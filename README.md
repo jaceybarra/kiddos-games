@@ -49,11 +49,16 @@ npm install
 npm run dev          # http://127.0.0.1:5173
 ```
 
-To play on a tablet on the same Wi-Fi during development:
+To play on a tablet on the same Wi-Fi, serve the production build to your home network:
 
 ```bash
-npx vite --host      # then open the printed "Network" address on the tablet
+npm run build
+npm run preview -- --host   # then open the printed "Network" address on the tablet
 ```
+
+While it runs, any device on that Wi-Fi can open it, so only do this on your home network. Press Ctrl+C to
+stop it. (`npx vite --host` also works for development, but it includes developer test hooks and loads
+more slowly.)
 
 ## Build a private copy for the family
 
