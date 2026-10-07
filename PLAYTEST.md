@@ -30,7 +30,7 @@ prove the game "works". Nothing here is recorded or uploaded.
 4. **Ask two simple questions afterwards:** "What was your favourite thing?" and "Was anything tricky?"
    Don't lead them toward praise.
 5. **Try stopping.** Ask them to press the moon button (Save and finish). Later, open the game again and
-   check that their kite tail is in the clubhouse and they return to the same place.
+   check that what they made is in the clubhouse and they return to the same place.
 6. **Change one thing.** Pick the most concrete usability or play problem, change it (or tell the
    developer), and try again another day.
 
@@ -48,6 +48,10 @@ prove the game "works". Nothing here is recorded or uploaded.
   "pop it back on" tap?
 - When two friends want the lantern cutter, which option do they pick? Do they say why?
 - If siblings play together: do the turns feel fair? Does anyone need the "My helper left" button?
+- Picnic Bridge: do they listen to each friend's need before building? What do they do when the plank
+  floats away?
+- Waterwheel: how do they respond when Fizz says the dam was a mistake? (There's no right answer.)
+- Lantern Launch: which job do they pick? How do they react when the first lantern wobbles down?
 - Story Stage: do they find the red "act it out" button without being told? Do they prefer dragging
   puppets or tapping the floor to make them walk?
 - What kind of stories do they make: silly, scary, everyday? (Any kind is fine. There's nothing to

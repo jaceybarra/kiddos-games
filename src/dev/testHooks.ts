@@ -35,7 +35,7 @@ export function registerSceneForTests(scene: Phaser.Scene): void {
           const b = t.bounds();
           const cx = (b.centerX - cam.scrollX) * cam.zoom;
           const cy = (b.centerY - cam.scrollY) * cam.zoom;
-          return { id: t.id, label: t.label, x: canvas.left + cx * sx, y: canvas.top + cy * sy };
+          return { id: t.id, label: t.label, x: canvas.left + cx * sx, y: canvas.top + cy * sy, w: b.width * cam.zoom * sx, h: b.height * cam.zoom * sy };
         });
     },
     worldToClient: (x: number, y: number) => {

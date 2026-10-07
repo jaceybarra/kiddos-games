@@ -102,7 +102,7 @@ export default class WaterwheelScene extends TrailScene {
     const im = this.img(x, y, 'ml.leaf', 13).setAngle((i * 37) % 50 - 25);
     this.leafImgs.push(im);
     const idx = this.leafImgs.length - 1;
-    this.addTarget({ id: `damleaf-${idx}`, label: 'Leaf in the dam', bounds: () => this.rectAround(x, y, 80, 60, 10), enabled: () => im.visible && !this.busy && this.w.route === 'solo', activate: () => void this.pullLeaf(im) });
+    this.addTarget({ id: `damleaf-${idx}`, label: 'Leaf in the dam', bounds: () => this.rectAround(x, y, 84, 84, 12), enabled: () => im.visible && !this.busy && this.w.route === 'solo', activate: () => void this.pullLeaf(im) });
   }
 
   private channelOpen(): boolean {

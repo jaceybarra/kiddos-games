@@ -6,6 +6,31 @@ ready for a lantern festival.
 No accounts, ads, purchases, analytics, or network calls during play. Everything is saved in the browser
 on the device.
 
+## What's inside
+
+- **Lantern Trail.** Four connected adventures that open in story order:
+  - The Windmill Kite
+  - The Picnic Bridge
+  - The Waterwheel Mix-Up
+  - The Lantern Launch
+
+  Walk, look, carry, build, and talk with friends who can say "not yet", apologise, and help. Each
+  adventure has more than one way through and leaves a souvenir in the clubhouse.
+- **Tinker Grove.** Build ramps, fans, springs, and chimes, then test them. There are four challenges
+  plus free build. Inventions are saved on a shelf.
+- **Picnic Parade.** Make picnic food at four hands-on stations: knead and bake cookies, stack
+  sandwiches, blend and pour juice, and decorate. Then serve friends who say what they'd like. There
+  are three picnics and an optional play-together mode for siblings.
+- **Story Stage.** A puppet theatre: pick a backdrop, puppets, and props, act it out, and play the
+  show back. Recording stores stage events only; there's no microphone or camera.
+- **The clubhouse.** Holds what each child made: their kite tail, a working invention, picnic snacks,
+  a story poster, and souvenirs.
+
+Each player has a "More help" or "More exploring" starting level, which can be changed per game in the
+grown-up area. "Save and finish" (the moon button) is always there.
+
+## Documents
+
 - Design: [GAME_DESIGN.md](GAME_DESIGN.md)
 - Art and audio: [ART_DIRECTION.md](ART_DIRECTION.md)
 - Adding content: [CONTENT_GUIDE.md](CONTENT_GUIDE.md)
@@ -47,7 +72,7 @@ This build is for private family use. Nothing here publishes a public site.
 ## Tests
 
 ```bash
-npm test             # unit tests (Vitest): saves, puzzle guarantees, encounter state machine, content validation
+npm test             # unit tests (Vitest): saves, puzzle and adventure guarantees, food/story rules, content and privacy checks
 npm run typecheck    # TypeScript
 npm run e2e          # browser journeys (Playwright, uses the preinstalled Chromium)
 npm run check        # all of the above + production build
@@ -68,6 +93,15 @@ is the art lab, which shows every puppet and art piece. Neither exists in produc
 On the "Who's playing?" screen, or in the pause menu, press and hold the gear for 2 seconds. Then answer
 two "number in words" questions. This keeps young children out of settings. It is not a password.
 
+In the grown-up area you can:
+- change help levels per player and per game;
+- set a play-time reminder with an optional short grace period;
+- read factual notes about what was played and made;
+- find off-screen ideas;
+- optionally type story titles;
+- export or import save files, or reset one player (it asks first, and a backup is kept);
+- read the honest feature status.
+
 ## Tech
 
 - [Phaser 4.2.1](https://phaser.io) runs the game scenes, with Vite 8 and TypeScript 6. The UI layer is
@@ -78,4 +112,5 @@ two "number in words" questions. This keeps young children out of settings. It i
   format is versioned, validated, and backed up. See `src/save/`.
 
 Licences of dependencies: Phaser (MIT), Vite (MIT). All game art, audio, and text are original to this
-repository.
+repository. The full asset list, with the source file and licence of every art key, is in
+`src/art/manifest.ts`. A unit test keeps it complete.

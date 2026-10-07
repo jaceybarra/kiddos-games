@@ -70,6 +70,14 @@ that gates progress.
    them instead of duplicating.
 8. Add an e2e journey in `tests/e2e/` that plays the quest to the end.
 
+### Adventures 2–4 and new ones
+
+Later adventures extend `TrailScene` (`src/game/scenes/trail/TrailScene.ts`). It provides walking,
+carrying, friends, checkpoints, the souvenir, and the calm ending. Put the adventure's rules in
+`src/content/trail/adventures.ts` as pure functions, with a test showing every route can be finished.
+Put its lines in `adventureLines.ts`, and add its place to `places.ts` with `requires` set to the
+adventure before it.
+
 ## Adding art
 
 1. Write an `ArtPiece` with `piece(key, [minX, minY, w, h], body, defs)`. The (0,0) point is the pivot:

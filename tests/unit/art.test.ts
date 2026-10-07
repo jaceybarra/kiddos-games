@@ -13,6 +13,8 @@ import { allPieceKeys, getPiece, pieceSvg } from '../../src/art/registry';
 import { CAST_RIGS, CAST_IDS, avatarRig, rigArtKeys } from '../../src/art/cast';
 import { AVATAR_SPECIES } from '../../src/art/cast/avatars';
 import { CHOICE_COLORS } from '../../src/art/palette';
+import { ART_SOURCES, LIBRARIES, OTHER_SOURCES, artManifest } from '../../src/art/manifest';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 
 registerAllArt();
 registerPieces(WINDMILL_PIECES);
@@ -63,5 +65,28 @@ describe('authored art', () => {
         seen.set(m[1], p.key);
       }
     expect(dup).toEqual([]);
+  });
+
+  it('the asset manifest lists every art key exactly once, with a source file and licence', () => {
+    const rows = artManifest();
+    const counts = new Map<string, number>();
+    for (const r of rows) counts.set(r.key, (counts.get(r.key) ?? 0) + 1);
+    expect([...counts].filter(([, n]) => n > 1).map(([k]) => k)).toEqual([]);
+    expect(allPieceKeys().filter((k) => !counts.has(k))).toEqual([]);
+    for (const s of [...ART_SOURCES, ...OTHER_SOURCES]) {
+      expect(existsSync(s.file), s.file).toBe(true);
+      expect(s.licence.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('every art module and every shipped library is in the manifest', () => {
+    const listed = new Set(ART_SOURCES.map((s) => s.file));
+    for (const dir of ['src/art/scenes', 'src/art/cast'])
+      for (const f of readdirSync(dir)) {
+        const src = readFileSync(`${dir}/${f}`, 'utf8');
+        if (/piece\(/.test(src) && !/^index\.ts$/.test(f)) expect(listed.has(`${dir}/${f}`), `${dir}/${f}`).toBe(true);
+      }
+    const deps = JSON.parse(readFileSync('package.json', 'utf8')).dependencies as Record<string, string>;
+    expect(LIBRARIES.map((l) => `${l.name}@${l.version}`).sort()).toEqual(Object.entries(deps).map(([n, v]) => `${n}@${v}`).sort());
   });
 });

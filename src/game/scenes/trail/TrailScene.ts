@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { WWScene } from '../../WWScene';
+import { WWScene, type Target } from '../../WWScene';
 import { Puppet } from '../../rig/Puppet';
 import { Walker } from '../../systems/Walker';
 import { GhostHand } from '../../systems/GhostHand';
@@ -38,6 +38,8 @@ export abstract class TrailScene extends WWScene {
   /** what the camera should look at instead of the avatar (e.g. a friend crossing) */
   protected camFocus: (() => number) | null = null;
   private camX = 0;
+  /** keyboard users: Tab to something off screen and the camera looks at it until the avatar moves */
+  private kbFocusX: number | null = null;
   private sky!: Phaser.GameObjects.Graphics;
 
   abstract readonly questId: string;
@@ -99,7 +101,8 @@ export abstract class TrailScene extends WWScene {
     const delta = Math.min(rawDelta, 200);
     this.walker.update(delta);
     const cam = this.cameras.main;
-    const target = this.camFocus ? this.camFocus() : this.avatar.x + this.avatar.facing * 160;
+    if (this.kbFocusX !== null && this.walker.moving) this.kbFocusX = null;
+    const target = this.camFocus ? this.camFocus() : this.kbFocusX ?? this.avatar.x + this.avatar.facing * 160;
     const k = motion.reduced ? 1 : Math.min(1, (delta / 1000) * 2.4);
     this.camX = Phaser.Math.Linear(this.camX || target, target, k);
     cam.scrollX = Phaser.Math.Clamp(this.camX - this.view.w / 2, 0, TRAIL_W - this.view.w);
@@ -108,6 +111,10 @@ export abstract class TrailScene extends WWScene {
   }
 
   protected onTick(_delta: number): void {}
+
+  protected override onFocusTarget(t: Target): void {
+    this.kbFocusX = t.bounds().centerX;
+  }
 
   protected override onGroundTap(x: number): void {
     this.hints.poke();

@@ -81,7 +81,7 @@ export default class LanternLaunchScene extends TrailScene {
     [-55, 0, 55].forEach((dx, i) => {
       const g = this.add.graphics().setDepth(12);
       this.foldLines.push(g);
-      this.addTarget({ id: `fold-${i}`, label: 'Fold line', priority: 3, bounds: () => this.rectAround(TABLE_X + dx * 0.8, groundY(TABLE_X) - 130, 40, 90, 14), enabled: () => this.jobIs('fold') && this.l.steps === i && !this.busy, activate: () => this.goDo(TABLE_X, () => void this.fold(i)) });
+      this.addTarget({ id: `fold-${i}`, label: 'Fold line', priority: 3, bounds: () => this.rectAround(TABLE_X + dx * 0.8, groundY(TABLE_X) - 130, 80, 100, 14), enabled: () => this.jobIs('fold') && this.l.steps === i && !this.busy, activate: () => this.goDo(TABLE_X, () => void this.fold(i)) });
     });
     this.addTarget({ id: 'flame', label: 'Flame post', bounds: () => this.rectAround(POST_X, groundY(POST_X) - 150, 90, 260, 8), enabled: () => this.jobIs('light') && this.l.steps === 0 && !this.busy, activate: () => this.goDo(POST_X, () => void this.takeFlame()) });
     this.addTarget({ id: 'lantern', label: 'The big lantern', bounds: () => this.rectAround(LAUNCH_X, groundY(LAUNCH_X) - 190, 200, 220, 8), enabled: () => this.jobIs('light') && this.l.steps === 1 && !this.busy, activate: () => this.goDo(LAUNCH_X, () => void this.lightIt()) });

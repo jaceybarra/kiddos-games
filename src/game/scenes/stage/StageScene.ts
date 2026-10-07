@@ -476,7 +476,7 @@ export default class StageScene extends WWScene {
       for (const i of INTENTS) tiles.push(tile('data-intent', i, i, `<span style="display:block;width:70px;height:70px">${pieceSvg(`st.i.${i}`)}</span>`, () => this.setIntent(i)));
     }
     const close = h('button', { class: 'btn-round close', type: 'button', 'aria-label': 'Close', html: icon('close'), 'data-drawer-close': true, on: { click: () => this.closeDrawer() } });
-    this.drawerEl = h('div', { class: 'drawer', role: 'dialog', 'aria-label': kind }, ...tiles, close);
+    this.drawerEl = h('div', { class: 'drawer', role: 'dialog', 'aria-label': kind, on: { keydown: (e) => (e as KeyboardEvent).key === 'Escape' && this.closeDrawer() } }, ...tiles, close);
     services.layers.choices.append(this.drawerEl);
     if (this.strip) this.strip.hidden = true;
     if (this.bar) this.bar.hidden = true;

@@ -10,8 +10,11 @@ soft warm-brown outline, quiet backgrounds, and bright, clearly outlined interac
   third-party art is used.
 - At load time each SVG is rasterised into a canvas and packed into runtime texture atlases
   (`src/art/rasterize.ts`). The DOM UI reuses the same SVG directly, so menus and scenes match.
-- `src/art/manifest.ts` lists every asset key, its source file, and its licence. `tests/unit/content.test.ts`
-  fails if content refers to an asset that does not exist.
+- `src/art/manifest.ts` lists every art key with its source file and licence. It also lists the
+  non-art assets (icons, favicon, synthesised audio, system fonts, local voices) and the one library
+  that ships in the build (Phaser, MIT). `tests/unit/art.test.ts` fails if a registered art key is
+  missing or listed twice, or if a new art module or runtime dependency isn't listed.
+  `tests/unit/content.test.ts` fails if content refers to an asset that does not exist.
 - Characters are **cut-out puppets**: separate parts (body, head, ears, tail, arms, eyes, brows,
   mouth) on pivots, animated with tweens. This fits the paper-toy look, and the same rigs are used as
   Story Stage puppets.
@@ -94,3 +97,5 @@ stripes, dots, or leaves).
 | Music | Generative synth loops | 5 composed acoustic loops (kalimba, ukulele, glockenspiel) |
 | Character art | Hand-written SVG puppets | Illustrator-drawn parts in the same rig layout |
 | Paper texture | Procedural grain overlay | Scanned paper and wood textures |
+| Scene layouts | Tuned for 16:9 and 4:3 landscape; lots of sky on 4:3 | A second layout pass for tall tablets |
+| Picnic food and stage props | Flat SVG with ink outlines | Hand-painted versions in the same sizes and pivots |

@@ -40,7 +40,7 @@ const PICNIC_X: Record<string, number> = { moss: 2380, fizz: 2520, rowan: 2680 }
 /** Once a way across exists, friends come and wait near the bank (in view while the child is there). */
 const BANK_X: Record<string, number> = { rowan: 500, moss: 610, fizz: 715 };
 /** Gathering spots in two rows (front row sits in front of the path) so nothing overlaps. */
-const SRC = { shed: 600, logs: 760, leaves: 900, fished: 1000, pile: 1030, rope: 1130, bank: 1200, stick: 1255 };
+const SRC = { shed: 600, logs: 760, leaves: 840, fished: 1060, pile: 1030, rope: 1230, bank: 1200, stick: 1255 };
 const FRONT = 70;
 const ROW: Record<string, 'front' | 'back'> = { shed: 'front', leaves: 'front', fished: 'front', bank: 'back' };
 const NEED_ART: Record<string, string> = { flat: 'br.need.flat', hop: 'br.need.hop', wide: 'br.need.wide' };
@@ -107,8 +107,8 @@ export default class PicnicBridgeScene extends TrailScene {
     // building materials
     this.ropeImg = this.img(SRC.rope, groundY(SRC.rope) + FRONT + 4, 'br.rope', 56);
     this.stickImg = this.img(SRC.stick, groundY(SRC.stick) + 10, 'br.stick', 30);
-    this.addTarget({ id: 'rope', label: 'Rope', bounds: () => this.rectAround(SRC.rope, groundY(SRC.rope) + FRONT - 22, 120, 60, 8), enabled: () => !this.busy, activate: () => this.goDo(SRC.rope, () => void this.tieRope()) });
-    this.addTarget({ id: 'stick', label: 'Long stick', bounds: () => this.rectAround(SRC.stick + 6, groundY(SRC.stick) - 110, 50, 200, 6), enabled: () => !this.busy, activate: () => this.goDo(SRC.stick, () => void this.fish()) });
+    this.addTarget({ id: 'rope', label: 'Rope', bounds: () => this.rectAround(SRC.rope, groundY(SRC.rope) + FRONT - 22, 120, 84, 10), enabled: () => !this.busy, activate: () => this.goDo(SRC.rope, () => void this.tieRope()) });
+    this.addTarget({ id: 'stick', label: 'Long stick', bounds: () => this.rectAround(SRC.stick + 6, groundY(SRC.stick) - 110, 80, 200, 8), enabled: () => !this.busy, activate: () => this.goDo(SRC.stick, () => void this.fish()) });
     this.img(SRC.pile, groundY(SRC.pile) + 10, 'br.stonepile', 30);
     this.addTarget({ id: 'stones', label: 'Stones', bounds: () => this.rectAround(SRC.pile, groundY(SRC.pile) - 50, 180, 100, 6), enabled: () => !this.busy && !stoneLane(this.b), activate: () => this.goDo(SRC.pile, () => this.takeStone()) });
     this.addLoose('shed', SRC.shed, !this.taken.shed);
@@ -117,7 +117,7 @@ export default class PicnicBridgeScene extends TrailScene {
     this.addLoose('fished', SRC.fished, this.b.floated === 'back' && !this.taken.fished);
     if (!this.revealed) {
       this.leavesImg = this.img(SRC.leaves, groundY(SRC.leaves) + FRONT + 10, 'br.leaves', 57);
-      this.addTarget({ id: 'leafpile', label: 'Pile of leaves', bounds: () => this.rectAround(SRC.leaves, groundY(SRC.leaves) + FRONT - 30, 200, 80, 6), enabled: () => !this.busy && !this.revealed, activate: () => this.goDo(SRC.leaves, () => void this.rummage()) });
+      this.addTarget({ id: 'leafpile', label: 'Pile of leaves', bounds: () => this.rectAround(SRC.leaves, groundY(SRC.leaves) + FRONT - 30, 200, 90, 8), enabled: () => !this.busy && !this.revealed, activate: () => this.goDo(SRC.leaves, () => void this.rummage()) });
     }
     // spots across the stream
     PLANK_X.forEach((x, i) => {
@@ -148,7 +148,7 @@ export default class PicnicBridgeScene extends TrailScene {
     const y = groundY(x) + (front ? FRONT + 8 : 8);
     const im = this.img(x, y, 'br.plank', front ? 55 : 31).setVisible(visible);
     this.loose.set(src, im);
-    this.addTarget({ id: `plank-${src}`, label: 'Plank', bounds: () => this.rectAround(x, y - 10, 200, 44, 8), enabled: () => im.visible && !this.busy, activate: () => this.goDo(x, () => this.takePlank(src)) });
+    this.addTarget({ id: `plank-${src}`, label: 'Plank', bounds: () => this.rectAround(x, y - 14, 200, 76, 10), enabled: () => im.visible && !this.busy, activate: () => this.goDo(x, () => this.takePlank(src)) });
   }
 
   private drawSpotHints(): void {

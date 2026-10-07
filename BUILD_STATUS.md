@@ -74,9 +74,30 @@ children's real names, network calls, and microphone or camera access never appe
 | Shelf (12 per player) with delete confirmation; clubhouse poster that plays | ✅ | e2e | — |
 | Optional story title typed by a grown-up | ✅ | not yet scripted | — |
 
+## Lantern Trail adventures 2–4
+
+| Area | Implemented | Tested by automation | Tested with a child |
+| --- | --- | --- | --- |
+| Adventure rules (bridge, water, launch), both presets | ✅ | unit tests: every route on both presets reaches the end | — |
+| The Picnic Bridge: the plank floats away, fish it back, tie it, find planks, everyone crosses | ✅ | e2e (planks route, More exploring, including a refresh mid-build) | — |
+| The Picnic Bridge: stepping stones for Fizz | ✅ | one-off dev script; unit tests | — |
+| The Picnic Bridge: the old log bridge route | ✅ | unit tests only | — |
+| The Waterwheel Mix-Up: clues, Fizz owns the mistake, clear the dam alone | ✅ | e2e (More help); one-off dev script on More exploring | — |
+| The Waterwheel Mix-Up: build a stone channel together so the pool stays | ✅ | one-off dev script; unit tests | — |
+| The Waterwheel Mix-Up: ask Moss to measure first | ✅ | not yet scripted (uses the same channel rules the unit tests cover) | — |
+| The Lantern Launch: pick a job (the quiet path-lantern job counts), the first launch wobbles, choose a fix | ✅ | e2e (path job, trim fix); one-off dev script (fold job, extra balloon) | — |
+| The Lantern Launch: light and signal jobs | ✅ | unit tests only | — |
+| Interrupted finales resume without losing the souvenir | ✅ | not yet scripted (checked by reading the resume code) | — |
+| Souvenirs (flag, toy wheel, lantern) on the clubhouse pegs | ✅ | e2e (lantern appears) | — |
+
+## Assets
+
+Every art key is listed in `src/art/manifest.ts` with its source file and licence. Unit tests fail if a key
+or an art module is missing, or if a runtime dependency isn't listed.
+
 ## Not built yet
-- Lantern Trail adventures 2–4 (Picnic Bridge, Waterwheel Mix-Up, Lantern Launch). Their map spots are
-  shown as "not ready yet", with no teaser.
+- Offline install (a service worker). The game makes no network requests while playing, but the page
+  itself still has to be served by `npm run dev`, `npm run preview`, or any static file server.
 
 ## Known limits
 
