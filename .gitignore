@@ -7,4 +7,4 @@ playwright-report/
 *.log
 .DS_Store
 .vite/
-*.tmp.mjs
+*.tmp.*
