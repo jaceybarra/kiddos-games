@@ -42,10 +42,37 @@ Legend:
 | "Pass the tools" turn badge | ✅ | not yet scripted | — |
 | Discovery notes that mark real-world facts and pretend ones | ✅ | unit test (every note is labelled and its wording matches) | — |
 
-## Not built yet
+## Picnic Parade
 
-- Picnic Parade
-- Story Stage
+| Area | Implemented | Tested by automation | Tested with a child |
+| --- | --- | --- | --- |
+| Food rules (wishes, sandwich balance, juice mixing and pouring, validation) | ✅ | unit tests | — |
+| Four stations: dough, sandwich stacking, juice, decorate | ✅ | e2e (all four) | — |
+| Windy Picnic: weights, windbreaks, the bumped-tray mix-up | ✅ | e2e (weights, windbreak, mix-up) | — |
+| Music Picnic: seating, the loud-drum talk | ✅ | e2e (More help, full picnic) | — |
+| Lantern Picnic: lanterns, the shared cutter, Moss's invitation | ✅ | unit tests for every cutter option; e2e for taking turns | — |
+| A dish that isn't quite right: remake, offer, keep, ask to try | ✅ | unit tests; e2e (keep, then "no thanks" to a bite) | — |
+| Parade, picnic photo, album (12 per player), clubhouse snacks | ✅ | e2e (photo saved, snacks in the clubhouse) | — |
+| Resume mid-picnic after a refresh | ✅ | e2e | — |
+| Play together: chef and server turns, swap jobs, helper takes over | ✅ | e2e (turns pass; helper serves) | — |
+
+## Content and privacy checks
+
+`npm run validate:content` checks every line against the written content rules: length, real speakers
+and moods, no shaming or pressure words, and labelled discovery notes. It also checks that the
+children's real names, network calls, and microphone or camera access never appear in the source.
+
+## Story Stage (in progress)
+
+| Area | Implemented | Tested by automation | Tested with a child |
+| --- | --- | --- | --- |
+| Story model: scenes, endings, recording limits, validation | ✅ | unit tests | — |
+| 5 backdrops, 7 puppets, 14 props, curated lines, sounds | ✅ | unit tests (catalogue, line icons) | — |
+| Editor: place, drag or tap-to-walk, actions, faces, lines, record, replay | first pass | scripted run only | — |
+| Whole show with curtains, alternate endings, bow | first pass | not yet | — |
+| Shelf (12 per player) and clubhouse poster | shelf done; poster not yet | not yet | — |
+
+## Not built yet
 - Lantern Trail adventures 2–4 (Picnic Bridge, Waterwheel Mix-Up, Lantern Launch). Their map spots are
   shown as "not ready yet", with no teaser.
 
@@ -58,5 +85,5 @@ Legend:
 
 ## Next concrete step
 
-Build Picnic Parade with one complete loop (one scenario, all four preparation steps). Then add the
-other scenarios and sibling mode.
+Build Story Stage with one complete loop (one backdrop, puppets, a three-scene story, replay, saving).
+Then add the remaining backdrops, props, six-scene stories, and alternate endings.

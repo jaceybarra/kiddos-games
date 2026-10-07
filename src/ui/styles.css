@@ -82,6 +82,11 @@ body { font-family: var(--font); color: var(--ink); -webkit-user-select: none; u
 .part-ico { display: block; width: 74px; height: 58px; }
 .part-ico svg { width: 100% !important; height: 100% !important; }
 .captions.hidden { opacity: 0; transform: translate(-50%, 20px); pointer-events: none; }
+/* captions never block play underneath; only the "hear again" button takes taps */
+.captions { pointer-events: none; }
+.captions .btn-round { pointer-events: auto; }
+.captions.hidden .btn-round { pointer-events: none; }
+#ui-root [hidden] { display: none !important; }
 .captions .who { width: 68px; height: 68px; flex: none; border-radius: 50%; background: var(--cream); border: 3px solid var(--ink); overflow: hidden; }
 .captions .who svg { width: 100%; height: 100%; }
 .captions .text { flex: 1; font: 700 clamp(19px, 2.4vw, 26px)/1.25 var(--font); }
@@ -94,6 +99,8 @@ body { font-family: var(--font); color: var(--ink); -webkit-user-select: none; u
   display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 12px; cursor: pointer; font: 700 21px/1.15 var(--font); color: var(--ink);
   animation: popin .28s cubic-bezier(.3,1.6,.5,1) both; text-align: left; }
 .choice svg { width: 64px; height: 64px; flex: none; }
+.choice .choice-art svg { width: 84px; height: 84px; }
+.tile .dialog-art svg { width: 120px; height: 110px; }
 .choice:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--wood-dark); }
 .choice:nth-child(2) { animation-delay: .06s; } .choice:nth-child(3) { animation-delay: .12s; } .choice:nth-child(4) { animation-delay: .18s; }
 @keyframes popin { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -198,15 +205,51 @@ body { font-family: var(--font); color: var(--ink); -webkit-user-select: none; u
 @keyframes twinkle { 50% { opacity: .2; } }
 
 /* shelves/list grids in game menus */
-.shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; width: min(900px, calc(100vw - 48px)); }
+.shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; width: min(900px, calc(100vw - 48px)); }
 .shelf-item { border: 4px solid var(--ink); border-radius: 22px; background: var(--paper); box-shadow: 0 5px 0 var(--wood-dark); padding: 8px; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
 .shelf-item .thumb { border-radius: 14px; border: 3px solid var(--ink); background: #eef4e2; aspect-ratio: 4 / 3; overflow: hidden; display: grid; place-items: center; cursor: pointer; padding: 0; }
 .shelf-item .thumb img, .shelf-item .thumb svg { width: 100%; height: 100%; object-fit: cover; }
 .shelf-item .acts { display: flex; gap: 6px; justify-content: space-between; }
-.shelf-item .acts .btn-round { --btn: 52px; border-width: 3px; }
+.shelf-item .acts .btn-round { --btn: 56px; border-width: 3px; }
 
 .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
 @media (prefers-reduced-motion: reduce) {
   html:not(.motion-full) *, html:not(.motion-full) *::before, html:not(.motion-full) *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
 }
 @media (max-height: 560px) { :root { --btn: 64px; } .choice { min-height: 80px; } .choice svg { width: 52px; height: 52px; } }
+
+/* ---------- glowing hint on tiles (Tinker tray, Picnic tabs) ---------- */
+.tile.glow { animation: glowpulse 1.4s ease-in-out infinite; }
+
+/* ---------- Story Stage ---------- */
+.stage-tools { position: absolute; display: flex; flex-direction: column; gap: 12px; top: calc(max(12px, env(safe-area-inset-top)) + var(--btn) + 22px); }
+.stage-tools.left { left: max(12px, env(safe-area-inset-left)); }
+.stage-tools.right { right: max(12px, env(safe-area-inset-right)); }
+.stage-tools .btn-round { --btn: 66px; }
+.stage-tools .btn-round.rec-on { background: #ffd2cc; animation: glowpulse 1.1s ease-in-out infinite; }
+.stage-strip { position: absolute; left: 50%; transform: translateX(-50%); bottom: max(10px, env(safe-area-inset-bottom)); display: flex; gap: 10px; align-items: center; max-width: calc(100vw - 2 * var(--btn) - 60px); overflow-x: auto; padding: 8px 6px 6px; }
+.scene-card { width: 112px; height: 74px; border-radius: 16px; border: 4px solid var(--ink); background: var(--paper); padding: 0; overflow: hidden; position: relative; flex: none; box-shadow: 0 5px 0 var(--wood-dark); cursor: pointer; }
+.scene-card > svg { width: 100%; height: 100%; display: block; }
+.scene-card[aria-current="true"] { outline: 6px solid var(--glow); transform: translateY(-5px); }
+.scene-card .num { position: absolute; left: 6px; bottom: 5px; display: flex; gap: 3px; }
+.scene-card .num i { width: 9px; height: 9px; border-radius: 50%; background: #fff; border: 2px solid var(--ink); }
+.scene-card .rec { position: absolute; right: 6px; top: 6px; width: 14px; height: 14px; border-radius: 50%; background: var(--berry); border: 2px solid #fff; }
+.scene-card.ending { border-color: #8e5ba8; border-style: dashed; }
+.scene-card .badge { position: absolute; right: 4px; bottom: 2px; width: 30px; height: 30px; }
+.scene-card .badge svg { width: 30px; height: 30px; }
+.scene-card.add { display: grid; place-items: center; background: linear-gradient(#fffdf7, var(--cream)); }
+.scene-card.add svg { width: 44px; height: 44px; }
+.stage-bar { position: absolute; left: 50%; transform: translateX(-50%); bottom: max(10px, env(safe-area-inset-bottom)); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 2 * var(--btn) - 60px);
+  background: var(--paper); border: 4px solid var(--ink); border-radius: 26px; padding: 8px 10px; box-shadow: 0 6px 0 var(--wood-dark); }
+.stage-bar .btn-round { --btn: 60px; }
+.stage-bar .who { width: 60px; height: 60px; border-radius: 50%; background: var(--cream); border: 3px solid var(--ink); overflow: hidden; flex: none; }
+.stage-bar .who svg { width: 100%; height: 100%; }
+.stage-bar .sep { width: 3px; height: 48px; background: var(--ink); opacity: .25; border-radius: 2px; }
+.drawer { position: absolute; left: 50%; transform: translateX(-50%); bottom: max(10px, env(safe-area-inset-bottom)); background: var(--paper); border: 5px solid var(--ink); border-radius: 28px; padding: 14px 14px 10px;
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 2 * var(--btn) - 60px); max-height: 52vh; overflow: auto; box-shadow: 0 8px 0 var(--wood-dark), 0 14px 26px rgba(0,0,0,.3); animation: popin .22s both; }
+.drawer .tile { width: 112px; min-height: 104px; padding: 6px; font-size: 15px; gap: 4px; }
+.drawer .tile svg { width: 86px; height: 78px; }
+.drawer .tile.wide svg { width: 100px; height: 52px; }
+.drawer .tile.line { width: 150px; min-height: 92px; }
+.drawer .tile.line svg { width: 46px; height: 46px; }
+.drawer .close { align-self: center; }

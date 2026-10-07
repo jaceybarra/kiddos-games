@@ -7,6 +7,8 @@ export interface DialogButton {
   icon: string;
   label: string;
   kind?: 'primary' | 'go' | 'danger' | '';
+  /** optional picture (inline SVG) instead of the icon */
+  art?: string;
 }
 
 /**
@@ -36,7 +38,7 @@ export function iconDialog(layer: HTMLElement, opts: { title?: string; art?: str
             },
           },
         },
-        h('span', { html: icon(b.icon, 96) }),
+        h('span', { class: b.art ? 'dialog-art' : '', html: b.art ?? icon(b.icon, 96) }),
         h('span', {}, b.label),
       ),
     );

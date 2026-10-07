@@ -165,25 +165,62 @@ lighting the path lanterns, still counts as part of the launch.
 
 **Verbs:** knead, combine, arrange, decorate, carry, serve, swap roles, repair.
 
-- **Four prep mechanics:**
-  1. Squish dough (a soft-body blob) and press a cutter shape.
-  2. Stack a sandwich (layers wobble and can slide off).
-  3. Blend and pour juice (tap-to-pour, two cup sizes).
-  4. Decorate with sprinkle trails, stamps, and icing swirls.
+The kitchen cart is on the left and the picnic blanket is on the right, so the friends and their wishes
+stay in view while the child cooks. Content lives in `src/content/picnic/` (pure, unit-tested) and the
+scene is `src/game/scenes/picnic/`.
 
-  You then arrange the blanket and serve the food.
-- **Scenarios:**
-  - Windy Picnic: weight the napkins and build silly windbreaks.
-  - Music Picnic: Fizz wants loud music, Luma wants a quiet seat, and you arrange the seating.
-  - Lantern Picnic: Fizz and Luma both want the lantern cutter, so you negotiate turns or find an
-    alternative.
-- Preferences are **shown by the guests** as visible icons (crunchy or soft, big or small portion,
-  quiet or loud seat, favourite topping). They are never inferred from species.
-- There is no clock and no customer rage. Wrong items can be remade, repurposed, or offered to someone
-  who wants them. Dropped items bounce into a funny recovery.
-- The player's own needs count too. They can keep their own snack and decline politely.
-- **Sibling mode:** two players share one objective, with alternating roles (chef and server). An NPC
-  takes over a role if one player leaves.
+- **Four prep mechanics, each a different action:**
+  1. **Dough** (cookies): tap to squish the dough (3 squishes on More help, 5 on More exploring). Watch
+     it roll flat, press a cutter, then choose "a little bake" (soft) or "a long bake" (crunchy). Soft
+     and crunchy look different in shape detail, not only colour: crunchy cookies have cracks.
+  2. **Sandwich stacking**: on More help each filling drops in the middle. On More exploring the child
+     taps where to drop it, and a toy balance rule (`dropLayer`) decides whether it stays. A layer that
+     lands too far off, or a stack that leans too much, slides off and bounces onto the table. One tap
+     pops it back on. There are at most 6 fillings. Three or more makes a big sandwich.
+  3. **Juice**: put fruit in the blender (2 on More help, up to 3), blend, choose a big or small cup,
+     then tap to pour one glug at a time. Colours mix like paint. Some mixes come out a funny muddy
+     colour, which gets its own reaction. Overfilling spills into the saucer, and nothing is lost.
+  4. **Decorate**: pick a dish from the tray and a topping (sprinkles, dots, little leaves, or an icing
+     swirl). Tap where it goes. The swirl can also be drawn by dragging, but a tap works too.
+
+  Finished dishes go on a three-slot tray. To serve, tap a dish and then a friend. Tapping your own
+  avatar keeps it as your own snack.
+- **Scenarios (each with a setup step and a social moment):**
+  - **Windy Picnic** (Pip hosts). Put things on the flapping blanket corners. Heavy things hold. Light
+    things blow away and drift back, with a real-world note. Then choose a windbreak: an umbrella (it
+    flips inside out, then Rowan holds it), a cushion wall, or Moss sitting still (More exploring).
+    Later Rowan chases a napkin and bumps the tray. He apologises, but his apology doesn't fix
+    anything by itself. The child can make it again together with him (Rowan comes to help), say it's
+    okay, or say they feel a bit cross (More exploring). Rowan accepts that feeling and offers to help.
+  - **Music Picnic** (Fizz hosts with a drum). Seat the friends: tap a friend, then a cushion. Rings
+    and icons show which cushions are quiet and which are by the music. If Luma ends up somewhere
+    loud, she says so. The child can ask Fizz to play softer, find Luma a quiet seat, or (More
+    exploring) ask Luma what would help. Rowan likes being close to the music and can ask to move. A
+    seat that already suits a friend means no problem at all, so listening pays off.
+  - **Lantern Picnic** (Luma hosts at dusk). Hang the lanterns first. When the child picks the lantern
+    cutter, Luma and Fizz both want it. The child can take turns (Fizz waits), make one big cookie
+    together to share, offer Fizz a different cutter (Fizz may say "not that one", and that's fine),
+    or say "I'd like a turn too" (then everyone takes turns, child first). Moss is watching fireflies
+    under the tree. Inviting him gets "not yet, thank you". He may come over by himself later, and he
+    joins the parade either way.
+- **Preferences** are written per picnic and shown in a bubble as a picture of the dish the friend
+  wants, plus a seat icon when it matters. They are never derived from species or appearance: the same
+  friend wants different things on different days (this is unit-tested).
+- **No clock.** A dish that isn't quite right stays on the tray. The friend says what they'd like ("I
+  like soft cookies best"). The child can make another, offer it to a friend who wants it, keep it,
+  or (More exploring) ask "could you try it?". Some friends will try it and some politely won't.
+  Friends can be flexible about details they don't mind.
+- **The child's needs count.** Your own snack is yours. When Pip asks for a bite, "No thanks, it's
+  mine" gets "Okay! Thanks for telling me."
+- **Ending.** The bell appears once anyone has something, so nobody is forced to satisfy every wish.
+  Ringing it takes a picnic photo (saved to the album, 12 per player, with view, show in the
+  clubhouse, and delete with confirmation). Then everyone eats, and a short parade puts bunting up.
+  Each finished picnic leaves something behind in the meadow (an umbrella, a drum, lanterns).
+- **Sibling mode** (Play together button). Pick the other player. One is chef, one is server, and
+  the turn badge shows whose turn it is. Making a dish passes the turn to the server; serving passes it
+  back. "Swap jobs" swaps them. "My helper left" asks who is still playing, and that picnic's helper
+  (never one of the guests) takes the other job. The helper serves dishes to friends who want them, or
+  makes whatever the child picks. Nothing depends on a second player.
 
 ## Game D — Story Stage (puppet theater)
 

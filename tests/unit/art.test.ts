@@ -6,6 +6,8 @@ import { WINDMILL_PIECES } from '../../src/art/scenes/windmill';
 import { MAP_PIECES } from '../../src/art/scenes/map';
 import { TINKER_PIECES } from '../../src/art/scenes/tinker';
 import { CLUBHOUSE_PIECES } from '../../src/art/scenes/clubhouse';
+import { PICNIC_PIECES } from '../../src/art/scenes/picnic';
+import { STAGE_PIECES } from '../../src/art/scenes/stage';
 import { allPieceKeys, getPiece, pieceSvg } from '../../src/art/registry';
 import { CAST_RIGS, CAST_IDS, avatarRig, rigArtKeys } from '../../src/art/cast';
 import { AVATAR_SPECIES } from '../../src/art/cast/avatars';
@@ -16,6 +18,8 @@ registerPieces(WINDMILL_PIECES);
 registerPieces(MAP_PIECES);
 registerPieces(TINKER_PIECES);
 registerPieces(CLUBHOUSE_PIECES);
+registerPieces(PICNIC_PIECES);
+registerPieces(STAGE_PIECES);
 
 describe('authored art', () => {
   it('every piece is well-formed SVG', () => {
@@ -36,5 +40,26 @@ describe('authored art', () => {
     const missing: string[] = [];
     for (const r of rigs) for (const k of rigArtKeys(r)) if (!allPieceKeys().includes(k)) missing.push(`${r.id}: ${k}`);
     expect(missing).toEqual([]);
+  });
+
+  it('every gradient or clip a piece uses is defined inside that piece', () => {
+    const bad: string[] = [];
+    for (const key of allPieceKeys()) {
+      const p = getPiece(key);
+      const defined = new Set([...((p.defs ?? '') + p.body).matchAll(/id="([^"]+)"/g)].map((m) => m[1]));
+      for (const m of p.body.matchAll(/url\(#([^)]+)\)/g)) if (!defined.has(m[1])) bad.push(`${key}: ${m[1]}`);
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('picnic pieces never share ids (they are also shown inline in the page)', () => {
+    const seen = new Map<string, string>();
+    const dup: string[] = [];
+    for (const p of [...PICNIC_PIECES, ...STAGE_PIECES])
+      for (const m of (p.defs ?? '').matchAll(/id="([^"]+)"/g)) {
+        if (seen.has(m[1])) dup.push(`${m[1]} in ${seen.get(m[1])} and ${p.key}`);
+        seen.set(m[1], p.key);
+      }
+    expect(dup).toEqual([]);
   });
 });

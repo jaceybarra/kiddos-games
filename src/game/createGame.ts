@@ -11,6 +11,8 @@ export const SCENES: Record<string, Loader> = {
   clubhouse: () => import('./scenes/ClubhouseScene'),
   'windmill-kite': () => import('./scenes/trail/WindmillKiteScene'),
   tinker: () => import('./scenes/tinker/TinkerScene'),
+  picnic: () => import('./scenes/picnic/PicnicScene'),
+  stage: () => import('./scenes/stage/StageScene'),
 };
 
 class IdleScene extends Phaser.Scene {

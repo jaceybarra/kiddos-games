@@ -7,6 +7,7 @@ export const CLUB_LINES = {
   'nar.pinwheel': { speaker: 'narrator', text: 'The pinwheel from the snail on the windmill.' },
   'nar.frameEmpty': { speaker: 'narrator', text: 'Something you make will go here.' },
   'nar.frameSoon': { speaker: 'narrator', text: 'This frame is waiting for a place Rowan is still building.' },
+  'nar.picnic': { speaker: 'narrator', text: 'The snacks from your picnic! Crunch, squish, slurp.' },
   'nar.wardrobe': { speaker: 'narrator', text: 'The dress-up chest! Everyone can wear anything.' },
   'luma.corner': { speaker: 'luma', text: 'This is my quiet corner. You can sit here too, if you like.', mood: 'calm' },
   'luma.stay': { speaker: 'luma', text: 'Stay as long as you like. Tap when you want to get up.', mood: 'calm' },

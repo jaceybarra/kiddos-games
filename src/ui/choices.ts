@@ -8,6 +8,8 @@ export interface ChoiceOption {
   icon: string;
   /** short label (also read aloud when a local voice is available) */
   label: string;
+  /** optional picture (inline SVG) shown instead of the icon, e.g. the cookie you'd get */
+  art?: string;
 }
 
 /**
@@ -48,7 +50,7 @@ export class Choices {
               mouseenter: () => narration.available && void narration.speak(o.label, { pitch: 1.15 }),
             },
           },
-          h('span', { html: icon(o.icon) }),
+          h('span', { class: o.art ? 'choice-art' : '', html: o.art ?? icon(o.icon) }),
           h('span', {}, o.label),
         ),
       ),

@@ -6,8 +6,16 @@ import { CAST_IDS, CAST_RIGS, avatarRig, rigArtKeys } from '../art/cast';
 import { Puppet } from '../game/rig/Puppet';
 import { EXPRESSIONS } from '../art/cast/face';
 import { HATS } from '../art/cast/hats';
+import { registerPieces } from '../art/registry';
+import { WINDMILL_PIECES } from '../art/scenes/windmill';
+import { MAP_PIECES } from '../art/scenes/map';
+import { TINKER_PIECES } from '../art/scenes/tinker';
+import { CLUBHOUSE_PIECES } from '../art/scenes/clubhouse';
+import { PICNIC_PIECES } from '../art/scenes/picnic';
+import { STAGE_PIECES } from '../art/scenes/stage';
 
 registerAllArt();
+for (const set of [WINDMILL_PIECES, MAP_PIECES, TINKER_PIECES, CLUBHOUSE_PIECES, PICNIC_PIECES, STAGE_PIECES]) registerPieces(set);
 const params = new URLSearchParams(location.search);
 const mode = params.get('mode') ?? 'rigs';
 

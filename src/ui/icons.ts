@@ -51,6 +51,22 @@ const ICONS: Record<string, string> = {
   copy: `<rect x="14" y="14" width="24" height="26" rx="3" fill="${P.cream}" ${S}/><path d="M10 33 V10 Q10 8 12 8 H30" fill="none" ${S}/>`,
   ear: `<path d="M16 20 Q16 8 26 8 Q36 8 36 19 Q36 26 30 30 Q26 33 26 38 Q26 43 20 42" fill="${P.rose}" ${S}/><path d="M22 20 Q22 14 27 14 Q31 14 31 19" fill="none" ${S}/>`,
   quiet: `<path d="M10 30 Q10 14 24 14 Q38 14 38 30" fill="none" ${S}/><rect x="6" y="28" width="10" height="13" rx="4" fill="${P.lilac}" ${S}/><rect x="32" y="28" width="10" height="13" rx="4" fill="${P.lilac}" ${S}/>`,
+  record: `<circle cx="24" cy="24" r="17" fill="${P.berry}" ${S}/><circle cx="24" cy="24" r="7" fill="#fff" opacity="0.85"/>`,
+  stop: `<rect x="11" y="11" width="26" height="26" rx="5" fill="${P.inkSoft}" ${S}/>`,
+  puppet: `<path d="M12 42 L14 24 Q14 12 24 12 Q34 12 34 24 L36 42 Z" fill="${P.pumpkin}" ${S}/><circle cx="19" cy="10" r="5" fill="${P.pumpkin}" ${S}/><circle cx="29" cy="10" r="5" fill="${P.pumpkin}" ${S}/><circle cx="20" cy="23" r="2.5" fill="${P.ink}"/><circle cx="28" cy="23" r="2.5" fill="${P.ink}"/><path d="M20 30 Q24 33 28 30" fill="none" ${S}/>`,
+  picture: `<rect x="6" y="9" width="36" height="30" rx="4" fill="${P.waterLight}" ${S}/><path d="M6 33 L18 21 L27 30 L33 24 L42 33 V35 Q42 39 38 39 H10 Q6 39 6 35 Z" fill="${P.leaf}" ${S}/><circle cx="33" cy="17" r="4" fill="${P.sun}" ${S}/>`,
+  smile: `<circle cx="24" cy="24" r="17" fill="${P.sun}" ${S}/><circle cx="18" cy="20" r="2.5" fill="${P.ink}"/><circle cx="30" cy="20" r="2.5" fill="${P.ink}"/><path d="M16 28 Q24 36 32 28" fill="none" ${S}/>`,
+  flip: `<path d="M24 8 V40" fill="none" ${S} stroke-dasharray="4 5"/><path d="M19 14 L6 24 L19 34 Z" fill="${P.sea}" ${S}/><path d="M29 14 L42 24 L29 34 Z" fill="${P.cream}" ${S}/>`,
+  thought: `<path d="M8 20 Q8 8 20 9 Q24 4 31 6 Q42 8 40 19 Q44 28 34 30 Q28 36 20 31 Q8 32 8 20 Z" fill="${P.white}" ${S}/><circle cx="12" cy="38" r="3.5" fill="${P.white}" ${S}/><circle cx="7" cy="44" r="2" fill="${P.white}" ${S}/>`,
+  chest: `<rect x="7" y="22" width="34" height="18" rx="3" fill="${P.woodLight}" ${S}/><path d="M7 22 Q7 9 24 9 Q41 9 41 22 Z" fill="${P.wood}" ${S}/><rect x="20" y="18" width="8" height="9" rx="2" fill="${P.lantern}" ${S}/>`,
+  scenes3: `<rect x="4" y="16" width="12" height="16" rx="3" fill="${P.sea}" ${S}/><rect x="18" y="16" width="12" height="16" rx="3" fill="${P.sun}" ${S}/><rect x="32" y="16" width="12" height="16" rx="3" fill="${P.leaf}" ${S}/>`,
+  scenes6: `<rect x="4" y="8" width="12" height="14" rx="3" fill="${P.sea}" ${S}/><rect x="18" y="8" width="12" height="14" rx="3" fill="${P.sun}" ${S}/><rect x="32" y="8" width="12" height="14" rx="3" fill="${P.leaf}" ${S}/><rect x="4" y="26" width="12" height="14" rx="3" fill="${P.berry}" ${S}/><rect x="18" y="26" width="12" height="14" rx="3" fill="${P.plum}" ${S}/><rect x="32" y="26" width="12" height="14" rx="3" fill="${P.pumpkin}" ${S}/>`,
+  jump: `<path d="M24 34 V8 M14 18 L24 8 L34 18" fill="none" stroke="${P.ink}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 42 H40" stroke="${P.ink}" stroke-width="4" stroke-linecap="round"/>`,
+  hide: `<circle cx="24" cy="24" r="17" fill="${P.sun}" ${S}/><ellipse cx="16" cy="21" rx="9" ry="7" fill="${P.pumpkin}" ${S}/><ellipse cx="32" cy="21" rx="9" ry="7" fill="${P.pumpkin}" ${S}/><path d="M18 33 Q24 37 30 33" fill="none" ${S}/>`,
+  zzz: `<path d="M10 14 H22 L10 28 H22 M26 22 H36 L26 34 H36" fill="none" stroke="${P.sea}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  bow: `<circle cx="34" cy="14" r="6" fill="${P.cream}" ${S}/><path d="M28 18 Q18 22 14 32 M20 26 L18 42 M24 28 L30 42" fill="none" stroke="${P.ink}" stroke-width="4" stroke-linecap="round"/>`,
+  foot: `<path d="M14 40 Q10 26 16 14 Q22 6 28 12 Q32 18 30 28 Q36 34 34 40 Z" fill="${P.woodLight}" ${S}/><circle cx="36" cy="10" r="3" fill="${P.woodLight}" ${S}/><circle cx="40" cy="17" r="2.5" fill="${P.woodLight}" ${S}/>`,
+  branch: `<path d="M24 42 V26 Q24 18 14 14 M24 26 Q24 18 34 14" fill="none" stroke="${P.ink}" stroke-width="4" stroke-linecap="round"/><circle cx="12" cy="12" r="6" fill="${P.sun}" ${S}/><circle cx="36" cy="12" r="6" fill="${P.sea}" ${S}/>`,
 };
 
 export function icon(name: keyof typeof ICONS | string, size = 48): string {

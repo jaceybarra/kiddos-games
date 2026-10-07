@@ -4,6 +4,7 @@ import { narration } from '../core/narration';
 import { CAST_RIGS, type CastId, avatarRig } from '../art/cast';
 import { rigSvg } from '../art/portrait';
 import type { Expression } from '../art/cast/face';
+import type { VoiceSpec } from '../art/cast/rig';
 import type { Puppet } from '../game/rig/Puppet';
 import { hashSeed } from '../core/rng';
 import { icon } from '../ui/icons';
@@ -30,6 +31,9 @@ export interface SayOpts {
   expression?: Expression;
   /** keep the caption up after speaking (e.g. while a choice is open) */
   hold?: boolean;
+  /** for puppets that aren't a regular speaker (e.g. Story Stage's spare puppet) */
+  portrait?: string;
+  voice?: VoiceSpec;
 }
 
 let token = 0;
@@ -47,10 +51,10 @@ function voiceFor(speaker: Speaker) {
  */
 export async function say(speaker: Speaker, text: string, opts: SayOpts = {}): Promise<void> {
   const my = ++token;
-  const v = voiceFor(speaker);
+  const v = opts.voice ?? voiceFor(speaker);
   if (opts.expression && opts.puppet) opts.puppet.setExpression(opts.expression);
   const minMs = Math.max(2200, 60 * text.length);
-  services.captions.show(portraitFor(speaker, opts.expression), text, 0);
+  services.captions.show(opts.portrait ?? portraitFor(speaker, opts.expression), text, 0);
   audio.duck(true);
   const syll = Math.ceil(text.replace(/[^a-z]/gi, '').length / 3.2);
   let speakMs: number;

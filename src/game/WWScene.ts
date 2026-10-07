@@ -142,9 +142,17 @@ export abstract class WWScene extends Phaser.Scene {
     if (t) {
       this.focusId = null;
       this.drawFocus();
-      t.activate();
+      this.tapPoint = { x: p.worldX, y: p.worldY };
+      try {
+        t.activate();
+      } finally {
+        this.tapPoint = null;
+      }
     } else this.onGroundTap(p.worldX, p.worldY);
   }
+
+  /** World point of the tap that is activating a target right now (null for keyboard activation). */
+  protected tapPoint: { x: number; y: number } | null = null;
 
   /** Taps that miss every target (e.g. walk there). */
   protected onGroundTap(_x: number, _y: number): void {}

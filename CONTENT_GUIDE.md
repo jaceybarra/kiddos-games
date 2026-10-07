@@ -11,6 +11,8 @@ AI writes lines during play.
 | Social encounter state machines | `src/content/trail/pipEncounter.ts` (pure reducer + choice sets) |
 | Puzzle numbers and toy physics | `src/content/trail/windmillModel.ts` (pure, unit-tested) |
 | Quest persistence (checkpoints and flags) | `src/content/trail/windmillQuest.ts` |
+| Tinker Grove parts, physics, challenges, notes | `src/content/tinker/` (`sim.ts`, `challenges.ts`, `tinkerLines.ts`) |
+| Picnic Parade food rules, picnics, lines | `src/content/picnic/` (`food.ts`, `scenarios.ts`, `picnicState.ts`, `picnicLines.ts`) |
 | Map destinations and story order | `src/content/places.ts` |
 | Off-screen ideas for grown-ups | `src/content/offscreen.ts` |
 | Feature status shown to grown-ups | `src/content/featureStatus.ts` |
@@ -77,9 +79,21 @@ that gates progress.
 4. Run `npm test`. `tests/unit/art.test.ts` fails on malformed SVG or missing rig art.
 5. Look at it in `http://127.0.0.1:5173/lab.html?mode=sheet&filter=<prefix>`.
 
+## Adding a picnic (Picnic Parade)
+
+1. Add an entry to `SCENARIOS` in `src/content/picnic/scenarios.ts`. Give it a host, a helper (never one
+   of the guests), guests for each preset (2 on More help, 3 on More exploring), and the cutters,
+   fillings, fruits, and toppings each preset offers.
+2. Write each guest's wish for **this** picnic. Don't base it on the character ("Rowan always wants
+   sandwiches"). A test checks that friends who visit twice want different things.
+3. Add the wish lines to `WISH_LINES` in `picnicLines.ts`. They say out loud what the bubble shows.
+4. `npm test` checks that every wish can be made from the ingredients on offer, and that serving
+   everyone finishes the picnic.
+
 ## Checking everything
 
 ```bash
-npm test          # content, puzzles, saves, encounters
+npm test                  # content, puzzles, saves, encounters
+npm run validate:content  # just the content and privacy rules (tests/unit/content.test.ts)
 npm run e2e       # plays the journeys in a real browser
 ```

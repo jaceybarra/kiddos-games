@@ -11,6 +11,7 @@ import { CLUBHOUSE_PIECES, FLOOR_Y } from '../../art/scenes/clubhouse';
 import { WINDMILL_PIECES } from '../../art/scenes/windmill';
 import { TINKER_PIECES } from '../../art/scenes/tinker';
 import { InventionDisplay, inventionArtKeys, type InventionData } from '../displays/InventionDisplay';
+import { PicnicDisplay, picnicDisplayKeys, type PicnicData } from '../displays/PicnicDisplay';
 import { PLACES } from '../../content/places';
 import { CAST_RIGS, avatarRig, rigArtKeys } from '../../art/cast';
 import { AVATAR_SPECIES, type AvatarSpecies } from '../../art/cast/avatars';
@@ -60,6 +61,7 @@ export default class ClubhouseScene extends WWScene {
     const keys = new Set<string>(CLUBHOUSE_PIECES.map((x) => x.key));
     for (const k of ['wh.kite', 'kite.bow.stars', 'kite.bow.stripes', 'kite.bow.dots', 'kite.bow.leaves', 'wh.pinwheel', 'wh.pinwheel.stick']) keys.add(k);
     for (const k of inventionArtKeys()) keys.add(k);
+    for (const k of picnicDisplayKeys()) keys.add(k);
     for (const sp of AVATAR_SPECIES) for (const c of CHOICE_COLORS) for (const k of rigArtKeys(avatarRig(sp.id, c.id))) keys.add(k);
     for (const k of rigArtKeys(CAST_RIGS.luma)) keys.add(k);
     for (const k of rigArtKeys(CAST_RIGS.moss)) keys.add(k);
@@ -196,11 +198,26 @@ export default class ClubhouseScene extends WWScene {
       this.addTarget({ id: 'frame-invention', label: 'Empty frame', bounds: () => this.rectAround(fx, fy, 320, 230, 0), activate: () => void this.line('nar.frameEmpty') });
     }
 
+    // the displayed picnic: the snacks the child made, on little plates along the shelf
+    const picId = prof.progress.display.picnic;
+    const pic = picId ? services.save.getCreation(picId) : undefined;
+    const picDisp = pic && pic.profileId === prof.id && pic.kind === 'picnic' ? new PicnicDisplay(this, 960, 628, 110, pic.data as PicnicData) : null;
+    if (picDisp && picDisp.count) {
+      picDisp.c.setDepth(D.wall + 2);
+      this.addTarget({
+        id: 'shelf-picnic',
+        label: 'Your picnic',
+        bounds: () => this.rectAround(960, 590, 110 * picDisp.count + 40, 120, 0),
+        activate: () => {
+          picDisp.play();
+          void this.line('nar.picnic');
+        },
+      });
+    }
+
     // frames for creations from games still being built
-    const frames: { id: string; x: number; y: number; ic: string }[] = [
-      { id: 'story', x: 1240, y: 250, ic: 'film' },
-      { id: 'picnic', x: 870, y: 600, ic: 'heart' },
-    ];
+    const frames: { id: string; x: number; y: number; ic: string }[] = [{ id: 'story', x: 1240, y: 250, ic: 'film' }];
+    if (!picDisp?.count) frames.push({ id: 'picnic', x: 870, y: 600, ic: 'heart' });
     for (const f of frames) {
       const scale = f.id === 'picnic' ? 0.5 : 0.85;
       addImage(this, f.x, f.y, 'club.frame').setDepth(D.wall).setScale(scale);
@@ -396,6 +413,6 @@ export default class ClubhouseScene extends WWScene {
   }
 
   override inspect(): Record<string, unknown> {
-    return { sitting: this.sitting, wardrobe: !!this.wardrobe, hasKite: this.kiteParts.length > 0, hasInvention: this.targets.get('frame-invention')?.label === 'Your invention', avatarX: Math.round(this.avatar?.x ?? 0) };
+    return { sitting: this.sitting, wardrobe: !!this.wardrobe, hasKite: this.kiteParts.length > 0, hasInvention: this.targets.get('frame-invention')?.label === 'Your invention', hasPicnic: this.targets.has('shelf-picnic'), avatarX: Math.round(this.avatar?.x ?? 0) };
   }
 }

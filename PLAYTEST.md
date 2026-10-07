@@ -41,6 +41,13 @@ prove the game "works". Nothing here is recorded or uploaded.
 - When the wagon rolls into the ribbon, which option do they pick, if any? Do they want to fix it?
 - Do they use the help (lightbulb) button? Did the demonstration hand make sense?
 - Can they stop when asked, and come back happily later?
+- Picnic Parade: do they look at the wish bubbles before cooking, or cook first and find out?
+- When a friend says "I like soft ones best", what do they do: make another, keep it, or offer it to
+  someone else?
+- Sandwich stacking (More exploring): is a sliding layer funny or frustrating? Do they find the
+  "pop it back on" tap?
+- When two friends want the lantern cutter, which option do they pick? Do they say why?
+- If siblings play together: do the turns feel fair? Does anyone need the "My helper left" button?
 
 Please don't treat long sessions, repeated launching, or difficulty stopping as signs of success. And
 enjoying the game doesn't show that real-world social skills changed. Those are things to notice

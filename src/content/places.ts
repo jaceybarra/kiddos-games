@@ -19,8 +19,8 @@ export const PLACES: PlaceInfo[] = [
   { id: 'waterwheel', scene: 'waterwheel', label: 'Waterwheel', built: false, requires: 'picnic-bridge' },
   { id: 'lantern-launch', scene: 'lantern-launch', label: 'Festival Glade', built: false, requires: 'waterwheel' },
   { id: 'tinker', scene: 'tinker', label: 'Tinker Grove', built: true },
-  { id: 'picnic', scene: 'picnic', label: 'Picnic Meadow', built: false },
-  { id: 'stage', scene: 'stage', label: 'Puppet Theatre', built: false },
+  { id: 'picnic', scene: 'picnic', label: 'Picnic Meadow', built: true },
+  { id: 'stage', scene: 'stage', label: 'Puppet Theatre', built: true },
 ];
 
 export function placeState(p: Profile, place: PlaceInfo): 'open' | 'building' | 'later' {
