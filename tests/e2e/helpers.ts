@@ -38,6 +38,8 @@ interface Target {
   id: string;
   x: number;
   y: number;
+  w: number;
+  h: number;
 }
 
 export async function targets(p: Page): Promise<Target[]> {

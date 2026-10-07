@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { chooseProfile, clickTarget, expect, playIntro, setupFamily, waitScene, waitState } from './helpers';
+import { chooseProfile, clickTarget, expect, playIntro, setupFamily, targets, waitScene, waitState } from './helpers';
 
 test.describe('runtime behaviour', () => {
   test('no network requests leave the device during play', async ({ page, baseURL }) => {
@@ -130,5 +130,26 @@ test.describe('runtime behaviour', () => {
     await page.click('[data-avatar-done]');
     await waitScene(page, 'windmill-kite');
     expect(await small()).toEqual([]);
+  });
+
+  test('things to tap in every scene are at least 56 CSS px', async ({ page }) => {
+    await setupFamily(page);
+    await chooseProfile(page, 0);
+    await page.click('[data-avatar-done]');
+    await waitScene(page, 'windmill-kite');
+    const vp = page.viewportSize()!;
+    const small = async (scene: string) =>
+      (await targets(page))
+        .filter((t) => t.x > 0 && t.x < vp.width && t.y > 0 && t.y < vp.height)
+        .filter((t) => t.w < 56 || t.h < 56)
+        .map((t) => `${scene} ${t.id}: ${Math.round(t.w)}x${Math.round(t.h)}`);
+    const bad = await small('windmill-kite');
+    for (const scene of ['map', 'clubhouse', 'tinker', 'picnic', 'stage', 'picnic-bridge', 'waterwheel', 'lantern-launch']) {
+      await page.evaluate((k) => (window as any).__ww.app.goTo(k), scene);
+      await waitScene(page, scene);
+      await page.waitForTimeout(1500);
+      bad.push(...(await small(scene)));
+    }
+    expect(bad).toEqual([]);
   });
 });

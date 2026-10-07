@@ -24,7 +24,7 @@ Legend:
 | Clubhouse (kite, invention frame, wardrobe, quiet corner, music box) | ✅ | e2e checks that saved creations appear | — |
 | Adult area (gate, settings, notes, off-screen ideas, export/import, reset) | ✅ | e2e for the gate, import, and storage notices; export and reset not yet scripted | — |
 | No network requests during play | ✅ | e2e (every request is checked) | — |
-| Keyboard-only play, 56 px targets, reduced motion with captions | ✅ | e2e | — |
+| Keyboard-only play, 56 px targets, reduced motion with captions | ✅ | e2e (buttons on the first screens; canvas targets in the opening view of every scene, at 1024×768) | — |
 | Scene changes leave no extra listeners or textures | ✅ | e2e | — |
 
 ## Tinker Grove
