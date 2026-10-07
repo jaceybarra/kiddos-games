@@ -1,0 +1,30 @@
+{
+  "name": "wonderwood-lantern-club",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Wonderwood: The Lantern Club — a local-first family game center for young children.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate:content": "vitest run tests/unit/content.test.ts",
+    "e2e": "playwright test",
+    "check": "npm run typecheck && npm run test && npm run build && npm run e2e"
+  },
+  "dependencies": {
+    "phaser": "4.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "fake-indexeddb": "6.2.5",
+    "jsdom": "30.1.2",
+    "typescript": "6.0.3",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
+  }
+}

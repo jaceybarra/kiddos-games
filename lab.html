@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wonderwood art lab (developer only)</title>
+    <style>
+      body { margin: 0; background: #e9e1cf; font: 12px system-ui; }
+      #game { width: 100vw; height: 100vh; }
+      #sheet { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; }
+      #sheet figure { margin: 0; background: #fff8; padding: 4px; text-align: center; }
+      #sheet img { display: block; max-width: 220px; max-height: 220px; }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="sheet"></div>
+    <script type="module" src="/src/dev/lab.ts"></script>
+  </body>
+</html>
