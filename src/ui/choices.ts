@@ -17,6 +17,7 @@ export interface ChoiceOption {
 export class Choices {
   private el: HTMLElement;
   private resolver: ((id: string | null) => void) | null = null;
+  private returnFocus: HTMLElement | null = null;
   active: ChoiceOption[] = [];
 
   constructor(layer: HTMLElement) {
@@ -52,6 +53,12 @@ export class Choices {
         ),
       ),
     );
+    // keyboard users: move focus to the first choice so they don't have to hunt for it
+    const active = document.activeElement as HTMLElement | null;
+    if (active && active.tagName === 'CANVAS') {
+      this.returnFocus = active;
+      (this.el.querySelector('button') as HTMLButtonElement | null)?.focus({ preventScroll: true });
+    }
     if (opts.readAloud && narration.available) {
       void (async () => {
         for (const o of options) {
@@ -67,8 +74,11 @@ export class Choices {
     const r = this.resolver;
     this.resolver = null;
     this.active = [];
+    const hadFocus = this.el.contains(document.activeElement);
     this.el.hidden = true;
     this.el.replaceChildren();
+    if (hadFocus && this.returnFocus && document.contains(this.returnFocus)) this.returnFocus.focus({ preventScroll: true });
+    this.returnFocus = null;
     r?.(id);
   }
 

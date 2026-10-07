@@ -10,6 +10,7 @@ export const SCENES: Record<string, Loader> = {
   map: () => import('./scenes/MapScene'),
   clubhouse: () => import('./scenes/ClubhouseScene'),
   'windmill-kite': () => import('./scenes/trail/WindmillKiteScene'),
+  tinker: () => import('./scenes/tinker/TinkerScene'),
 };
 
 class IdleScene extends Phaser.Scene {

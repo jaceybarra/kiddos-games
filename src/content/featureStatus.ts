@@ -13,10 +13,10 @@ export const FEATURES: FeatureStatus[] = [
   { name: 'Lantern Trail: The Picnic Bridge', status: 'not yet' },
   { name: 'Lantern Trail: The Waterwheel Mix-Up', status: 'not yet' },
   { name: 'Lantern Trail: The Lantern Launch', status: 'not yet' },
-  { name: 'Tinker Grove (building)', status: 'not yet' },
+  { name: 'Tinker Grove (building)', status: 'ready', note: 'Four challenges plus free build; 12 saved inventions per player.' },
   { name: 'Picnic Parade (cooking & serving)', status: 'not yet' },
   { name: 'Story Stage (puppet theatre)', status: 'not yet' },
-  { name: 'Clubhouse displays', status: 'partial', note: 'Shows souvenirs from finished adventures; more displays arrive with each game.' },
+  { name: 'Clubhouse displays', status: 'partial', note: 'Shows the kite tail, secret souvenirs, and a working invention; story and picnic displays arrive with those games.' },
   { name: 'Narration', status: 'partial', note: 'Uses an on-device computer voice only if your browser has one; otherwise captions and demonstrations. No recorded voice acting yet.' },
   { name: 'Offline play', status: 'not yet', note: 'Saves are local, but the game files themselves are not cached for offline use.' },
 ];

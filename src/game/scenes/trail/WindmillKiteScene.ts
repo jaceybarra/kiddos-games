@@ -1969,7 +1969,9 @@ export default class WindmillKiteScene extends WWScene {
   private updateCamera(dt: number): void {
     const cam = this.cameras.main;
     const target = this.camFollow ? this.camFollow() : { x: this.avatar.x + this.avatar.facing * 160, y: 0 };
-    this.camX = Phaser.Math.Linear(this.camX || target.x, target.x, Math.min(1, dt * (this.camFollow ? 3 : 2.4)));
+    // reduced motion: the camera cuts instead of gliding
+    const k = motion.reduced ? 1 : Math.min(1, dt * (this.camFollow ? 3 : 2.4));
+    this.camX = Phaser.Math.Linear(this.camX || target.x, target.x, k);
     cam.scrollX = Phaser.Math.Clamp(this.camX - this.view.w / 2, 0, WORLD_W - this.view.w);
     cam.scrollY = -this.view.oy;
   }
@@ -2059,7 +2061,12 @@ export default class WindmillKiteScene extends WWScene {
         const gy = groundY;
         let tx: number;
         let ty: number;
-        if (!this.flags.nestX || (this.flags.flagX && Math.abs(this.flags.flagX - this.flags.nestX) > 120)) {
+        const neverTried = !this.flags.route && !this.flags.flagX;
+        if (neverTried && ['busy', 'offered', 'notYet'].includes(this.pip.mode) && !this.flags.rowanHelping) {
+          // first time: the friendly thing to try is talking to Pip
+          tx = this.pipP.x;
+          ty = this.pipP.y - 120;
+        } else if (!this.flags.nestX || (this.flags.flagX && Math.abs(this.flags.flagX - this.flags.nestX) > 120)) {
           tx = this.nest.x;
           ty = this.nest.c.y - 70;
         } else if (this.launcherIsMine()) {

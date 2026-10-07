@@ -78,6 +78,9 @@ body { font-family: var(--font); color: var(--ink); -webkit-user-select: none; u
 .captions { left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(760px, calc(100vw - 2 * var(--btn) - 64px));
   display: flex; align-items: center; gap: 12px; background: rgba(251,243,228,.97); border: 4px solid var(--ink); border-radius: 26px; padding: 8px 10px 8px 8px;
   box-shadow: 0 6px 0 var(--wood-dark), 0 10px 20px rgba(0,0,0,.25); transition: opacity .2s, transform .2s; }
+.captions.raised { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 100px); }
+.part-ico { display: block; width: 74px; height: 58px; }
+.part-ico svg { width: 100% !important; height: 100% !important; }
 .captions.hidden { opacity: 0; transform: translate(-50%, 20px); pointer-events: none; }
 .captions .who { width: 68px; height: 68px; flex: none; border-radius: 50%; background: var(--cream); border: 3px solid var(--ink); overflow: hidden; }
 .captions .who svg { width: 100%; height: 100%; }

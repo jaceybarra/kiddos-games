@@ -218,15 +218,13 @@ export function buildColliders(parts: Part[]): Colliders {
         segments.push(seg(p, -75, -45, -60, 45, 8, 'basket'), seg(p, -60, 45, 60, 45, 8, 'basket'), seg(p, 60, 45, 75, -45, 8, 'basket'));
         break;
       case 'curve': {
-        // quarter pipe: from the left lip curving down to the bottom (rotate for others)
+        // quarter pipe (concave, opening up-right): from the top-left wall down to the bottom-right floor
         const r = 140;
         const n = 7;
         let prev: [number, number] | null = null;
         for (let i = 0; i <= n; i++) {
-          const a = Math.PI + (i / n) * (Math.PI / 2);
-          const pt: [number, number] = [70 + Math.cos(a) * r, -70 - Math.sin(a) * r];
-          // flip so the pipe is concave up: points from (-70,-70) down to (70,70)
-          const q: [number, number] = [pt[0], -pt[1]];
+          const a = Math.PI - (i / n) * (Math.PI / 2);
+          const q: [number, number] = [70 + Math.cos(a) * r, -70 + Math.sin(a) * r];
           if (prev) segments.push(seg(p, prev[0], prev[1], q[0], q[1], 10, 'wood'));
           prev = q;
         }
@@ -309,8 +307,8 @@ export class Sim {
       // air drag (parcels float down gently)
       const drag = 1 - b.drag * dt;
       b.vx *= drag;
-      // the parcel has a little parachute: it floats down gently
-      b.vy *= b.kind === 'parcel' ? 1 - 3 * dt : drag;
+      // the parcel has a little parachute: it floats down gently (only while in the air)
+      b.vy *= b.kind === 'parcel' && !b.touching ? 1 - 3 * dt : drag;
       // speed cap keeps everything stable
       const sp = Math.hypot(b.vx, b.vy);
       if (sp > SIM.maxSpeed) {

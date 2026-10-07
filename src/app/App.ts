@@ -217,6 +217,8 @@ export class App {
     stopSpeech();
     audio.setPaused(false);
     audio.setWind(0);
+    services.hud.setExtras([], []);
+    services.hud.setTurnBadge(null);
     this.paused = false;
     try {
       await startScene(services.game, scene, data);

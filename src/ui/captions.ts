@@ -42,6 +42,11 @@ export class Captions {
     this.el.classList.add('hidden');
   }
 
+  /** Lift the caption bar above a bottom toolbar (Tinker tray etc.). */
+  setRaised(on: boolean): void {
+    this.el.classList.toggle('raised', on);
+  }
+
   get visible(): boolean {
     return !this.el.classList.contains('hidden');
   }

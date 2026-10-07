@@ -28,6 +28,7 @@ export class Hud {
   private root: HTMLElement;
   private btns = new Map<HudButton, HTMLButtonElement>();
   private extra: HTMLElement;
+  private extraRight: HTMLElement;
   private badge: HTMLElement;
 
   constructor(layer: HTMLElement, handlers: HudHandlers) {
@@ -51,6 +52,7 @@ export class Hud {
       return b;
     };
     this.extra = h('div', { class: 'bl-extra', style: 'display:flex;gap:14px' });
+    this.extraRight = h('div', { class: 'br-extra', style: 'display:flex;gap:14px' });
     this.badge = h('div', { class: 'turn-badge', hidden: true, role: 'status' });
     this.root = h(
       'div',
@@ -58,7 +60,7 @@ export class Hud {
       h('div', { class: 'tl' }, mk('home')),
       h('div', { class: 'tr' }, mk('finish'), mk('pause')),
       h('div', { class: 'bl' }, mk('replay'), this.extra),
-      h('div', { class: 'br' }, mk('help')),
+      h('div', { class: 'br' }, this.extraRight, mk('help')),
       this.badge,
     );
     layer.append(this.root);
@@ -74,8 +76,9 @@ export class Hud {
   }
 
   /** Extra per-game buttons next to replay (kept short). */
-  setExtras(nodes: HTMLElement[]): void {
+  setExtras(nodes: HTMLElement[], right: HTMLElement[] = []): void {
     this.extra.replaceChildren(...nodes);
+    this.extraRight.replaceChildren(...right);
   }
 
   setTurnBadge(content: { face: string; label: string } | null): void {

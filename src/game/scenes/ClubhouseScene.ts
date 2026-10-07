@@ -9,6 +9,9 @@ import { addArt, addImage } from '../../art/rasterize';
 import { registerPieces } from '../../art/registry';
 import { CLUBHOUSE_PIECES, FLOOR_Y } from '../../art/scenes/clubhouse';
 import { WINDMILL_PIECES } from '../../art/scenes/windmill';
+import { TINKER_PIECES } from '../../art/scenes/tinker';
+import { InventionDisplay, inventionArtKeys, type InventionData } from '../displays/InventionDisplay';
+import { PLACES } from '../../content/places';
 import { CAST_RIGS, avatarRig, rigArtKeys } from '../../art/cast';
 import { AVATAR_SPECIES, type AvatarSpecies } from '../../art/cast/avatars';
 import { HATS } from '../../art/cast/hats';
@@ -26,6 +29,7 @@ import type { AvatarLook } from '../../save/schema';
 
 registerPieces(CLUBHOUSE_PIECES);
 registerPieces(WINDMILL_PIECES);
+registerPieces(TINKER_PIECES);
 
 const D = { bg: 0, wall: 10, prop: 20, npc: 30, avatar: 40, fx: 60 };
 
@@ -55,6 +59,7 @@ export default class ClubhouseScene extends WWScene {
     const p = currentProfile();
     const keys = new Set<string>(CLUBHOUSE_PIECES.map((x) => x.key));
     for (const k of ['wh.kite', 'kite.bow.stars', 'kite.bow.stripes', 'kite.bow.dots', 'kite.bow.leaves', 'wh.pinwheel', 'wh.pinwheel.stick']) keys.add(k);
+    for (const k of inventionArtKeys()) keys.add(k);
     for (const sp of AVATAR_SPECIES) for (const c of CHOICE_COLORS) for (const k of rigArtKeys(avatarRig(sp.id, c.id))) keys.add(k);
     for (const k of rigArtKeys(CAST_RIGS.luma)) keys.add(k);
     for (const k of rigArtKeys(CAST_RIGS.moss)) keys.add(k);
@@ -169,9 +174,30 @@ export default class ClubhouseScene extends WWScene {
       });
     }
 
-    // frames for creations from the other games (filled in as those games are built)
+    // the displayed invention — real parts, and it still runs when tapped
+    const invId = prof.progress.display.invention;
+    const inv = invId ? services.save.getCreation(invId) : undefined;
+    const fx = 1400;
+    const fy = 470;
+    addImage(this, fx, fy, 'club.frame').setDepth(D.wall).setScale(1.15, 1.05);
+    if (inv && inv.profileId === prof.id && inv.kind === 'invention') {
+      const disp = new InventionDisplay(this, fx, fy, 270, inv.data as InventionData);
+      disp.c.setDepth(D.wall + 1);
+      this.addTarget({
+        id: 'frame-invention',
+        label: 'Your invention',
+        bounds: () => this.rectAround(fx, fy, 320, 230, 0),
+        activate: () => {
+          if (!disp.running) disp.play();
+        },
+      });
+    } else {
+      addImage(this, fx, fy, 'club.frame.empty').setDepth(D.wall + 1).setScale(1.15, 1.05);
+      this.addTarget({ id: 'frame-invention', label: 'Empty frame', bounds: () => this.rectAround(fx, fy, 320, 230, 0), activate: () => void this.line('nar.frameEmpty') });
+    }
+
+    // frames for creations from games still being built
     const frames: { id: string; x: number; y: number; ic: string }[] = [
-      { id: 'invention', x: 1400, y: 470, ic: 'fix' },
       { id: 'story', x: 1240, y: 250, ic: 'film' },
       { id: 'picnic', x: 870, y: 600, ic: 'heart' },
     ];
@@ -183,7 +209,7 @@ export default class ClubhouseScene extends WWScene {
         id: `frame-${f.id}`,
         label: 'Empty frame',
         bounds: () => this.rectAround(f.x, f.y, 280 * scale, 220 * scale, 10),
-        activate: () => void this.line('nar.frameSoon'),
+        activate: () => void this.line(PLACES.find((pl) => pl.id === (f.id === 'story' ? 'stage' : 'picnic'))?.built ? 'nar.frameEmpty' : 'nar.frameSoon'),
       });
     }
     // souvenir pegs for adventures still to come
@@ -370,6 +396,6 @@ export default class ClubhouseScene extends WWScene {
   }
 
   override inspect(): Record<string, unknown> {
-    return { sitting: this.sitting, wardrobe: !!this.wardrobe, hasKite: this.kiteParts.length > 0, avatarX: Math.round(this.avatar?.x ?? 0) };
+    return { sitting: this.sitting, wardrobe: !!this.wardrobe, hasKite: this.kiteParts.length > 0, hasInvention: this.targets.get('frame-invention')?.label === 'Your invention', avatarX: Math.round(this.avatar?.x ?? 0) };
   }
 }

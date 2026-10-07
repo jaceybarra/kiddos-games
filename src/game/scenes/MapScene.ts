@@ -70,7 +70,11 @@ export default class MapScene extends WWScene {
     this.hints = new Hints(this, prof.settings.preset, () => this.demo());
     services.hud.show(['finish', 'pause', 'replay', 'help']);
     audio.startMusic('hub');
-    updateProfile((p) => (p.progress.location = { scene: 'map', data: { place: loc } }));
+    // reaching the map counts as finishing the minimal onboarding: never force a child back into the intro
+    updateProfile((p) => {
+      p.progress.location = { scene: 'map', data: { place: loc } };
+      p.progress.onboarded = true;
+    });
     this.buildTray(prof);
     this.onCleanup(() => {
       this.tray?.remove();

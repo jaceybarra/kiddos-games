@@ -4,6 +4,8 @@ import { registerAllArt } from '../../src/art';
 import { registerPieces } from '../../src/art/registry';
 import { WINDMILL_PIECES } from '../../src/art/scenes/windmill';
 import { MAP_PIECES } from '../../src/art/scenes/map';
+import { TINKER_PIECES } from '../../src/art/scenes/tinker';
+import { CLUBHOUSE_PIECES } from '../../src/art/scenes/clubhouse';
 import { allPieceKeys, getPiece, pieceSvg } from '../../src/art/registry';
 import { CAST_RIGS, CAST_IDS, avatarRig, rigArtKeys } from '../../src/art/cast';
 import { AVATAR_SPECIES } from '../../src/art/cast/avatars';
@@ -12,6 +14,8 @@ import { CHOICE_COLORS } from '../../src/art/palette';
 registerAllArt();
 registerPieces(WINDMILL_PIECES);
 registerPieces(MAP_PIECES);
+registerPieces(TINKER_PIECES);
+registerPieces(CLUBHOUSE_PIECES);
 
 describe('authored art', () => {
   it('every piece is well-formed SVG', () => {

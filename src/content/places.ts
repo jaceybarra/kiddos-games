@@ -18,7 +18,7 @@ export const PLACES: PlaceInfo[] = [
   { id: 'picnic-bridge', scene: 'picnic-bridge', label: 'Picnic Bridge', built: false, requires: 'windmill-kite' },
   { id: 'waterwheel', scene: 'waterwheel', label: 'Waterwheel', built: false, requires: 'picnic-bridge' },
   { id: 'lantern-launch', scene: 'lantern-launch', label: 'Festival Glade', built: false, requires: 'waterwheel' },
-  { id: 'tinker', scene: 'tinker', label: 'Tinker Grove', built: false },
+  { id: 'tinker', scene: 'tinker', label: 'Tinker Grove', built: true },
   { id: 'picnic', scene: 'picnic', label: 'Picnic Meadow', built: false },
   { id: 'stage', scene: 'stage', label: 'Puppet Theatre', built: false },
 ];
