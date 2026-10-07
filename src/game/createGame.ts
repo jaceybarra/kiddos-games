@@ -53,11 +53,16 @@ export async function startScene(game: Phaser.Game, key: string, data: Record<st
     if (!game.scene.getScene(key)) game.scene.add(key, mod.default, false);
     loaded.add(key);
   }
-  for (const s of game.scene.getScenes(true)) if (s.scene.key !== key) game.scene.stop(s.scene.key);
+  for (const s of liveScenes(game)) if (s.scene.key !== key) game.scene.stop(s.scene.key);
   game.scene.start(key, data);
 }
 
+/** Scenes that are running OR paused (paused scenes still own UI and listeners). */
+function liveScenes(game: Phaser.Game): Phaser.Scene[] {
+  return game.scene.getScenes(false).filter((x) => x.scene.key !== 'idle' && (x.sys.isActive() || x.sys.isPaused()));
+}
+
 export function activeSceneKey(game: Phaser.Game): string | null {
-  const s = game.scene.getScenes(true).find((x) => x.scene.key !== 'idle');
+  const s = liveScenes(game)[0];
   return s ? s.scene.key : null;
 }

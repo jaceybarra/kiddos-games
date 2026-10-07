@@ -10,7 +10,8 @@ export type SessionPhase = 'off' | 'running' | 'reminded' | 'grace' | 'over';
 
 export interface SessionOpts {
   minutes: number;
-  grace: 0 | 2 | 5;
+  /** grace length in minutes (0 = stop option only) */
+  grace: number;
   now?: () => number;
 }
 

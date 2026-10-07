@@ -540,6 +540,13 @@ export const WINDMILL_PIECES: ArtPiece[] = [
   ...bows,
 ];
 
+/** DOM-ready SVG of a kite bow in its chosen colour (the in-game version is tinted). */
+export function bowSvg(pattern: string, colorHex: string): string {
+  const b = bows.find((x) => x.key === `kite.bow.${pattern}`) ?? bows[0];
+  const [x, y, w, h] = b.box;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${b.body.replaceAll('fill="#fff"', `fill="${colorHex}"`)}</svg>`;
+}
+
 /** Shared by the clubhouse (souvenir display). */
 export const KITE_KEYS = ['wh.kite', ...bows.map((b) => b.key)];
 

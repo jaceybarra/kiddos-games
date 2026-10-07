@@ -83,7 +83,7 @@ export default class MapScene extends WWScene {
     // accessible quick-jump: real buttons with pictures for every place
     this.tray = h(
       'nav',
-      { class: 'choices no-caption', 'aria-label': 'Quick jump', style: 'gap:10px;bottom:max(16px, env(safe-area-inset-bottom));width:auto;max-width:calc(100vw - 220px)' },
+      { class: 'choices quickjump', 'aria-label': 'Quick jump', style: 'gap:8px;top:max(16px, env(safe-area-inset-top));bottom:auto;width:auto;flex-wrap:nowrap;max-width:calc(100vw - 2 * var(--btn) - 120px)' },
       ...PLACES.map((pl) => {
         const st = placeState(prof, pl);
         return h(
@@ -94,10 +94,10 @@ export default class MapScene extends WWScene {
             'aria-label': `${pl.label}${st === 'building' ? ' (being built)' : st === 'later' ? ' (opens later in the story)' : ''}`,
             title: pl.label,
             'data-jump': pl.id,
-            style: `width:84px;min-height:84px;padding:4px;${st !== 'open' ? 'opacity:.55' : ''}`,
+            style: `width:72px;min-height:72px;padding:3px;border-radius:20px;${st !== 'open' ? 'opacity:.55' : ''}`,
             on: { click: () => void this.travel(pl) },
           },
-          h('span', { html: pieceSvg(MAP_ICON[pl.id]), style: 'width:66px;height:66px;display:block' }),
+          h('span', { html: pieceSvg(MAP_ICON[pl.id]), style: 'width:58px;height:58px;display:block' }),
         );
       }),
     );

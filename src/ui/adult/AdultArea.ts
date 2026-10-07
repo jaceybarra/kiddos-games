@@ -42,6 +42,7 @@ export function openAdultArea(layer: HTMLElement, handlers: AdultHandlers): HTML
   el.addEventListener('keydown', (e) => e.key === 'Escape' && close());
   layer.append(el);
 
+  let flash: { kind: 'notice' | 'error'; text: string } | null = null;
   const render = () => {
     main.replaceChildren(statusSection(), ...save.listProfiles().map(playerSection), addPlayerSection(), senseSection(), ideasSection(), savesSection(), aboutSection());
   };
@@ -50,6 +51,7 @@ export function openAdultArea(layer: HTMLElement, handlers: AdultHandlers): HTML
   const statusSection = () => {
     const s = save.status;
     const items: HTMLElement[] = [];
+    if (flash) items.push(h('div', { class: flash.kind, role: 'status' }, flash.text));
     if (s.readOnly) items.push(h('div', { class: 'error' }, 'Saving is paused to protect your existing saves. ', ...s.notices.filter((n) => /newer|protect|could not be read/i.test(n)).map((n) => h('div', {}, n))));
     if (s.quotaFull) items.push(h('div', { class: 'error' }, s.lastError ?? 'Storage is full.', ' Use “Export saves” below to keep a copy.'));
     else if (s.lastError) items.push(h('div', { class: 'error' }, s.lastError));
@@ -228,9 +230,11 @@ export function openAdultArea(layer: HTMLElement, handlers: AdultHandlers): HTML
       const confirmBtn = h('button', { type: 'button', class: 'primary', on: { click: async () => {
         const r = await save.applyImport(res.file);
         if (r.ok) {
-          out.replaceChildren(h('div', { class: 'notice' }, 'Imported. Your previous saves were backed up first.'));
+          flash = { kind: 'notice', text: 'Imported. Your previous saves were backed up first.' };
           handlers.onDataReplaced();
           render();
+          main.scrollTop = 0;
+          el.scrollTop = 0;
         } else out.replaceChildren(h('div', { class: 'error' }, `Import failed: ${r.message ?? r.reason}. Your saves were backed up before trying.`));
       } } }, 'Replace current saves with this file');
       out.replaceChildren(

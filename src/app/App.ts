@@ -93,6 +93,22 @@ export class App {
       flush: () => save.flush(),
       status: () => save.status,
       activeScene: () => activeSceneKey(game),
+      paused: () => {
+        const k = activeSceneKey(game);
+        return k ? game.scene.getScene(k).sys.isPaused() : null;
+      },
+      audioState: () => audio.ctx?.state ?? 'none',
+      textureCount: () => game.textures.getTextureKeys().length,
+      // e2e-only: a reminder measured in seconds instead of minutes
+      testReminder: (seconds: number, grace: 0 | 2 | 5) => {
+        this.endSession();
+        this.timer = new SessionTimer({ minutes: seconds / 60, grace: grace ? 0.05 : 0 });
+        this.ticker = setInterval(() => {
+          const ev = this.timer?.tick();
+          if (ev === 'remind') void this.showReminder(false);
+          if (ev === 'graceOver') void this.showReminder(true);
+        }, 250);
+      },
     });
     this.showStart();
   }

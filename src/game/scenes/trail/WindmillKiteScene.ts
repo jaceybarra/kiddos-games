@@ -7,10 +7,10 @@ import { Hints } from '../../systems/Hints';
 import { dust, seeds, sparkle, splash, windLeaves } from '../../systems/fx';
 import { addArt, addImage, setPiece } from '../../../art/rasterize';
 import { registerPieces } from '../../../art/registry';
-import { WINDMILL_PIECES, TAIL_PATTERNS } from '../../../art/scenes/windmill';
+import { WINDMILL_PIECES, TAIL_PATTERNS, bowSvg } from '../../../art/scenes/windmill';
 import { CAST_RIGS, avatarRig, rigArtKeys } from '../../../art/cast';
 import { HATS } from '../../../art/cast/hats';
-import { CHOICE_COLORS, P, hex, mix } from '../../../art/palette';
+import { CHOICE_COLORS, P, choiceColor, hex, mix } from '../../../art/palette';
 import { pieceSvg } from '../../../art/registry';
 import {
   ANGLES,
@@ -1106,7 +1106,7 @@ export default class WindmillKiteScene extends WWScene {
     this.launcher.setAngle(deg);
     await this.wait(500);
     void this.pipP.play('pump', { expression: 'determined' });
-    const near = Math.abs(this.avatar.x - L.launcherX) < 650;
+    const near = Math.abs(this.avatar.x - L.launcherX) < 450;
     const res = await this.launcher.fire(deg, this.flags.wind, D.air);
     this.onBallLanded(res, near);
     this.pipP.setExpression(res.endReason === 'windmill' ? 'silly' : 'surprised');
@@ -1118,7 +1118,7 @@ export default class WindmillKiteScene extends WWScene {
     const wasMode = this.pip.mode;
     this.dispatchPip({ type: 'PIP_LAUNCH_DONE' });
     // PIP_LAUNCH_DONE says "whoa" for us in ordinary practice
-    if (near && Math.abs(this.avatar.x - L.launcherX) < 650 && (wasMode === 'busy' || wasMode === 'resting')) {
+    if (near && Math.abs(this.avatar.x - L.launcherX) < 450 && (wasMode === 'busy' || wasMode === 'resting')) {
       await this.wait(1500);
       if (this.alive && !this.pipTray && !services.choices.open && (this.pip.mode === 'busy' || this.pip.mode === 'resting')) this.dispatchPip({ type: 'WATCHED_LAUNCH' });
     }
@@ -1740,7 +1740,7 @@ export default class WindmillKiteScene extends WWScene {
     audio.play('pop');
     void say('narrator', WINDMILL_LINES['nar.pickColor'].text);
     const color = await this.pickFromPanel(
-      CHOICE_COLORS.map((c) => ({ id: c.id, label: c.name, art: pieceSvg(`kite.bow.${pattern}`), color: c.hex })),
+      CHOICE_COLORS.map((c) => ({ id: c.id, label: c.name, art: bowSvg(pattern, '#ffffff'), color: c.hex })),
       'color',
       (id) => this.kite.setTail({ pattern, color: id }),
     );
@@ -1886,7 +1886,7 @@ export default class WindmillKiteScene extends WWScene {
       'trail',
       `${first ? 'Completed' : 'Replayed'} The Windmill Kite using the ${route === 'launcher' ? 'launcher' : 'windmill brake'}${approaches}. Chose a ${this.flags.tailPattern} kite tail.`,
     );
-    services.session.made.push({ kind: 'souvenir', label: 'Kite tail', art: pieceSvg(`kite.bow.${this.flags.tailPattern || 'stars'}`) });
+    services.session.made.push({ kind: 'souvenir', label: 'Kite tail', art: bowSvg(this.flags.tailPattern || 'stars', choiceColor(this.flags.tailColor || 'berry')) });
     await services.save.flush();
   }
 
