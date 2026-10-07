@@ -10,8 +10,10 @@ import { registerPieces } from '../../art/registry';
 import { CLUBHOUSE_PIECES, FLOOR_Y } from '../../art/scenes/clubhouse';
 import { WINDMILL_PIECES } from '../../art/scenes/windmill';
 import { TINKER_PIECES } from '../../art/scenes/tinker';
+import { SOUVENIR_ART, TRAIL_ADVENTURE_PIECES } from '../../art/scenes/trailAdventures';
 import { InventionDisplay, inventionArtKeys, type InventionData } from '../displays/InventionDisplay';
 import { PicnicDisplay, picnicDisplayKeys, type PicnicData } from '../displays/PicnicDisplay';
+import { StoryPoster, posterArtKeys, posterScene } from '../displays/StoryPoster';
 import { PLACES } from '../../content/places';
 import { CAST_RIGS, avatarRig, rigArtKeys } from '../../art/cast';
 import { AVATAR_SPECIES, type AvatarSpecies } from '../../art/cast/avatars';
@@ -31,6 +33,7 @@ import type { AvatarLook } from '../../save/schema';
 registerPieces(CLUBHOUSE_PIECES);
 registerPieces(WINDMILL_PIECES);
 registerPieces(TINKER_PIECES);
+registerPieces(TRAIL_ADVENTURE_PIECES);
 
 const D = { bg: 0, wall: 10, prop: 20, npc: 30, avatar: 40, fx: 60 };
 
@@ -62,6 +65,9 @@ export default class ClubhouseScene extends WWScene {
     for (const k of ['wh.kite', 'kite.bow.stars', 'kite.bow.stripes', 'kite.bow.dots', 'kite.bow.leaves', 'wh.pinwheel', 'wh.pinwheel.stick']) keys.add(k);
     for (const k of inventionArtKeys()) keys.add(k);
     for (const k of picnicDisplayKeys()) keys.add(k);
+    for (const k of Object.values(SOUVENIR_ART)) keys.add(k);
+    const story = this.displayedStory();
+    if (story) for (const k of posterArtKeys(story.data, this.stageCast())) keys.add(k);
     for (const sp of AVATAR_SPECIES) for (const c of CHOICE_COLORS) for (const k of rigArtKeys(avatarRig(sp.id, c.id))) keys.add(k);
     for (const k of rigArtKeys(CAST_RIGS.luma)) keys.add(k);
     for (const k of rigArtKeys(CAST_RIGS.moss)) keys.add(k);
@@ -216,7 +222,26 @@ export default class ClubhouseScene extends WWScene {
     }
 
     // frames for creations from games still being built
-    const frames: { id: string; x: number; y: number; ic: string }[] = [{ id: 'story', x: 1240, y: 250, ic: 'film' }];
+    // the story poster: the opening scene in miniature; tap it to watch
+    const story = this.displayedStory();
+    const sc = story ? posterScene(story.data) : null;
+    const frames: { id: string; x: number; y: number; ic: string }[] = [];
+    if (sc) {
+      addImage(this, 1240, 250, 'club.frame').setDepth(D.wall).setScale(1.0, 0.82);
+      const poster = new StoryPoster(this, 1240, 250, 236, sc, this.stageCast());
+      poster.container.setDepth(D.wall + 1);
+      this.onCleanup(() => poster.destroy());
+      this.addTarget({
+        id: 'frame-story',
+        label: 'Your story poster',
+        bounds: () => this.rectAround(1240, 250, 280, 180, 0),
+        activate: () => {
+          if (poster.playing) return;
+          void this.line('nar.poster');
+          void poster.play();
+        },
+      });
+    } else frames.push({ id: 'story', x: 1240, y: 250, ic: 'film' });
     if (!picDisp?.count) frames.push({ id: 'picnic', x: 870, y: 600, ic: 'heart' });
     for (const f of frames) {
       const scale = f.id === 'picnic' ? 0.5 : 0.85;
@@ -229,12 +254,29 @@ export default class ClubhouseScene extends WWScene {
         activate: () => void this.line(PLACES.find((pl) => pl.id === (f.id === 'story' ? 'stage' : 'picnic'))?.built ? 'nar.frameEmpty' : 'nar.frameSoon'),
       });
     }
-    // souvenir pegs for adventures still to come
-    [
-      ['club.sil.flag', 180, 300],
-      ['club.sil.wheel', 300, 300],
-      ['club.sil.lantern', 420, 300],
-    ].forEach(([k, x, y]) => addImage(this, x as number, y as number, k as string).setDepth(D.wall));
+    // souvenir pegs: a silhouette until the adventure is done, then the real thing (tap it)
+    const pegs: { id: string; sil: string; x: number; line: ClubLineId }[] = [
+      { id: 'bridge-flag', sil: 'club.sil.flag', x: 180, line: 'nar.flag' },
+      { id: 'mill-wheel', sil: 'club.sil.wheel', x: 300, line: 'nar.wheel' },
+      { id: 'festival-lantern', sil: 'club.sil.lantern', x: 420, line: 'nar.lantern' },
+    ];
+    for (const peg of pegs) {
+      if (!prof.progress.souvenirs[peg.id]) {
+        addImage(this, peg.x, 300, peg.sil).setDepth(D.wall);
+        continue;
+      }
+      const im = addImage(this, peg.x, 352, SOUVENIR_ART[peg.id]).setDepth(D.wall + 1).setScale(0.85);
+      this.addTarget({
+        id: `souvenir-${peg.id}`,
+        label: 'Souvenir',
+        bounds: () => this.rectAround(peg.x, 300, 110, 140, 6),
+        activate: () => {
+          if (!motion.reduced) this.tweens.add({ targets: im, angle: { from: -10, to: 10 }, duration: 160, yoyo: true, repeat: 1, onComplete: () => im.setAngle(0) });
+          audio.play('chime', { note: pegs.indexOf(peg) * 2 });
+          void this.line(peg.line);
+        },
+      });
+    }
   }
 
   // ------------------------------------------------------------ interactions
@@ -261,8 +303,10 @@ export default class ClubhouseScene extends WWScene {
   }
 
   protected override onArrow(dx: number, _dy: number, down: boolean): void {
+    // letting go of a key always stops walking, even mid-conversation
+    if (!down) return this.walker.setHeld(0);
     if (this.busy || this.sitting) return;
-    this.walker.setHeld(down ? dx : 0);
+    this.walker.setHeld(dx);
   }
 
   private async talkLuma(): Promise<void> {
@@ -412,7 +456,19 @@ export default class ClubhouseScene extends WWScene {
     if (!this.sitting) this.walker.update(delta);
   }
 
+  private displayedStory() {
+    const p = currentProfile();
+    const id = p.progress.display.story;
+    const c = id ? services.save.getCreation(id) : undefined;
+    return c && c.profileId === p.id && c.kind === 'story' ? c : undefined;
+  }
+
+  private stageCast() {
+    const p = currentProfile();
+    return { me: { rig: avatarRig(p.avatar.species, p.avatar.color), hat: p.avatar.hat } };
+  }
+
   override inspect(): Record<string, unknown> {
-    return { sitting: this.sitting, wardrobe: !!this.wardrobe, hasKite: this.kiteParts.length > 0, hasInvention: this.targets.get('frame-invention')?.label === 'Your invention', hasPicnic: this.targets.has('shelf-picnic'), avatarX: Math.round(this.avatar?.x ?? 0) };
+    return { sitting: this.sitting, wardrobe: !!this.wardrobe, hasKite: this.kiteParts.length > 0, hasInvention: this.targets.get('frame-invention')?.label === 'Your invention', hasPicnic: this.targets.has('shelf-picnic'), hasPoster: this.targets.has('frame-story'), avatarX: Math.round(this.avatar?.x ?? 0) };
   }
 }

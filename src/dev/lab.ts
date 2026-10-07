@@ -13,9 +13,10 @@ import { TINKER_PIECES } from '../art/scenes/tinker';
 import { CLUBHOUSE_PIECES } from '../art/scenes/clubhouse';
 import { PICNIC_PIECES } from '../art/scenes/picnic';
 import { STAGE_PIECES } from '../art/scenes/stage';
+import { TRAIL_ADVENTURE_PIECES } from '../art/scenes/trailAdventures';
 
 registerAllArt();
-for (const set of [WINDMILL_PIECES, MAP_PIECES, TINKER_PIECES, CLUBHOUSE_PIECES, PICNIC_PIECES, STAGE_PIECES]) registerPieces(set);
+for (const set of [WINDMILL_PIECES, MAP_PIECES, TINKER_PIECES, CLUBHOUSE_PIECES, PICNIC_PIECES, STAGE_PIECES, TRAIL_ADVENTURE_PIECES]) registerPieces(set);
 const params = new URLSearchParams(location.search);
 const mode = params.get('mode') ?? 'rigs';
 

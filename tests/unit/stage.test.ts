@@ -160,3 +160,17 @@ describe('Story Stage editing and recording', () => {
     expect(validStory({ ...s, title: 'x'.repeat(200) })).toBe(false);
   });
 });
+
+describe('Story Stage scene continuity', () => {
+  it('an untouched scene follows on from the scene before, until the child changes it', async () => {
+    const { refreshScene } = await import('../../src/content/stage/stageModel');
+    let s = newStory('blank', 'simple');
+    s.scenes[0] = addActor(s.scenes[0], 'puppet', 'moss', 300, 600).scene;
+    s = refreshScene(s, 1);
+    expect(s.scenes[1].actors.map((a) => a.ref)).toEqual(['moss']);
+    expect(s.scenes[1].fresh).toBe(true);
+    // once edited (no longer fresh) it keeps its own cast
+    s.scenes[1] = { ...s.scenes[1], fresh: undefined, actors: [] };
+    expect(refreshScene(s, 1).scenes[1].actors).toEqual([]);
+  });
+});

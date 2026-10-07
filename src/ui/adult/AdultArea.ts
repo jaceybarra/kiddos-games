@@ -107,6 +107,26 @@ export function openAdultArea(layer: HTMLElement, handlers: AdultHandlers): HTML
       .map(([id, q]) => `${QUEST_NAMES[id] ?? id}${q.completions > 1 ? ` (${q.completions} times)` : ''}`);
     const counts = (['invention', 'story', 'picnic'] as const).map((k) => `${save.listCreations(p.id, k).length}/${MAX_CREATIONS_PER_KIND} ${k === 'invention' ? 'inventions' : k === 'story' ? 'stories' : 'picnic creations'}`);
     const log = p.progress.log.slice(-15).reverse();
+    // optional free text: a grown-up can type a story title; children never need to read or type to make one
+    const stories = save.listCreations(p.id, 'story');
+    const titles = stories.length
+      ? h(
+          'details',
+          {},
+          h('summary', {}, 'Story titles (optional, for a grown-up to type)'),
+          h('p', { class: 'note' }, 'Making a story never needs reading or typing. If your child would like a title, type it here; it’s read out before their show.'),
+          ...stories.map((c) => {
+            const input = h('input', { type: 'text', maxlength: 40, value: c.name, 'aria-label': 'Story title', 'data-story-title': c.id }) as HTMLInputElement;
+            input.addEventListener('change', async () => {
+              const v = input.value.trim().slice(0, 40);
+              if (!v) return;
+              const data = { ...(c.data as Record<string, unknown>), title: v };
+              await save.saveCreation({ id: c.id, profileId: p.id, kind: 'story', name: v, data, preview: c.preview });
+            });
+            return h('label', { style: 'display:flex;align-items:center;gap:10px' }, c.preview ? h('img', { src: c.preview, alt: '', style: 'width:96px;border-radius:8px' }) : null, input);
+          }),
+        )
+      : null;
     return h(
       'section',
       { 'data-adult-player': p.id },
@@ -121,6 +141,7 @@ export function openAdultArea(layer: HTMLElement, handlers: AdultHandlers): HTML
       h('h3', {}, 'What has been played and made'),
       h('p', {}, quests.length ? `Finished: ${quests.join(', ')}.` : 'No adventures finished yet.'),
       h('p', {}, `Shelves: ${counts.join(' · ')}. Souvenirs: ${Object.keys(p.progress.souvenirs).length}.`),
+      titles,
       log.length
         ? h('ul', { class: 'log' }, ...log.map((e) => h('li', {}, `${new Date(e.at).toLocaleDateString()} — ${e.text}`)))
         : h('p', { class: 'note' }, 'Nothing recorded yet.'),

@@ -8,6 +8,7 @@ import { TINKER_PIECES } from '../../src/art/scenes/tinker';
 import { CLUBHOUSE_PIECES } from '../../src/art/scenes/clubhouse';
 import { PICNIC_PIECES } from '../../src/art/scenes/picnic';
 import { STAGE_PIECES } from '../../src/art/scenes/stage';
+import { TRAIL_ADVENTURE_PIECES } from '../../src/art/scenes/trailAdventures';
 import { allPieceKeys, getPiece, pieceSvg } from '../../src/art/registry';
 import { CAST_RIGS, CAST_IDS, avatarRig, rigArtKeys } from '../../src/art/cast';
 import { AVATAR_SPECIES } from '../../src/art/cast/avatars';
@@ -20,6 +21,7 @@ registerPieces(TINKER_PIECES);
 registerPieces(CLUBHOUSE_PIECES);
 registerPieces(PICNIC_PIECES);
 registerPieces(STAGE_PIECES);
+registerPieces(TRAIL_ADVENTURE_PIECES);
 
 describe('authored art', () => {
   it('every piece is well-formed SVG', () => {

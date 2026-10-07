@@ -62,15 +62,17 @@ Legend:
 and moods, no shaming or pressure words, and labelled discovery notes. It also checks that the
 children's real names, network calls, and microphone or camera access never appear in the source.
 
-## Story Stage (in progress)
+## Story Stage
 
 | Area | Implemented | Tested by automation | Tested with a child |
 | --- | --- | --- | --- |
-| Story model: scenes, endings, recording limits, validation | ✅ | unit tests | — |
-| 5 backdrops, 7 puppets, 14 props, curated lines, sounds | ✅ | unit tests (catalogue, line icons) | — |
-| Editor: place, drag or tap-to-walk, actions, faces, lines, record, replay | first pass | scripted run only | — |
-| Whole show with curtains, alternate endings, bow | first pass | not yet | — |
-| Shelf (12 per player) and clubhouse poster | shelf done; poster not yet | not yet | — |
+| Story model: scenes, endings, recording limits, continuity, validation | ✅ | unit tests | — |
+| 5 backdrops, 7 puppets, 14 props, 28 curated lines, sounds | ✅ | unit tests (catalogue, every line has an icon) | — |
+| Place, drag or tap-to-walk, actions, faces, lines, record (events only) | ✅ | e2e (act, say, walk recorded and replayed after a refresh) | — |
+| Three-scene strip (More help); six scenes, endings, intentions (More exploring); switch to simple | ✅ | e2e | — |
+| Whole show with curtains, alternate ending choice, bow | ✅ | e2e (show plays to the end) | — |
+| Shelf (12 per player) with delete confirmation; clubhouse poster that plays | ✅ | e2e | — |
+| Optional story title typed by a grown-up | ✅ | not yet scripted | — |
 
 ## Not built yet
 - Lantern Trail adventures 2–4 (Picnic Bridge, Waterwheel Mix-Up, Lantern Launch). Their map spots are
@@ -78,12 +80,15 @@ children's real names, network calls, and microphone or camera access never appe
 
 ## Known limits
 
-- Headless browser tests run with software rendering at about 9 frames per second. They check
+- Headless browser tests run with software rendering at about 3–8 frames per second. They check
   behaviour, not smoothness. Smoothness on a real tablet hasn't been measured yet.
+- Some routes are exercised only by unit tests or one-off scripted runs, not the committed browser
+  suite (listed in the tables above).
 - Narration uses only browser voices that report themselves as local. On many devices there are none,
   so the game falls back to captions, icons, and babble sounds.
 
 ## Next concrete step
 
-Build Story Stage with one complete loop (one backdrop, puppets, a three-scene story, replay, saving).
-Then add the remaining backdrops, props, six-scene stories, and alternate endings.
+Final quality pass: accessibility sweep across every scene, a production build check for network
+requests and bundle size, a full keyboard-only journey, and the documentation review. After that,
+family playtests (see PLAYTEST.md) decide what to change.

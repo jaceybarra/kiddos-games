@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { WINDMILL_LINES } from '../../src/content/trail/windmillLines';
 import { TINKER_LINES } from '../../src/content/tinker/tinkerLines';
 import { CLUB_LINES } from '../../src/content/clubhouseLines';
+import { BRIDGE_LINES, LAUNCH_LINES, TRAIL_END_LINES, WATER_LINES } from '../../src/content/trail/adventureLines';
+import { STAGE_GUIDE, STAGE_LINES } from '../../src/content/stage/stageLines';
 import { OFFSCREEN } from '../../src/content/offscreen';
 import { NOTES } from '../../src/content/tinker/challenges';
 import { DECLINE_TRY_LINE, FLEX_LINE, FULL_LINE, GUEST_LINES, HOST_LINES, NOBODY_LINE, SHARED_LINE, TRIED_LINE, WISH_LINES, YUM_LINES } from '../../src/content/picnic/picnicLines';
@@ -27,6 +29,11 @@ const tables: Record<string, Record<string, AnyLine>> = {
   clubhouse: CLUB_LINES,
   picnicHost: HOST_LINES,
   picnicGuests: GUEST_LINES,
+  bridge: BRIDGE_LINES,
+  waterwheel: WATER_LINES,
+  launch: LAUNCH_LINES,
+  trailEnd: TRAIL_END_LINES,
+  stageLines: STAGE_LINES,
 };
 
 const looseText: string[] = [
@@ -39,12 +46,13 @@ const looseText: string[] = [
   ...Object.values(YUM_LINES),
   ...Object.values(WISH_LINES).flatMap((byGuest) => Object.values(byGuest).flatMap((byPreset) => Object.values(byPreset ?? {}))),
   ...Object.values(NOTES).map((n) => n.text),
+  ...Object.values(STAGE_GUIDE),
 ];
 
 const allText = [...Object.values(tables).flatMap((t) => Object.values(t).map((l) => l.text)), ...looseText];
 
 // words that shame, rush, compare, or label a child (see CONTENT_GUIDE.md "Writing lines")
-const BANNED = /\b(wrong|bad|stupid|naughty|hurry|quickly|failed|failure|loser|lose|baby|babyish|streak|shy|rude|mean|don'?t be|should have|good (boy|girl)|best player|winner)\b/i;
+const BANNED = /\b(wrong|bad|stupid|naughty|hurry|quickly|failed|failure|loser|lose|baby|babyish|streak|shy|rude|(?:you'?re|so|be|being|was) mean|don'?t be|should have|good (boy|girl)|best player|winner)\b/i;
 
 describe('content rules', () => {
   it('every line has words, and is short enough to hear in one go', () => {

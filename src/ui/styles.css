@@ -246,7 +246,8 @@ body { font-family: var(--font); color: var(--ink); -webkit-user-select: none; u
 .stage-bar .who svg { width: 100%; height: 100%; }
 .stage-bar .sep { width: 3px; height: 48px; background: var(--ink); opacity: .25; border-radius: 2px; }
 .drawer { position: absolute; left: 50%; transform: translateX(-50%); bottom: max(10px, env(safe-area-inset-bottom)); background: var(--paper); border: 5px solid var(--ink); border-radius: 28px; padding: 14px 14px 10px;
-  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 2 * var(--btn) - 60px); max-height: 52vh; overflow: auto; box-shadow: 0 8px 0 var(--wood-dark), 0 14px 26px rgba(0,0,0,.3); animation: popin .22s both; }
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 2 * var(--btn) - 60px); max-height: 52vh; overflow: auto; box-shadow: 0 8px 0 var(--wood-dark), 0 14px 26px rgba(0,0,0,.3); animation: drawerin .22s both; }
+@keyframes drawerin { from { transform: translateX(-50%) translateY(40px); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
 .drawer .tile { width: 112px; min-height: 104px; padding: 6px; font-size: 15px; gap: 4px; }
 .drawer .tile svg { width: 86px; height: 78px; }
 .drawer .tile.wide svg { width: 100px; height: 52px; }

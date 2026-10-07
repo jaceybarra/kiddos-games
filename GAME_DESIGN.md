@@ -117,28 +117,75 @@ These are design hypotheses to test, not developmental cutoffs.
 
 Different routes get different lines but the same welcome and the same reward.
 
-### A2. The Picnic Bridge
-Connect both sides of Whistle Stream so friends can bring picnic baskets across. There are three
-crossers with different needs: Moss needs a flat, slow crossing (no steps); Fizz wants to hop across
-stones; Rowan's big wagon needs a wide plank. The player gathers planks and stones (carry and place),
-then places them on snap spots. There are two bridge styles (plank bridge or stepping stones plus a
-rope). **Complication:** a plank floats away, and Moss offers the idea of tying it. **Alternate route:**
-rebuild the beaver's old log bridge. **World change:** the bridge stays built.
+### A2. The Picnic Bridge (`PicnicBridgeScene`)
+The bridge over Whistle Stream washed away, and the picnic is on the far bank. Three friends show
+(picture bubble) and say what they need:
+- Moss needs a flat, slow way with no steps.
+- Fizz would love stepping stones to hop on, but will walk a flat way too. That's a preference, not a
+  requirement.
+- Rowan's wagon needs something wide and steady.
 
-### A3. The Waterwheel Mix-Up
-The waterwheel stopped and the mill lanterns went dark. Explore to discover the cause: Fizz built a
-leaf dam upstream for a "splash pool" and forgot to tell anyone. When the player investigates, Fizz
-feels embarrassed and is invited to help repair. The child and Fizz move stones together to make a
-small channel, so the pool and the wheel both get water. **Alternate route:** clear the dam leaf by leaf
-alone, or ask Moss to measure where the water should go. **World change:** the wheel turns and the
-lanterns light.
+**Beats:**
+- Gather planks: one by the shed, one hidden under a leaf pile, one by the bank.
+- Gather stones from a pile.
+- Carry each piece and put it on the faint outlines across the stream: long outlines for planks, round
+  ones for stones.
 
-### A4. The Lantern Launch
-A group project: everyone has a role (fold, light, hold the line, signal). The player chooses a role.
-The first launch wobbles because one lantern is too heavy (a playful complication, not a punishment).
-The group adjusts by trimming the paper, adding a second balloon, or choosing a different role, then
-tries again. The festival sky fills with the club's lanterns. **Alternate route:** a quiet job, such as
-lighting the path lanterns, still counts as part of the launch.
+**Complication:** the first plank floats away downstream. Moss offers the idea of tying the planks
+together. Fish the plank back with the long stick, then tie the planks with the rope. Rowan's wagon
+needs the tied planks, and says so kindly if they're not tied yet.
+
+**Alternate route:** roll the old logs back onto the rocks upstream. The log bridge suits all three
+friends.
+
+**Resolution:** tap each friend to try crossing. If something's missing, they say what they need. Once
+everyone is across, there's a picnic on the far bank.
+
+**World change:** the bridge stays built and the far bank opens for walking. The bridge flag goes up
+in the clubhouse.
+
+### A3. The Waterwheel Mix-Up (`WaterwheelScene`)
+The waterwheel stopped and the mill lanterns went dark. Rowan wonders why.
+
+**Exploring:** follow the dry streambed uphill. There are optional clues along the way: a leaf in the
+mud, small wet footprints, and a bucket of leaves. Getting near the pool is enough to find the cause;
+no clue is required.
+
+**Fizz's mistake:** Fizz built a leaf dam for a splash pool and forgot to tell anyone. Fizz is
+embarrassed, owns it, apologises, and offers to help. The apology doesn't fix anything; the repair is
+an action. Choices:
+- Fix it together: carry stones with Fizz to make a side channel, so the pool and the wheel both get
+  water.
+- Do it alone: Fizz watches, the child clears the dam leaf by leaf, and the pool empties. Fizz is a
+  little sad, which is okay.
+- (More exploring) Ask Moss where the water should go. Moss measures and marks the spots.
+- (More exploring) "How are you feeling?" Fizz answers honestly.
+
+**World change:** the water returns and the camera follows it down to the wheel. The wheel turns and
+the mill windows glow. A paddle-wheel souvenir goes in the clubhouse.
+
+### A4. The Lantern Launch (`LanternLaunchScene`)
+A group project at dusk. Luma explains that everyone has a job. The child picks one:
+- fold the paper (tap the fold lines);
+- light the lantern (carry the flame from the post);
+- (More exploring) hold the line (let it out bit by bit);
+- ring the countdown bell;
+- (More exploring) the quiet job: light the path lanterns. This still counts as part of the launch.
+
+The friends do the other jobs, and nobody is left out.
+
+**Complication:** the first launch rises, wobbles, and drifts down onto Pip's head ("Too heavy?").
+It's playful, not a failure, and the rules guarantee it happens only once. The group fixes it by
+trimming the paper, adding a second balloon, or swapping jobs (Luma refolds it thinner), then tries
+again.
+
+**Resolution:** the lantern rises and the club's lanterns fill the evening sky. They stay there
+afterwards. Luma: "Every job helped. Even the quiet ones." A lantern souvenir goes in the clubhouse.
+
+All three adventures share `TrailScene`: tap to walk, carrying, friends, checkpoints that survive a
+refresh, and a calm ending ("Look around" or "Back to the map"). Each adventure's rules are pure
+functions in `src/content/trail/adventures.ts` with unit tests. The tests show that every route can be
+finished.
 
 ## Game B — Tinker Grove (construction sandbox)
 
@@ -224,18 +271,40 @@ scene is `src/game/scenes/picnic/`.
 
 ## Game D — Story Stage (puppet theater)
 
-- **4 backdrops** (Forest, Pond, Moon Sky, Lantern Oak), **7 puppets** (5 cast + 2 extra), **14 props**.
-- Place puppets and props. Then pick a pose (wave, jump, sad, happy, surprised, cross, dance, sleep,
-  think, hide), drag a puppet to move it, and add lines from a curated library (speech bubble icon,
-  caption, voice blip) and sound effects.
-- **Recording** captures game events only (positions, poses, lines). There is no microphone or camera.
-- **More help:** a three-scene strip. **More exploring:** up to six scenes, character intentions, and
-  alternate endings (A/B).
-- **Starters:** an invitation arrives at the wrong house; two explorers want different adventures; an
-  invention behaves unexpectedly; someone wants to join a game. A blank stage is also available. Nothing
-  scores morals or requires happy endings.
-- **Storage:** 12 stories per profile, with previews, playback, edit, and delete confirmation. The
-  player can put a poster up in the clubhouse.
+A tiny theatre in a tree stump. Content is in `src/content/stage/` (pure, unit-tested). The scene is
+`src/game/scenes/stage/` and playback is `src/game/displays/StagePlayer.ts`.
+
+- **What's on offer:** 5 backdrops (Forest, Pond, Moon Sky, Lantern Oak, an empty stage), 7 puppets (the
+  five friends, the child's own explorer, and Newt, a spare puppet anyone can be), and 14 props. Eight
+  of the props switch on and stay on when used: an invitation that opens, a cake whose candles light, a
+  chest that opens, an umbrella that opens, a lantern that lights, a map that unrolls, a telescope that
+  extends, a flower that blooms. The rest do a little animation (a ball bounces, a drum booms, an
+  invention puffs).
+- **Arranging:** the left toolbar adds a backdrop, puppets, props, or sounds from big picture drawers.
+  Tap a puppet to pick it. Then drag it, or tap the stage floor and it walks there (no dragging
+  needed). Arrow keys move it too. The picked puppet's bar has actions (wave, jump, dance, hide; the
+  full stage adds eight more), faces drawn as that puppet's own face, lines, turn around, take off,
+  and on the full stage "what do they want?" (intentions).
+- **Acting it out:** press the red button and act. The stage records game events only: moves, actions,
+  lines, faces, turns, and sounds. There is no microphone or camera. Long pauses are shortened so
+  playback never drags. A tape bar shows how much room is left (45 seconds per scene). Acting again
+  asks first, with "keep what I made" as the safe choice.
+- **Lines** come from a curated library of 28 short lines, each with an icon (8 on the simple strip).
+  Any puppet can say any line, in its own voice, with a caption.
+- **More help** uses a three-scene strip. Untouched later scenes keep following on from the scene
+  before, so the cast is already in place. **More exploring** allows up to six scenes, reordering by
+  adding and removing, two alternate endings, and intentions shown as thought bubbles. Either child can
+  switch to the simpler strip at any time.
+- **Starters** (each plays its opening and stops there): an invitation arrives at the wrong house; two
+  explorers want different adventures; an invention does something unexpected; someone wants to join a
+  game. There is also an empty stage. Nothing scores a moral or requires a happy ending; "The end!" is
+  just one of the lines.
+- **Watching:** play one scene, or the whole show with curtains between scenes. If there are alternate
+  endings, the audience picks one at the end; then everyone bows.
+- **Saving:** 12 stories per player on a shelf with previews: watch, change, show in the clubhouse,
+  or throw away (asks first). The clubhouse poster is the opening scene in miniature, and tapping it
+  plays that scene. A grown-up can optionally type a title in the grown-up area. It's read out before
+  the show and is never needed to make a story.
 
 ## Emotional and social rules (enforced in content review)
 

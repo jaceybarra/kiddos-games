@@ -33,6 +33,7 @@ import {
   newStory,
   placeActor,
   record,
+  refreshScene,
   removeActor,
   removeEnding,
   removeScene,
@@ -99,7 +100,7 @@ export default class StageScene extends WWScene {
   private curtains: Phaser.GameObjects.Image[] = [];
   private showing = false;
   private editingId: string | null = null;
-  private drag: { id: string; sx: number; sy: number; moved: boolean } | null = null;
+  private drag: { id: string; sx: number; sy: number; moved: boolean; ox: number; oy: number } | null = null;
   private justDragged = false;
   private left?: HTMLElement;
   private right?: HTMLElement;
@@ -188,7 +189,10 @@ export default class StageScene extends WWScene {
     return this.endingIx >= 0 ? this.story.endings[this.endingIx] : this.story.scenes[this.sceneIx];
   }
 
-  private setCurrent(sc: SceneData): void {
+  private setCurrent(scIn: SceneData): void {
+    // any change makes a scene the child's own: it stops following the scene before
+    const { fresh: _fresh, ...sc } = scIn;
+    void _fresh;
     if (this.endingIx >= 0) {
       const endings = [...this.story.endings];
       endings[this.endingIx] = sc;
@@ -222,6 +226,7 @@ export default class StageScene extends WWScene {
 
   private loadScene(): void {
     this.stopRecording(false);
+    this.story = this.endingIx >= 0 ? refreshScene(this.story, this.endingIx, true) : refreshScene(this.story, this.sceneIx);
     this.select(null);
     this.player.build(this.current());
     this.syncTargets();
@@ -674,6 +679,7 @@ export default class StageScene extends WWScene {
   }
 
   private playSfx(s: SfxId): void {
+    this.closeDrawer();
     this.player.sfx(s);
     this.recordEvent({ a: 'sfx', sfx: s });
   }
@@ -721,7 +727,9 @@ export default class StageScene extends WWScene {
     this.justDragged = false;
     if (this.showing || this.drawer || !this.ready) return;
     const id = this.actorAt(p.worldX, p.worldY);
-    if (id) this.drag = { id, sx: p.worldX, sy: p.worldY, moved: false };
+    const o = id ? this.player.objs.get(id) : undefined;
+    // keep the grab point under the finger (no jumping when picked up by the head)
+    if (id && o) this.drag = { id, sx: p.worldX, sy: p.worldY, moved: false, ox: o.obj.x - (p.worldX - SX), oy: o.obj.y - (p.worldY - SY) };
   }
 
   private onMove(p: Phaser.Input.Pointer): void {
@@ -732,7 +740,7 @@ export default class StageScene extends WWScene {
       d.moved = true;
       if (this.selected !== d.id) this.select(d.id);
     }
-    const pos = clampToStage(p.worldX - SX, p.worldY - SY + 40);
+    const pos = clampToStage(p.worldX - SX + d.ox, p.worldY - SY + d.oy);
     this.player.move(d.id, pos.x, pos.y);
     this.drawSelection();
     if (this.rec) this.recordEvent({ a: 'move', id: d.id, x: pos.x, y: pos.y });
@@ -821,6 +829,8 @@ export default class StageScene extends WWScene {
     this.closeDrawer();
     this.select(null);
     this.setShowing(true);
+    // a title typed by a grown-up (optional) is read out first
+    if (this.story.title) await say('narrator', this.story.title);
     await this.guide('showTime');
     const scenes = this.story.scenes;
     for (let i = 0; i < scenes.length && this.showing; i++) {
@@ -963,7 +973,8 @@ export default class StageScene extends WWScene {
       profileId: pid,
       kind: 'story',
       name: existing ? services.save.getCreation(existing)!.name : `${TEMPLATE_NAME[this.story.template]} ${count + 1}`,
-      data: this.story,
+      // keep a title a grown-up typed in the meantime
+      data: { ...this.story, title: this.story.title ?? (existing ? (services.save.getCreation(existing)!.data as Story).title : undefined) },
       preview,
     });
     if (res.ok) {

@@ -99,6 +99,8 @@ export class App {
       },
       audioState: () => audio.ctx?.state ?? 'none',
       textureCount: () => game.textures.getTextureKeys().length,
+      // e2e-only: jump straight to a place (skips story order so each adventure can be tested on its own)
+      goTo: (key: string) => services.nav.goTo(key),
       // e2e-only: a reminder measured in seconds instead of minutes
       testReminder: (seconds: number, grace: 0 | 2 | 5) => {
         this.endSession();

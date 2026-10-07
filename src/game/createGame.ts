@@ -13,6 +13,9 @@ export const SCENES: Record<string, Loader> = {
   tinker: () => import('./scenes/tinker/TinkerScene'),
   picnic: () => import('./scenes/picnic/PicnicScene'),
   stage: () => import('./scenes/stage/StageScene'),
+  'picnic-bridge': () => import('./scenes/trail/PicnicBridgeScene'),
+  waterwheel: () => import('./scenes/trail/WaterwheelScene'),
+  'lantern-launch': () => import('./scenes/trail/LanternLaunchScene'),
 };
 
 class IdleScene extends Phaser.Scene {
@@ -40,7 +43,8 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     input: { activePointers: 3, keyboard: true },
     disableContextMenu: true,
     banner: false,
-    fps: { target: 60, smoothStep: true, panicMax: 10 },
+    // min 3: on a struggling device the game clock keeps real time instead of slowing to a crawl
+    fps: { target: 60, min: 3, smoothStep: true, panicMax: 10 },
     scene: [IdleScene],
   });
 }

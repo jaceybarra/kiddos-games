@@ -48,6 +48,10 @@ prove the game "works". Nothing here is recorded or uploaded.
   "pop it back on" tap?
 - When two friends want the lantern cutter, which option do they pick? Do they say why?
 - If siblings play together: do the turns feel fair? Does anyone need the "My helper left" button?
+- Story Stage: do they find the red "act it out" button without being told? Do they prefer dragging
+  puppets or tapping the floor to make them walk?
+- What kind of stories do they make: silly, scary, everyday? (Any kind is fine. There's nothing to
+  score.) Do they want to show the show to someone?
 
 Please don't treat long sessions, repeated launching, or difficulty stopping as signs of success. And
 enjoying the game doesn't show that real-world social skills changed. Those are things to notice

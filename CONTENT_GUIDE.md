@@ -13,6 +13,7 @@ AI writes lines during play.
 | Quest persistence (checkpoints and flags) | `src/content/trail/windmillQuest.ts` |
 | Tinker Grove parts, physics, challenges, notes | `src/content/tinker/` (`sim.ts`, `challenges.ts`, `tinkerLines.ts`) |
 | Picnic Parade food rules, picnics, lines | `src/content/picnic/` (`food.ts`, `scenarios.ts`, `picnicState.ts`, `picnicLines.ts`) |
+| Story Stage catalogue, story rules, line library | `src/content/stage/` (`stageModel.ts`, `stageLines.ts`) |
 | Map destinations and story order | `src/content/places.ts` |
 | Off-screen ideas for grown-ups | `src/content/offscreen.ts` |
 | Feature status shown to grown-ups | `src/content/featureStatus.ts` |
@@ -89,6 +90,16 @@ that gates progress.
 3. Add the wish lines to `WISH_LINES` in `picnicLines.ts`. They say out loud what the bubble shows.
 4. `npm test` checks that every wish can be made from the ingredients on offer, and that serving
    everyone finishes the picnic.
+
+## Adding to Story Stage
+
+- **A line:** add it to `STAGE_LINES` in `src/content/stage/stageLines.ts` with an icon from
+  `src/ui/icons.ts`. Mark it `simple: true` only if it belongs in the small set (6–8 lines). Lines must
+  work for any puppet and any story, so don't write lessons.
+- **A story start:** add a template in `templateOpening()`. It should set up a situation and stop. A
+  test checks that no template adds an ending or says "the end".
+- **A prop:** add it to `PROPS` (and `PROP_TOGGLES` if it switches on), draw it in
+  `src/art/scenes/stage.ts`, and give its "use" a sound in `StagePlayer.useProp`.
 
 ## Checking everything
 

@@ -146,3 +146,14 @@ export function collectErrors(p: Page): string[] {
 }
 
 export { expect };
+
+/** Visible child-facing buttons smaller than 56 CSS px (should be none). */
+export async function smallButtons(p: Page): Promise<string[]> {
+  return p.$$eval('.btn-round, .choice, .tile, .card, .swatch, .scene-card, [data-profile]', (els) =>
+    els
+      .filter((e) => (e as HTMLElement).offsetParent !== null)
+      .map((e) => ({ r: e.getBoundingClientRect(), id: (e as HTMLElement).getAttribute('aria-label') ?? e.className }))
+      .filter(({ r }) => r.width < 56 || r.height < 56)
+      .map(({ r, id }) => `${id}: ${Math.round(r.width)}x${Math.round(r.height)}`),
+  );
+}

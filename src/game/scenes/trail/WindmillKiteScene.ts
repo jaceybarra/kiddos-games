@@ -585,8 +585,10 @@ export default class WindmillKiteScene extends WWScene {
       if (down) this.flyTarget.y = Phaser.Math.Clamp(this.flyTarget.y + dy * 90, 120, 640);
       return;
     }
+    // letting go of a key always stops walking, even mid-conversation
+    if (!down) return this.walker.setHeld(0);
     if (!this.canWalk()) return;
-    this.walker.setHeld(down ? dx : 0);
+    this.walker.setHeld(dx);
   }
 
   private canWalk(): boolean {
@@ -1950,7 +1952,9 @@ export default class WindmillKiteScene extends WWScene {
 
   // ================================================================ per-frame
 
-  protected override tick(_time: number, delta: number): void {
+  protected override tick(_time: number, rawDelta: number): void {
+    // physics-like motion takes steps no bigger than 200 ms, however slow the frame
+    const delta = Math.min(rawDelta, 200);
     const dt = delta / 1000;
     if (this.mode === 'glider') this.gliderTick(dt);
     if (this.mode === 'flying') this.flyTick(dt);

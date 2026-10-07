@@ -78,6 +78,8 @@ export interface StageScene {
   backdrop: BackdropId;
   actors: StageActor[];
   events: StageEvent[];
+  /** made automatically and not touched yet: it keeps following on from the scene before */
+  fresh?: boolean;
 }
 
 export type TemplateId = 'wrong-house' | 'two-explorers' | 'invention' | 'join-game' | 'blank';
@@ -159,7 +161,23 @@ export function newStory(template: TemplateId, mode: 'simple' | 'full'): Story {
 
 /** A new scene that starts where the previous one left everybody (after its recording). */
 export function continueFrom(prev: StageScene): StageScene {
-  return { backdrop: prev.backdrop, actors: finalActors(prev), events: [] };
+  return { backdrop: prev.backdrop, actors: finalActors(prev), events: [], fresh: true };
+}
+
+/** An untouched scene picks up wherever the scene before it now ends. */
+export function refreshScene(story: Story, index: number, ending = false): Story {
+  if (ending) {
+    const e = story.endings[index];
+    if (!e?.fresh) return story;
+    const endings = [...story.endings];
+    endings[index] = continueFrom(story.scenes[story.scenes.length - 1]);
+    return { ...story, endings };
+  }
+  const sc = story.scenes[index];
+  if (index === 0 || !sc?.fresh) return story;
+  const scenes = [...story.scenes];
+  scenes[index] = continueFrom(scenes[index - 1]);
+  return { ...story, scenes };
 }
 
 /** Where everyone ends up once a scene's recording has played. */
@@ -324,6 +342,7 @@ function validEvent(e: unknown, ids: Set<string>): e is StageEvent {
 export function validScene(s: unknown): s is StageScene {
   const x = s as StageScene;
   if (!x || !BACKDROPS.includes(x.backdrop) || !Array.isArray(x.actors) || !Array.isArray(x.events)) return false;
+  if (x.fresh !== undefined && typeof x.fresh !== 'boolean') return false;
   if (x.actors.length > LIMITS.actors || x.events.length > LIMITS.events || !x.actors.every(validActor)) return false;
   const ids = new Set(x.actors.map((a) => a.id));
   if (ids.size !== x.actors.length) return false;
