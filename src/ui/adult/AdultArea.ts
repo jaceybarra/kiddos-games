@@ -5,6 +5,7 @@ import { narration } from '../../core/narration';
 import { OFFSCREEN } from '../../content/offscreen';
 import { FEATURES } from '../../content/featureStatus';
 import { displayName } from '../screens/profiles';
+import { requestPersistentStorage } from '../../save/persist';
 
 const GAME_NAMES: Record<GameId, string> = { trail: 'Lantern Trail', tinker: 'Tinker Grove', picnic: 'Picnic Parade', stage: 'Story Stage' };
 const QUEST_NAMES: Record<string, string> = {
@@ -43,6 +44,14 @@ export function openAdultArea(layer: HTMLElement, handlers: AdultHandlers): HTML
   layer.append(el);
 
   let flash: { kind: 'notice' | 'error'; text: string } | null = null;
+  // ask the browser to keep saves when space runs low (a grown-up is present, so a permission question is fine)
+  const keepNote = h('p', { 'data-persist': 'unknown' }, 'Checking whether this browser will keep saves if space runs low…');
+  void requestPersistentStorage().then((kept) => {
+    keepNote.dataset.persist = String(kept);
+    keepNote.textContent = kept
+      ? 'This browser will keep these saves even if the device runs low on space.'
+      : 'This browser may clear saves if the device runs very low on space. Use “Export saves” below now and then to keep a copy.';
+  });
   const render = () => {
     main.replaceChildren(statusSection(), ...save.listProfiles().map(playerSection), addPlayerSection(), senseSection(), ideasSection(), savesSection(), aboutSection());
   };
@@ -62,6 +71,7 @@ export function openAdultArea(layer: HTMLElement, handlers: AdultHandlers): HTML
       {},
       h('h2', {}, 'Saving'),
       h('p', {}, `Saved in: ${s.backend === 'indexeddb' ? 'this browser’s storage (IndexedDB)' : s.backend === 'localstorage' ? 'this browser’s small storage (localStorage)' : 'memory only — will be lost when the page closes'}. Last saved: ${last}.`),
+      s.backend === 'memory' ? null : keepNote,
       ...items,
     );
   };

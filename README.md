@@ -68,6 +68,14 @@ The game runs on your computer, and the iPad opens it over your home Wi-Fi.
 Each time they play, the computer must be on, awake, and running `npm run play`, and the iPad must be on
 the same Wi-Fi. While it runs, any device on that Wi-Fi can open the game, so only do this at home.
 
+About saves on an iPad:
+- The Home Screen app keeps its own saves, separate from Safari. Anything played in a Safari tab won't
+  appear in the app, so always play from the icon.
+- Safari's 7-day clean-up of website data doesn't apply to Home Screen apps, so saves last through
+  weeks without play.
+- The iPad can still clear them if it runs very low on space. The grown-up area's "Saving" section says
+  whether this browser has agreed to keep them. Use "Export saves" there now and then to keep a copy.
+
 It doesn't work away from home yet. That needs offline support, and iPads only allow offline web apps
 from an HTTPS web address, which means putting the game online. This build doesn't publish anything.
 

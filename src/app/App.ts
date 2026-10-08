@@ -17,6 +17,7 @@ import { openAdultArea } from '../ui/adult/AdultArea';
 import { askGate } from '../ui/adult/gate';
 import { openBestBackend } from '../save/backends';
 import { SaveManager } from '../save/SaveManager';
+import { requestPersistentStorage } from '../save/persist';
 import type { DeviceSettings, Profile } from '../save/schema';
 import { audio } from '../core/audio';
 import { narration } from '../core/narration';
@@ -161,6 +162,8 @@ export class App {
           );
           save.updateDevice((d) => (d.setupDone = true));
           void save.flush();
+          // a grown-up is here, so it's fine if the browser asks
+          void requestPersistentStorage();
           this.showStart();
         },
         () => this.openAdult(),

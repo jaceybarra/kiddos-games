@@ -87,11 +87,15 @@ test.describe('profiles and saves', () => {
     await setupFamily(page);
     await openAdult(page);
     await expect(page.locator('.adult')).toContainText(/memory only/i);
+    // no "kept if space runs low" claim when nothing is stored at all
+    await expect(page.locator('[data-persist]')).toHaveCount(0);
   });
 
   test('a broken import file changes nothing; an old-format save imports', async ({ page }) => {
     await setupFamily(page);
     await openAdult(page);
+    // the Saving section says whether the browser will keep saves when space runs low
+    await expect(page.locator('[data-persist]')).not.toHaveAttribute('data-persist', 'unknown');
     const input = page.locator('.adult input[type="file"]');
     await input.setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"format":"nope"}') });
     await expect(page.locator('.adult .error')).toContainText(/not a Wonderwood save/);

@@ -26,6 +26,8 @@ Legend:
 | No network requests during play | ✅ | e2e (every request is checked) | — |
 | Keyboard-only play, 56 px targets, reduced motion with captions | ✅ | e2e (buttons on the first screens; canvas targets in the opening view of every scene, at 1024×768) | — |
 | Scene changes leave no extra listeners or textures | ✅ | e2e | — |
+| Add to Home Screen: icon, full screen, stable `.local` address, fixed port | ✅ | one-off scripted run (manifest parses, icons served, game plays from a `.local` name); not yet tried on a real iPad | — |
+| Ask the browser to keep saves when space runs low (only while a grown-up is present) | ✅ | unit tests; e2e (the grown-up area reports the answer) | — |
 
 ## Tinker Grove
 
