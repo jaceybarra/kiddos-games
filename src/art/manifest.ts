@@ -56,6 +56,10 @@ export const ART_SOURCES: ArtSource[] = [
 export const OTHER_SOURCES: { file: string; what: string; licence: string }[] = [
   { file: 'src/ui/icons.ts', what: 'menu and button icons (inline SVG)', licence: ORIGINAL },
   { file: 'index.html', what: 'lantern favicon (inline SVG data URL)', licence: ORIGINAL },
+  { file: 'public/apple-touch-icon.png', what: 'Home Screen icon (lantern on a dusk sky, rendered from code-drawn SVG)', licence: ORIGINAL },
+  { file: 'public/icon-192.png', what: 'Home Screen icon, 192 px', licence: ORIGINAL },
+  { file: 'public/icon-512.png', what: 'Home Screen icon, 512 px', licence: ORIGINAL },
+  { file: 'public/manifest.webmanifest', what: 'web app manifest (name, icons, full screen)', licence: ORIGINAL },
   { file: 'src/core/audio.ts', what: 'all music and sound effects, synthesised live with Web Audio (no audio files)', licence: ORIGINAL },
   { file: 'src/app/speech.ts', what: 'spoken lines use a browser voice only when it reports itself as local; no voice files ship', licence: 'Voices belong to the device/browser; nothing is bundled' },
   { file: 'src/ui/styles.css', what: 'fonts: the device’s own rounded system fonts; no font files ship', licence: 'Not bundled' },

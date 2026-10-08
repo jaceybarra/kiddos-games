@@ -17,7 +17,9 @@ export default defineConfig({
     },
   },
   server: { host: '127.0.0.1', port: 5173 },
-  preview: { host: '127.0.0.1', port: 4173 },
+  // strictPort: saves belong to the exact address, so never drift to another port.
+  // allowedHosts '.local': lets a tablet use the computer's stable name (e.g. my-mac.local) instead of an IP that can change.
+  preview: { host: '127.0.0.1', port: 4173, strictPort: true, allowedHosts: ['.local'] },
   test: {
     include: ['tests/unit/**/*.test.ts'],
     environment: 'node',

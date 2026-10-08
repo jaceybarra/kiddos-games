@@ -49,16 +49,27 @@ npm install
 npm run dev          # http://127.0.0.1:5173
 ```
 
-To play on a tablet on the same Wi-Fi, serve the production build to your home network:
+## Put it on an iPad (or another tablet)
 
-```bash
-npm run build
-npm run preview -- --host   # then open the printed "Network" address on the tablet
-```
+The game runs on your computer, and the iPad opens it over your home Wi-Fi.
 
-While it runs, any device on that Wi-Fi can open it, so only do this on your home network. Press Ctrl+C to
-stop it. (`npx vite --host` also works for development, but it includes developer test hooks and loads
-more slowly.)
+1. On the computer, in this folder, run `npm run play`. Leave that window open. Ctrl+C stops it.
+2. Pick an address that won't change. Saves belong to the exact address.
+   - **Mac:** run `scutil --get LocalHostName` and add `.local:4173`, for example
+     `http://Jaces-MacBook-Air.local:4173`.
+   - **Windows (or if the `.local` name doesn't open):** use the `Network:` address that
+     `npm run play` prints, for example `http://192.168.1.23:4173`. In your Wi-Fi router's settings,
+     reserve that address for the computer so it stays the same.
+3. On the iPad, open that address in Safari and wait for the game to appear.
+4. Tap the Share button, then **Add to Home Screen**. If you see **Open as Web App**, leave it on. Tap
+   **Add**.
+5. Open Wonderwood from the new Home Screen icon and do the grown-up setup there.
+
+Each time they play, the computer must be on, awake, and running `npm run play`, and the iPad must be on
+the same Wi-Fi. While it runs, any device on that Wi-Fi can open the game, so only do this at home.
+
+It doesn't work away from home yet. That needs offline support, and iPads only allow offline web apps
+from an HTTPS web address, which means putting the game online. This build doesn't publish anything.
 
 ## Build a private copy for the family
 
