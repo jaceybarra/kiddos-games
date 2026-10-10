@@ -107,8 +107,8 @@ or an art module is missing, or if a runtime dependency isn't listed.
   behaviour, not smoothness. Smoothness on a real tablet hasn't been measured yet.
 - Some routes are exercised only by unit tests or one-off scripted runs, not the committed browser
   suite (listed in the tables above).
-- Narration uses only browser voices that report themselves as local. On many devices there are none,
-  so the game falls back to captions, icons, and babble sounds.
+- Voices are recorded with an open-source voice model, not actors. Each recording was checked by
+  speech recognition, but nobody has listened to every line on a real iPad yet.
 
 ## Next concrete step
 

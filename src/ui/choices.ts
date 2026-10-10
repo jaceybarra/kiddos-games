@@ -28,11 +28,13 @@ export class Choices {
     layer.append(this.el);
   }
 
-  ask(options: ChoiceOption[], opts: { readAloud?: boolean; captionVisible?: boolean } = {}): Promise<string | null> {
+  /** at: 'top' keeps the tray clear of characters and objects low on the screen. */
+  ask(options: ChoiceOption[], opts: { readAloud?: boolean; captionVisible?: boolean; at?: 'bottom' | 'top' } = {}): Promise<string | null> {
     this.cancel();
     this.active = options;
     this.el.hidden = false;
     this.el.classList.toggle('no-caption', opts.captionVisible === false);
+    this.el.classList.toggle('top', opts.at === 'top');
     this.el.replaceChildren(
       ...options.map((o, i) =>
         h(

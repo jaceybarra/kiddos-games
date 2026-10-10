@@ -10,3 +10,4 @@ playwright-report/
 *.tmp.*
 dist-audit/
 dist-dev2/
+.claude/worktrees/

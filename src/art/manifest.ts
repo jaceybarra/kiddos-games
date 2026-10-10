@@ -61,7 +61,7 @@ export const OTHER_SOURCES: { file: string; what: string; licence: string }[] = 
   { file: 'public/icon-512.png', what: 'Home Screen icon, 512 px', licence: ORIGINAL },
   { file: 'public/manifest.webmanifest', what: 'web app manifest (name, icons, full screen)', licence: ORIGINAL },
   { file: 'src/core/audio.ts', what: 'all music and sound effects, synthesised live with Web Audio (no audio files)', licence: ORIGINAL },
-  { file: 'src/app/speech.ts', what: 'spoken lines use a browser voice only when it reports itself as local; no voice files ship', licence: 'Voices belong to the device/browser; nothing is bundled' },
+  { file: 'public/voice/', what: 'every spoken line, recorded ahead of time from this repository’s own text with the Kokoro-82M open-source voice model (tools/voices)', licence: 'Kokoro-82M model weights: Apache-2.0. The text is original; the recordings are generated output' },
   { file: 'src/ui/styles.css', what: 'fonts: the device’s own rounded system fonts; no font files ship', licence: 'Not bundled' },
 ];
 

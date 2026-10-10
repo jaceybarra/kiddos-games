@@ -134,11 +134,14 @@ In the grown-up area you can:
 
 - [Phaser 4.2.1](https://phaser.io) runs the game scenes, with Vite 8 and TypeScript 6. The UI layer is
   plain DOM: accessible buttons, dialogs, and the grown-up area.
-- All art is original SVG authored in `src/art/`, rasterised into texture atlases at load time. All
-  audio is synthesised with Web Audio in `src/core/audio.ts`. There are no third-party assets.
+- All art is original SVG authored in `src/art/`, rasterised into texture atlases at load time. Music
+  and sound effects are synthesised with Web Audio in `src/core/audio.ts`.
+- Every spoken line is a recording made ahead of time with the open-source Kokoro voice model and
+  stored in `public/voice/`. No AI runs while playing. To re-record after changing lines, see
+  `tools/voices/README.md`.
 - Saves use IndexedDB, falling back to localStorage, then to memory only (with a warning). The save
   format is versioned, validated, and backed up. See `src/save/`.
 
-Licences of dependencies: Phaser (MIT), Vite (MIT). All game art, audio, and text are original to this
-repository. The full asset list, with the source file and licence of every art key, is in
+Licences of dependencies: Phaser (MIT), Vite (MIT). All game art, sound and text are original to this
+repository; the voice recordings were generated from that text with Kokoro-82M (Apache-2.0). The full asset list, with the source file and licence of every art key, is in
 `src/art/manifest.ts`. A unit test keeps it complete.

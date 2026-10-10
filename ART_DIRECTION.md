@@ -11,7 +11,7 @@ soft warm-brown outline, quiet backgrounds, and bright, clearly outlined interac
 - At load time each SVG is rasterised into a canvas and packed into runtime texture atlases
   (`src/art/rasterize.ts`). The DOM UI reuses the same SVG directly, so menus and scenes match.
 - `src/art/manifest.ts` lists every art key with its source file and licence. It also lists the
-  non-art assets (icons, favicon, synthesised audio, system fonts, local voices) and the one library
+  non-art assets (icons, favicon, synthesised audio, recorded voices, system fonts) and the one library
   that ships in the build (Phaser, MIT). `tests/unit/art.test.ts` fails if a registered art key is
   missing or listed twice, or if a new art module or runtime dependency isn't listed.
   `tests/unit/content.test.ts` fails if content refers to an asset that does not exist.
@@ -73,18 +73,21 @@ stripes, dots, or leaves).
   are never used.
 
 ## Audio
-- **All sound is synthesised at runtime with Web Audio** (`src/core/audio.ts`). There are no audio
-  files and no network. The sounds include wooden clicks (filtered noise plus resonant body), soft
-  thuds, wind (band-passed noise with a slow LFO), boings, chimes (pentatonic), paper flutter,
-  squishes, and creaks.
-- **Character voices** are short pitched "babble" blips that match each character (Pip quick and high,
-  Moss low and slow, Fizz bouncy, Luma airy, Rowan warm and low). They play alongside captions.
+- **Music and sound effects are synthesised at runtime with Web Audio** (`src/core/audio.ts`): wooden
+  clicks (filtered noise plus resonant body), soft thuds, wind (band-passed noise with a slow LFO),
+  boings, chimes (pentatonic), paper flutter, squishes, and creaks. No network.
+- **Voices are recorded ahead of time.** Every line the game says was recorded with Kokoro, an
+  open-source text-to-speech model (Kokoro-82M, Apache-2.0), run on the development machine by
+  `tools/voices/`. The game ships the small MP3s in `public/voice/` and never runs a voice model or
+  any AI. Each recording is checked by speech recognition (NVIDIA Parakeet, run locally) against its
+  text, and anything misheard is re-recorded. The browser's own speech voice is not used at all.
+- **Cast:** storyteller (the lantern) Heart, slightly slow and warm; Pip Bella, bright; Fizz Puck,
+  playful; Moss Michael, slow and careful; Luma Emma, dreamy; Rowan George, calm; the child's own
+  character Kore; Story Stage's spare puppet Newt Fable. See `CASTING` in `tools/voices/generate.py`.
+- **Babble fallback:** a line without a recording (or with voices switched off by a grown-up) plays
+  short pitched "babble" blips matched to the character, with the caption.
 - **Music:** a gentle generative loop per area (kalimba-like plucks plus a soft pad). It stays quiet and
   ducks under speech.
-- **Narration:** if the browser reports an on-device speech voice (`SpeechSynthesisVoice.localService`),
-  it can read instructions and lines. This is a **temporary computer voice, not voice acting**. If no
-  local voice exists, narration is off and the visual demonstrations and captions carry the
-  instructions.
 - **Separate volume controls:** music, effects, and voice, plus mute. Quiet presentation lowers volume,
   removes music percussion, and softens effects. Audio starts only after the first tap (autoplay rules)
   and suspends when the game is paused or the tab is hidden.
@@ -92,8 +95,7 @@ stripes, dots, or leaves).
 ## Known gaps (replacement wishlist)
 | Asset | Current | Ideal replacement |
 | --- | --- | --- |
-| Narration | Local device TTS when available; otherwise captions plus demos | Short professional voice recordings (about 150 lines) |
-| Character voices | Synth babble | Recorded vocal "gibberish" by a voice actor |
+| Voices | Recorded with an open-source voice model | Actors recording the same lines (the file names stay the same) |
 | Music | Generative synth loops | 5 composed acoustic loops (kalimba, ukulele, glockenspiel) |
 | Character art | Hand-written SVG puppets | Illustrator-drawn parts in the same rig layout |
 | Paper texture | Procedural grain overlay | Scanned paper and wood textures |
