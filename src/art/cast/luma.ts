@@ -146,5 +146,5 @@ export const LUMA_RIG: RigDef = {
   height: 245,
   width: 120,
   gait: 'float',
-  voice: { pitch: 430, spread: 90, len: 0.09, wave: 'sine', ttsPitch: 1.2, ttsRate: 0.94 },
+  voice: { pitch: 430, spread: 90, len: 0.09, wave: 'sine' },
 };

@@ -1,5 +1,5 @@
-import { test, type Page } from '@playwright/test';
-import { chooseProfile, clickChoice, clickTarget, collectErrors, expect, flush, profile, setupFamily, state, waitScene, waitState } from './helpers';
+import { type Page } from '@playwright/test';
+import { test, chooseProfile, clickChoice, clickTarget, collectErrors, expect, flush, profile, setupFamily, state, waitScene, waitState } from './helpers';
 
 async function enterPicnic(page: Page, player: number) {
   await setupFamily(page);

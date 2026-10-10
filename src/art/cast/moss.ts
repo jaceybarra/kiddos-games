@@ -116,5 +116,5 @@ export const MOSS_RIG: RigDef = {
   height: 210,
   width: 140,
   gait: 'waddle',
-  voice: { pitch: 200, spread: 50, len: 0.11, wave: 'sine', ttsPitch: 0.75, ttsRate: 0.88 },
+  voice: { pitch: 200, spread: 50, len: 0.11, wave: 'sine' },
 };

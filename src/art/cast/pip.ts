@@ -182,5 +182,5 @@ export const PIP_RIG: RigDef = {
   height: 215,
   width: 120,
   gait: 'hop',
-  voice: { pitch: 520, spread: 160, len: 0.065, wave: 'triangle', ttsPitch: 1.45, ttsRate: 1.08 },
+  voice: { pitch: 520, spread: 160, len: 0.065, wave: 'triangle' },
 };

@@ -73,7 +73,7 @@ export abstract class TrailScene extends WWScene {
     this.walker = new Walker(this.avatar, { groundY, minX: this.walkRange[0], maxX: this.walkRange[1] });
     this.camX = this.avatar.x;
     this.hand = new GhostHand(this);
-    this.hints = new Hints(this, this.preset, () => this.demo());
+    this.hints = new Hints(this, this.preset, () => this.demo(), () => !this.busy);
     audio.startMusic(this.gameTheme);
     services.hud.show(['home', 'finish', 'pause', 'replay', 'help']);
     this.onCleanup(() => {

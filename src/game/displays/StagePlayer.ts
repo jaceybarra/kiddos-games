@@ -268,7 +268,7 @@ export class StagePlayer {
       return Promise.resolve();
     }
     const ref = o.actor.ref as PuppetRef;
-    if (ref === 'newt') return say('narrator', text, { puppet: o.obj, portrait: puppetPortrait('newt', this.cast), voice: NEWT_RIG().voice });
+    if (ref === 'newt') return say('narrator', text, { puppet: o.obj, portrait: puppetPortrait('newt', this.cast), voice: { ...NEWT_RIG().voice, id: 'newt' } });
     return say(ref === 'me' ? 'avatar' : (ref as CastId), text, { puppet: o.obj });
   }
 

@@ -111,7 +111,9 @@ describe('privacy rules in the source', () => {
   it('the game code makes no network requests and loads nothing from other sites', () => {
     for (const f of files) {
       const src = readFileSync(f, 'utf8');
-      expect(src, f).not.toMatch(/\bfetch\(|XMLHttpRequest|navigator\.sendBeacon|new WebSocket|EventSource\(/);
+      // the one exception: recorded voice clips load from the game's own voice/ folder
+      const own = f.endsWith(join('src', 'app', 'voices.ts')) ? src.replace('fetch(`voice/${file}`)', '') : src;
+      expect(own, f).not.toMatch(/\bfetch\(|XMLHttpRequest|navigator\.sendBeacon|new WebSocket|EventSource\(|speechSynthesis/);
       expect(src, f).not.toMatch(/https?:\/\/(?!www\.w3\.org\/)/);
     }
   });

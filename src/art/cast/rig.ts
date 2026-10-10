@@ -45,9 +45,8 @@ export interface VoiceSpec {
   len: number;
   /** oscillator wave */
   wave: OscillatorType;
-  /** speech-synthesis pitch/rate when a local voice is used */
-  ttsPitch: number;
-  ttsRate: number;
+  /** which set of recorded lines to use (defaults to the speaker's own) */
+  id?: string;
 }
 
 export interface RigDef {

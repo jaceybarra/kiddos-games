@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
-import { ensureArt, releaseGroup } from '../art/rasterize';
+import { addImage, ensureArt, releaseGroup } from '../art/rasterize';
 import { COMMON_PIECES } from '../art/common';
 import { motion } from '../core/motion';
 import { registerSceneForTests } from '../dev/testHooks';
 import { showLoading, hideLoading } from '../ui/loading';
+import { services } from '../app/services';
 
 export interface Target {
   id: string;
@@ -15,6 +16,8 @@ export interface Target {
   enabled?(): boolean;
   /** lower = checked first when hit areas overlap */
   priority?: number;
+  /** fun to poke but never "the next step": the beacon ignores it */
+  ambient?: boolean;
 }
 
 export interface View {
@@ -77,6 +80,8 @@ export abstract class WWScene extends Phaser.Scene {
         if (!this.sys.isActive() && !this.sys.isPaused()) return;
         await this.build(data ?? {});
         this.focusRing = this.add.graphics().setDepth(10000);
+        this.beaconRing = addImage(this, 0, 0, 'fx.tapring').setDepth(8990).setVisible(false);
+        this.beaconArrow = addImage(this, 0, 0, 'fx.arrow').setDepth(8991).setVisible(false);
         this.ready = true;
         this.layout();
         hideLoading();
@@ -231,6 +236,80 @@ export abstract class WWScene extends Phaser.Scene {
     if (!this.ready) return;
     if (this.focusId) this.drawFocus();
     this.tick(time, delta);
+    this.updateBeacon(time);
+  }
+
+  // ---------------------------------------------------------------- beacon
+
+  private beaconRing?: Phaser.GameObjects.Image;
+  private beaconArrow?: Phaser.GameObjects.Image;
+  private beaconId: string | null = null;
+  private beaconSince = 0;
+
+  /**
+   * The next thing to tap, marked with a bobbing arrow and a pulsing ring
+   * until it's tapped, so the screen always answers "what do I do?" even with
+   * the sound off. Default: the only enabled, non-ambient target. Scenes with
+   * more to tap override this (return null for no marker).
+   */
+  protected beaconTarget(): string | null {
+    let only: Target | null = null;
+    for (const t of this.targets.values()) {
+      if (t.ambient || !(t.enabled?.() ?? true)) continue;
+      if (only) return null;
+      only = t;
+    }
+    return only?.id ?? null;
+  }
+
+  private updateBeacon(time: number): void {
+    const ring = this.beaconRing;
+    const arrow = this.beaconArrow;
+    if (!ring || !arrow) return;
+    const id = this.inputLocked || services.choices?.open ? null : this.beaconTarget();
+    const t = id ? this.targets.get(id) : undefined;
+    if (id !== this.beaconId) {
+      this.beaconId = id;
+      this.beaconSince = time;
+    }
+    // wait a moment on a new target so it doesn't flicker during changes
+    if (!t || !(t.enabled?.() ?? true) || time - this.beaconSince < 700) {
+      ring.setVisible(false);
+      arrow.setVisible(false);
+      return;
+    }
+    const r = t.bounds();
+    const cam = this.cameras.main;
+    const v = cam.worldView;
+    const still = motion.reduced;
+    const bob = still ? 0 : Math.sin(time / 260) * 12;
+    const pulse = still ? 0.5 : 0.5 + Math.sin(time / 300) * 0.5;
+    if (r.centerX < v.x + 20 || r.centerX > v.right - 20) {
+      // off screen (scrolling scenes): an arrow at the edge points the way
+      const right = r.centerX > v.right - 20;
+      ring.setVisible(false);
+      arrow
+        .setVisible(true)
+        .setPosition(right ? v.right - 70 + bob : v.x + 70 - bob, v.centerY)
+        .setRotation(right ? 0 : Math.PI)
+        .setScale(1.6)
+        .setAlpha(0.95);
+      return;
+    }
+    const size = Phaser.Math.Clamp(Math.min(r.width, r.height) / 80, 0.9, 2.4);
+    ring
+      .setVisible(true)
+      .setPosition(r.centerX, r.centerY)
+      .setScale(size * (1 + pulse * 0.12))
+      .setAlpha(0.35 + pulse * 0.5);
+    // arrow above, pointing down (or below pointing up when there's no room)
+    const above = r.top - 60 > v.y;
+    arrow
+      .setVisible(true)
+      .setPosition(r.centerX, above ? r.top - 46 - bob : r.bottom + 46 + bob)
+      .setRotation(above ? Math.PI / 2 : -Math.PI / 2)
+      .setScale(1.3)
+      .setAlpha(0.95);
   }
 
   /** Per-frame logic once the scene is built. */

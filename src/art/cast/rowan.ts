@@ -118,5 +118,5 @@ export const ROWAN_RIG: RigDef = {
   height: 250,
   width: 150,
   gait: 'walk',
-  voice: { pitch: 150, spread: 40, len: 0.12, wave: 'sine', ttsPitch: 0.7, ttsRate: 0.86 },
+  voice: { pitch: 150, spread: 40, len: 0.12, wave: 'sine' },
 };

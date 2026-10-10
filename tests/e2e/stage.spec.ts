@@ -1,5 +1,5 @@
-import { test, type Page } from '@playwright/test';
-import { chooseProfile, clickTarget, collectErrors, expect, flush, profile, setupFamily, smallButtons, state, waitScene, waitState } from './helpers';
+import { type Page } from '@playwright/test';
+import { test, chooseProfile, clickTarget, collectErrors, expect, flush, profile, setupFamily, smallButtons, state, waitScene, waitState } from './helpers';
 
 async function enterStage(page: Page, player: number) {
   await setupFamily(page);

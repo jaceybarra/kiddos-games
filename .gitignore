@@ -8,3 +8,5 @@ playwright-report/
 .DS_Store
 .vite/
 *.tmp.*
+dist-audit/
+dist-dev2/

@@ -1,5 +1,4 @@
-import { test } from '@playwright/test';
-import { chooseProfile, clickTarget, expect, playIntro, setupFamily, targets, waitScene, waitState } from './helpers';
+import { test, chooseProfile, clickTarget, expect, playIntro, setupFamily, targets, waitScene, waitState } from './helpers';
 
 test.describe('runtime behaviour', () => {
   test('no network requests leave the device during play', async ({ page, baseURL }) => {

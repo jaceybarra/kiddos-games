@@ -1,4 +1,27 @@
-import { expect, type Page } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
+import { mkdirSync, writeFileSync } from 'node:fs';
+
+/**
+ * Every journey also checks the voices: each line the game asked to speak must
+ * have a recording (tools/voices). The lines heard are saved under
+ * test-results/voice-lines/ so tools/voices/merge-captured.mjs can add them
+ * to the recording list. VOICE_STRICT=1 fails a journey that hears an unrecorded line.
+ */
+export const test = base.extend<{ voiceCheck: void }>({
+  voiceCheck: [
+    async ({ page }, use, testInfo) => {
+      await use();
+      const log = (await page.evaluate(() => (window as unknown as { __ww?: { voiceLog?(): { voice: string; text: string; recorded: boolean }[] } }).__ww?.voiceLog?.() ?? []).catch(() => [])) as { voice: string; text: string; recorded: boolean }[];
+      mkdirSync('test-results/voice-lines', { recursive: true });
+      writeFileSync(`test-results/voice-lines/${testInfo.testId}.json`, JSON.stringify(log));
+      if (process.env.VOICE_STRICT === '1') {
+        const missing = [...new Set(log.filter((l) => !l.recorded).map((l) => `${l.voice}: ${l.text}`))];
+        expect(missing, 'lines spoken without a recording (run tools/voices)').toEqual([]);
+      }
+    },
+    { auto: true },
+  ],
+});
 
 export type GameState = Record<string, unknown> & {
   mode?: string;

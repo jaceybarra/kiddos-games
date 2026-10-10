@@ -54,6 +54,8 @@ export default class ClubhouseScene extends WWScene {
   private kiteParts: Phaser.GameObjects.GameObject[] = [];
   private pinwheel?: Phaser.GameObjects.Image;
   private wardrobe?: HTMLElement;
+  private firstVisit = false;
+  private keys: Phaser.GameObjects.Arc[] = [];
 
   constructor() {
     super('clubhouse');
@@ -80,6 +82,7 @@ export default class ClubhouseScene extends WWScene {
     const prof = currentProfile();
     this.sitting = false;
     this.busy = false;
+    this.keys = [];
     addArt(this, 0, 0, 'club.bg').setDepth(D.bg);
     // furniture
     addImage(this, 200, FLOOR_Y, 'club.lamp').setDepth(D.prop);
@@ -94,7 +97,7 @@ export default class ClubhouseScene extends WWScene {
 
     // friends
     this.luma = new Puppet(this, 380, FLOOR_Y - 30, CAST_RIGS.luma, { seed: 21 });
-    this.luma.setDepth(D.npc).setScale(0.95).setFacing(1).setExpression('calm');
+    this.luma.setDepth(D.npc).setScale(0.95).setFacing(1).setExpression('happy');
     this.moss = new Puppet(this, 1240, FLOOR_Y, CAST_RIGS.moss, { seed: 22 });
     this.moss.setDepth(D.npc).setFacing(1);
     this.makeAvatar(prof.avatar);
@@ -113,7 +116,11 @@ export default class ClubhouseScene extends WWScene {
       this.wardrobe?.remove();
       stopSpeech();
     });
-    this.time.delayedCall(500, () => void instruct('narrator', CLUB_LINES['nar.welcome'].text, () => this.demo()));
+    // first visit: point at the dress-up chest; afterwards, welcome back to their things
+    this.firstVisit = !prof.progress.done.club;
+    updateProfile((p) => (p.progress.done.club = (p.progress.done.club ?? 0) + 1));
+    this.time.delayedCall(500, () => void instruct('narrator', CLUB_LINES[this.firstVisit ? 'nar.welcome' : 'nar.welcomeBack'].text, () => this.demo()));
+    if (!motion.reduced) this.time.delayedCall(900, () => void this.luma.play('wave'));
   }
 
   private makeAvatar(look: AvatarLook): void {
@@ -251,7 +258,7 @@ export default class ClubhouseScene extends WWScene {
         id: `frame-${f.id}`,
         label: 'Empty frame',
         bounds: () => this.rectAround(f.x, f.y, 280 * scale, 220 * scale, 10),
-        activate: () => void this.line(PLACES.find((pl) => pl.id === (f.id === 'story' ? 'stage' : 'picnic'))?.built ? 'nar.frameEmpty' : 'nar.frameSoon'),
+        activate: () => void this.line(PLACES.find((pl) => pl.id === (f.id === 'story' ? 'stage' : 'picnic'))?.built ? (f.id === 'story' ? 'nar.frameStory' : 'nar.framePicnic') : 'nar.frameSoon'),
       });
     }
     // souvenir pegs: a silhouette until the adventure is done, then the real thing (tap it)
@@ -314,7 +321,7 @@ export default class ClubhouseScene extends WWScene {
     this.luma.lookAtWorld(this.avatar.x, this.avatar.y - 150);
     await this.line('luma.corner');
     const opts = [
-      { id: 'sit', icon: 'quiet', label: 'Sit quietly' },
+      { id: 'sit', icon: 'heart', label: 'Sit with Luma' },
       { id: 'what', icon: 'ask', label: '“What are you reading?”' },
       { id: 'bye', icon: 'wave', label: '“Bye!”' },
     ];
@@ -355,8 +362,35 @@ export default class ClubhouseScene extends WWScene {
     }
     sparkle(this, 1390, 760, 8, D.fx);
     await new Promise((r) => this.time.delayedCall(2000, r));
+    this.showKeys();
     await this.line('moss.again');
     this.busy = false;
+  }
+
+  /** Moss's music box becomes a little instrument: five big keys, any tune is lovely. */
+  private showKeys(): void {
+    if (this.keys.length) return;
+    const colors = [P.berry, P.sun, P.leaf, P.sea, P.plum];
+    let played = 0;
+    colors.forEach((c, i) => {
+      const x = 1270 + i * 105;
+      const y = 830;
+      const key = this.add.circle(x, y, 44, hex(c)).setStrokeStyle(7, hex(P.ink)).setDepth(D.fx - 1);
+      this.keys.push(key);
+      this.addTarget({
+        id: `key-${i}`,
+        label: 'Music key',
+        ambient: true,
+        bounds: () => this.rectAround(x, y, 88, 88, 6),
+        activate: () => {
+          audio.play('chime', { note: [0, 2, 4, 5, 7][i] });
+          this.tweens.add({ targets: key, scale: 1.18, duration: 90, yoyo: true });
+          sparkle(this, x, y - 40, 4, D.fx);
+          void this.moss.play('nod');
+          if (++played === 8) void this.line('moss.lovely');
+        },
+      });
+    });
   }
 
   // ------------------------------------------------------------ wardrobe (DOM, picture-only)
@@ -398,7 +432,7 @@ export default class ClubhouseScene extends WWScene {
         'aria-label': hat.name,
         'aria-pressed': String((look.hat ?? '') === hat.id),
         style: 'width:84px;min-height:84px;padding:6px',
-        html: hat.id ? pieceSvg(hat.id) : icon('no', 56),
+        html: hat.id ? pieceSvg(hat.id) : rigSvg(avatarRig(look.species, look.color), { crop: 'head', hat: null }),
       });
       b.addEventListener('click', () => {
         look.hat = hat.id || null;
@@ -408,7 +442,7 @@ export default class ClubhouseScene extends WWScene {
       });
       return b;
     });
-    const done = h('button', { class: 'btn primary', type: 'button', 'aria-label': 'Done', html: icon('check'), 'data-wardrobe-done': true });
+    const done = h('button', { class: 'btn go glow', type: 'button', 'aria-label': 'Done', html: icon('yes', 64), 'data-wardrobe-done': true, style: 'min-width:120px;min-height:96px' });
     const panel = h(
       'div',
       { class: 'panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Dress-up chest', style: 'display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:min(980px,calc(100vw - 24px))' },
@@ -425,6 +459,7 @@ export default class ClubhouseScene extends WWScene {
       release();
       overlay.remove();
       this.wardrobe = undefined;
+      this.firstVisit = false;
       this.busy = false;
       audio.play('success');
       updateProfile((p) => (p.avatar = { ...look }));
@@ -446,6 +481,11 @@ export default class ClubhouseScene extends WWScene {
 
   private demo(): void {
     void this.hand.tapAt(720, FLOOR_Y - 120, 2);
+  }
+
+  /** First visit: the chest is the thing to try. After that, free to explore. */
+  protected override beaconTarget(): string | null {
+    return this.firstVisit && !this.busy && !this.wardrobe ? 'chest' : null;
   }
 
   override hint(): void {

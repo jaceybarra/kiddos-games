@@ -29,3 +29,16 @@ export function hideLoading(): void {
 }
 
 export const lanternSvg = LANTERN;
+
+/** The storyteller's face in captions: a friendly lantern (it's the Lantern Club). */
+export const guideFaceSvg = `<svg viewBox="0 0 120 120" aria-hidden="true">
+<rect width="120" height="120" fill="#2f3b2a"/>
+<circle cx="60" cy="66" r="50" fill="${P.glow}" opacity="0.35"/>
+<rect x="44" y="6" width="32" height="12" rx="4" fill="${P.woodDark}" stroke="${P.ink}" stroke-width="4"/>
+<rect x="22" y="16" width="76" height="90" rx="30" fill="${P.lantern}" stroke="${P.ink}" stroke-width="5"/>
+<ellipse cx="60" cy="62" rx="27" ry="33" fill="${P.glow}"/>
+<circle cx="49" cy="56" r="5.5" fill="${P.ink}"/><circle cx="71" cy="56" r="5.5" fill="${P.ink}"/>
+<circle cx="51" cy="54" r="1.8" fill="#fff"/><circle cx="73" cy="54" r="1.8" fill="#fff"/>
+<ellipse cx="41" cy="68" rx="6" ry="4" fill="${P.berry}" opacity="0.45"/><ellipse cx="79" cy="68" rx="6" ry="4" fill="${P.berry}" opacity="0.45"/>
+<path d="M50 70 Q60 80 70 70" fill="none" stroke="${P.ink}" stroke-width="4.5" stroke-linecap="round"/>
+</svg>`;

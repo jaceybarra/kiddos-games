@@ -280,6 +280,6 @@ export function avatarRig(sp: AvatarSpecies, colorId: string): RigDef {
     height: 195,
     width: 104,
     gait: 'walk',
-    voice: { pitch: 360, spread: 120, len: 0.075, wave: 'triangle', ttsPitch: 1.25, ttsRate: 1 },
+    voice: { pitch: 360, spread: 120, len: 0.075, wave: 'triangle' },
   };
 }

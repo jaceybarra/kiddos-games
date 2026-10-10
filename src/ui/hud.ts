@@ -16,8 +16,8 @@ const LABELS: Record<HudButton, { icon: string; label: string }> = {
   home: { icon: 'map', label: 'Map' },
   finish: { icon: 'moon', label: 'Save and finish' },
   pause: { icon: 'pause', label: 'Pause' },
-  replay: { icon: 'replay', label: 'Hear it again' },
-  help: { icon: 'help', label: 'Show me how' },
+  replay: { icon: 'ear', label: 'Hear it again' },
+  help: { icon: 'pointer', label: 'Show me how' },
 };
 
 /**

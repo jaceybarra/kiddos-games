@@ -1,7 +1,6 @@
 import { h } from '../dom';
 import { services } from '../../app/services';
 import { GAME_IDS, type GameId, type PresetId, type Profile, MAX_CREATIONS_PER_KIND } from '../../save/schema';
-import { narration } from '../../core/narration';
 import { OFFSCREEN } from '../../content/offscreen';
 import { FEATURES } from '../../content/featureStatus';
 import { displayName } from '../screens/profiles';
@@ -204,7 +203,6 @@ export function openAdultArea(layer: HTMLElement, handlers: AdultHandlers): HTML
       h('option', { value: 'full' }, 'Full motion'),
     );
     motionSel.value = d.motion;
-    const voice = narration.voiceName;
     return h(
       'section',
       {},
@@ -216,13 +214,11 @@ export function openAdultArea(layer: HTMLElement, handlers: AdultHandlers): HTML
       check('Quieter presentation (softer sounds, no music percussion, fewer effects)', () => d.quiet, (v) => set((x) => (x.quiet = v))),
       check('Show captions', () => d.captions, (v) => set((x) => (x.captions = v))),
       h('label', {}, 'Motion:', motionSel),
-      check('Read instructions aloud with an on-device voice (when available)', () => d.narration === 'auto', (v) => set((x) => (x.narration = v ? 'auto' : 'off'))),
+      check('Characters speak with their recorded voices', () => d.narration === 'auto', (v) => set((x) => (x.narration = v ? 'auto' : 'off'))),
       h(
         'p',
         { class: 'note' },
-        voice
-          ? `On-device voice found: “${voice}”. This is a temporary computer voice, not voice acting. Only voices your browser marks as on-device are used, so no text is sent to an online speech service.`
-          : 'No on-device voice was found in this browser, so narration is off. Characters speak with playful sounds and captions, and every instruction is also shown with a demonstration hand.',
+        'Every line was recorded ahead of time with an open-source voice model and is stored with the game. Nothing is generated while playing and nothing is sent anywhere. Switched off, characters speak with playful sounds and captions.',
       ),
     );
   };

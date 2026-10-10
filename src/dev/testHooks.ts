@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { voiceLog } from '../app/voices';
 
 /**
  * Test hooks for browser automation. Present only in dev/e2e builds
@@ -21,6 +22,8 @@ export function registerSceneForTests(scene: Phaser.Scene): void {
   w.__ww = {
     ...(w.__ww ?? {}),
     scene: () => (current ? current.scene.key : null),
+    /** every line asked to be spoken so far, and whether it had a recording */
+    voiceLog: () => voiceLog.slice(),
     ready: () => !!current?.isReady,
     state: () => current?.inspect() ?? {},
     targets: () => {

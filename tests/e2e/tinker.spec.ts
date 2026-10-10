@@ -1,5 +1,5 @@
-import { test, type Page } from '@playwright/test';
-import { chooseProfile, collectErrors, expect, flush, profile, setupFamily, state, waitScene, waitState } from './helpers';
+import { type Page } from '@playwright/test';
+import { test, chooseProfile, collectErrors, expect, flush, profile, setupFamily, state, waitScene, waitState } from './helpers';
 
 const BX = 300;
 const BY = 70;

@@ -202,6 +202,45 @@ export class AudioEngine {
     this.duckGain.gain.setTargetAtTime(on ? 0.35 : 1, this.ctx.currentTime, 0.12);
   }
 
+  /** Decode a recorded clip (null when audio isn't available yet or the data is bad). */
+  async decode(data: ArrayBuffer): Promise<AudioBuffer | null> {
+    if (!this.ctx) return null;
+    try {
+      return await this.ctx.decodeAudioData(data);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Play a recorded voice clip on the voice bus. `done` resolves when it ends
+   * or is stopped. Returns null when audio isn't unlocked yet (before the
+   * first tap), so callers can fall back to captions.
+   */
+  playClip(buf: AudioBuffer): { done: Promise<void>; stop(): void } | null {
+    if (!this.ctx || !this.unlocked) return null;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.voiceBus);
+    let finish!: () => void;
+    const done = new Promise<void>((r) => (finish = r));
+    src.onended = () => {
+      src.disconnect();
+      finish();
+    };
+    src.start();
+    return {
+      done,
+      stop: () => {
+        try {
+          src.stop();
+        } catch {
+          finish();
+        }
+      },
+    };
+  }
+
   // ---------------------------------------------------------------- primitives
 
   private env(g: GainNode, t: number, a: number, peak: number, dec: number): void {

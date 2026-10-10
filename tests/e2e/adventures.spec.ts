@@ -1,5 +1,5 @@
-import { test, type Page } from '@playwright/test';
-import { chooseProfile, clickChoice, clickTarget, collectErrors, expect, flush, profile, setupFamily, state, targets, waitScene, waitState, walkUntilVisible } from './helpers';
+import { type Page } from '@playwright/test';
+import { test, chooseProfile, clickChoice, clickTarget, collectErrors, expect, flush, profile, setupFamily, state, targets, waitScene, waitState, walkUntilVisible } from './helpers';
 
 /** Story order opens these one by one; tests jump straight in with the e2e-only hook. */
 async function enter(page: Page, player: number, scene: string) {

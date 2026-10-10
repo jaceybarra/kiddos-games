@@ -16,7 +16,7 @@ export function displayName(p: Profile): string {
  * "Who's playing?" — big picture cards. Names are local labels only; the
  * pictures carry the meaning for children who don't read yet.
  */
-export function profileScreen(layer: HTMLElement, profiles: Profile[], onPick: (id: string) => void, onAdult: () => void): HTMLElement {
+export function profileScreen(layer: HTMLElement, profiles: Profile[], onPick: (id: string) => void, onAdult: () => void, onSpeak: (text: string) => void = () => {}): HTMLElement {
   const cards = profiles.map((p) =>
     h(
       'button',
@@ -44,6 +44,7 @@ export function profileScreen(layer: HTMLElement, profiles: Profile[], onPick: (
     h('div', { class: 'corner-gear' }, adultGateButton(onAdult)),
   );
   layer.append(el);
+  setTimeout(() => el.isConnected && onSpeak('Who’s playing? Tap your picture!'), 500);
   return el;
 }
 

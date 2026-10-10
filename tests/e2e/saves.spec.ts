@@ -1,5 +1,4 @@
-import { test } from '@playwright/test';
-import { chooseProfile, clickTarget, collectErrors, expect, flush, playIntro, profile, setupFamily, waitScene, waitState } from './helpers';
+import { test, chooseProfile, clickTarget, collectErrors, expect, flush, playIntro, profile, setupFamily, waitScene, waitState } from './helpers';
 
 async function openAdult(page: import('@playwright/test').Page) {
   // keyboard activation of the gear opens the reading question directly (adults on keyboards)

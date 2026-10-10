@@ -1,5 +1,5 @@
-import { test } from '@playwright/test';
 import {
+  test,
   chooseProfile,
   clickChoice,
   clickTarget,

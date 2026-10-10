@@ -14,13 +14,13 @@ import { setupScreen } from '../ui/screens/setup';
 import { avatarPicker } from '../ui/screens/avatarPicker';
 import { closingScreen, restScreen } from '../ui/screens/closing';
 import { openAdultArea } from '../ui/adult/AdultArea';
-import { askGate } from '../ui/adult/gate';
+import { adultGateButton } from '../ui/adult/gate';
 import { openBestBackend } from '../save/backends';
 import { SaveManager } from '../save/SaveManager';
 import { requestPersistentStorage } from '../save/persist';
 import type { DeviceSettings, Profile } from '../save/schema';
 import { audio } from '../core/audio';
-import { narration } from '../core/narration';
+import { loadVoiceIndex, voices } from './voices';
 import { motion } from '../core/motion';
 import { registerAllArt } from '../art';
 import { createGame, startScene, activeSceneKey } from '../game/createGame';
@@ -48,7 +48,7 @@ export class App {
     const save = new SaveManager(backend);
     await save.init();
     audio.install();
-    narration.init();
+    void loadVoiceIndex();
     const hud = new Hud(layers.hud, {
       home: () => void this.homePressed(),
       finish: () => void this.finish(),
@@ -57,7 +57,6 @@ export class App {
       help: () => this.activeScene()?.hint(),
     });
     const captions = new Captions(layers.captions);
-    captions.onReplay = () => replayInstruction();
     const choices = new Choices(layers.choices);
     const game = createGame(document.getElementById('game-root')!);
     Object.assign(services, {
@@ -83,7 +82,6 @@ export class App {
       if (document.visibilityState === 'hidden') {
         void save.flush();
         this.timer?.pause();
-        narration.cancel();
       } else if (!this.paused) this.timer?.resume();
     });
     window.addEventListener('pagehide', () => void save.flush());
@@ -123,7 +121,7 @@ export class App {
     motion.set(d.motion);
     document.documentElement.classList.toggle('motion-full', d.motion === 'full');
     services.captions.showText = d.captions;
-    narration.enabled = d.narration === 'auto';
+    voices.enabled = d.narration === 'auto';
   }
 
   private activeScene(): WWScene | null {
@@ -176,7 +174,7 @@ export class App {
       return;
     }
     audio.startMusic('hub');
-    profileScreen(services.layers.screens, profiles, (id) => void this.pickProfile(id), () => this.openAdult());
+    profileScreen(services.layers.screens, profiles, (id) => void this.pickProfile(id), () => this.openAdult(), (text) => void say('narrator', text));
   }
 
   private async pickProfile(id: string): Promise<void> {
@@ -237,6 +235,7 @@ export class App {
     const key = activeSceneKey(services.game);
     if (key === 'map') return;
     this.activeScenePause(true);
+    void say('narrator', 'Keep playing, or go to the map?');
     const pick = await iconDialog(services.layers.overlay, {
       buttons: [
         { id: 'stay', icon: 'play', label: 'Keep playing', kind: 'go' },
@@ -244,6 +243,7 @@ export class App {
       ],
       safeId: 'stay',
     });
+    stopSpeech();
     this.activeScenePause(false);
     if (pick === 'map') {
       await services.save.flush();
@@ -270,7 +270,6 @@ export class App {
     this.paused = true;
     this.activeScenePause(true);
     audio.setPaused(true);
-    narration.cancel();
     this.timer?.pause();
     void services.save.flush();
     const muted = services.save.device.muted;
@@ -309,13 +308,8 @@ export class App {
             },
           },
         }),
-        h('button', {
-          class: 'btn small',
-          type: 'button',
-          'aria-label': 'Grown-ups',
-          html: icon('gear'),
-          on: { click: () => void askGate().then((ok) => ok && this.openAdult()) },
-        }),
+        // press and hold, like on the "Who's playing?" screen, so a stray tap can't open it
+        adultGateButton(() => this.openAdult()),
       ),
     );
     const overlay = h('div', { class: 'overlay', on: { keydown: (e) => (e as KeyboardEvent).key === 'Escape' && this.resume() } }, panel);
@@ -344,7 +338,8 @@ export class App {
 
   // ---------------------------------------------------------------- finish
 
-  async finish(): Promise<void> {
+  /** Save and finish. A reminder that has run out (forced) offers no way back; a tap on the moon does. */
+  async finish(forced = false): Promise<void> {
     if (!services.profileId) return;
     const key = activeSceneKey(services.game);
     if (key) services.game.scene.pause(key);
@@ -361,12 +356,28 @@ export class App {
     this.endSession();
     const made = services.session.made;
     this.clearScreens();
-    closingScreen(services.layers.screens, made, portraitFor('avatar', 'happy'), () => {
-      this.clearScreens();
-      void this.stopGame();
-      services.profileId = null;
-      restScreen(services.layers.screens, () => this.showStart());
-    });
+    const keepPlaying =
+      forced || !key
+        ? null
+        : () => {
+            // changed their mind: back to the same place (every scene resumes from its save)
+            this.clearScreens();
+            this.startSession(currentProfile());
+            void this.goTo(key);
+          };
+    closingScreen(
+      services.layers.screens,
+      made,
+      portraitFor('avatar', 'happy'),
+      () => {
+        this.clearScreens();
+        void this.stopGame();
+        services.profileId = null;
+        restScreen(services.layers.screens, () => this.showStart());
+        void say('narrator', 'All saved. Night night!');
+      },
+      keepPlaying,
+    );
     void say('narrator', made.length ? 'Look what you made today! It’s all saved.' : 'Good playing today. It’s all saved.');
   }
 
@@ -406,7 +417,8 @@ export class App {
       toast(services.layers.toast, 'turn', 'A few more minutes', 3000);
       return;
     }
-    void this.finish();
+    // finishing from a reminder sticks: no "keep playing" on the closing screen
+    void this.finish(true);
   }
 
   // ---------------------------------------------------------------- grown-ups

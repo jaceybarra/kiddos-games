@@ -137,5 +137,5 @@ export const FIZZ_RIG: RigDef = {
   height: 270,
   width: 120,
   gait: 'hop',
-  voice: { pitch: 620, spread: 240, len: 0.055, wave: 'triangle', ttsPitch: 1.6, ttsRate: 1.15 },
+  voice: { pitch: 620, spread: 240, len: 0.055, wave: 'triangle' },
 };

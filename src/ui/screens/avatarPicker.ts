@@ -19,6 +19,16 @@ export function avatarPicker(layer: HTMLElement, start: AvatarLook, onDone: (loo
     preview.innerHTML = rigSvg(avatarRig(species, color), { expression: expr, hat: start.hat });
     preview.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.08) translateY(-10px)' }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
   };
+  // talk the child through it: animal, then colour, then the green tick
+  let pickedAnimal = false;
+  let pickedColour = false;
+  let nudge: ReturnType<typeof setTimeout> | null = null;
+  const readyNow = () => {
+    go.classList.add('glow');
+    if (nudge) clearTimeout(nudge);
+    nudge = setTimeout(() => el.isConnected && onSpeak('Tap the big green tick when you’re ready!'), 9000);
+  };
+  const SOUND: Record<AvatarSpecies, Parameters<typeof audio.play>[0]> = { fox: 'chirp', hedgehog: 'rustle', mouse: 'squeak', frog: 'croak' };
   const speciesTiles = AVATAR_SPECIES.map((s) =>
     h(
       'button',
@@ -31,14 +41,18 @@ export function avatarPicker(layer: HTMLElement, start: AvatarLook, onDone: (loo
         on: {
           click: () => {
             species = s.id;
-            audio.play('pop', { pitch: 0.9 + AVATAR_SPECIES.indexOf(s) * 0.1 });
+            audio.play(SOUND[s.id]);
+            if (!pickedAnimal) {
+              pickedAnimal = true;
+              onSpeak('Now tap a colour!');
+            } else if (pickedColour) readyNow();
             speciesTiles.forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.species === species)));
             colorTiles.forEach((t) => (t.innerHTML = rigSvg(avatarRig(species, t.dataset.color!), { crop: 'head' })));
             draw('excited');
           },
         },
       },
-      h('span', { html: rigSvg(avatarRig(s.id, color), { crop: 'full' }), style: 'width:120px;height:120px;display:block' }),
+      h('span', { html: rigSvg(avatarRig(s.id, color), { crop: 'head' }), style: 'width:120px;height:120px;display:block' }),
     ),
   );
   const colorTiles = CHOICE_COLORS.map((c) =>
@@ -57,9 +71,14 @@ export function avatarPicker(layer: HTMLElement, start: AvatarLook, onDone: (loo
           colorTiles.forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.color === color)));
           speciesTiles.forEach((t) => {
             const sp = t.dataset.species as AvatarSpecies;
-            (t.firstElementChild as HTMLElement).innerHTML = rigSvg(avatarRig(sp, color), { crop: 'full' });
+            (t.firstElementChild as HTMLElement).innerHTML = rigSvg(avatarRig(sp, color), { crop: 'head' });
           });
           draw('excited');
+          if (!pickedColour) {
+            pickedColour = true;
+            onSpeak('Tap the big green tick when you’re ready!');
+          }
+          readyNow();
         },
       },
     }),
@@ -67,19 +86,20 @@ export function avatarPicker(layer: HTMLElement, start: AvatarLook, onDone: (loo
   const go = h(
     'button',
     {
-      class: 'btn primary',
+      class: 'btn go',
       type: 'button',
       'aria-label': 'Ready!',
       'data-avatar-done': true,
-      style: 'min-width:140px;min-height:84px',
+      style: 'min-width:150px;min-height:96px',
       on: {
         click: () => {
+          if (nudge) clearTimeout(nudge);
           audio.play('success');
           onDone({ species, color, hat: start.hat });
         },
       },
     },
-    h('span', { html: icon('check') }),
+    h('span', { html: icon('yes', 72) }),
   );
   const el = h(
     'div',
@@ -89,7 +109,7 @@ export function avatarPicker(layer: HTMLElement, start: AvatarLook, onDone: (loo
   );
   layer.append(el);
   draw();
-  setTimeout(() => onSpeak('Pick your explorer, then a colour!'), 400);
+  setTimeout(() => onSpeak('Who do you want to be? Tap an animal!'), 400);
   speciesTiles[0].focus();
   return el;
 }

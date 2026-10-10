@@ -10,6 +10,7 @@ import { MAP_PIECES, MAP_PLACES, MAP_ICON, type MapPlace } from '../../art/scene
 import { avatarRig, rigArtKeys } from '../../art/cast';
 import { HATS } from '../../art/cast/hats';
 import { PLACES, placeState, type PlaceInfo } from '../../content/places';
+import { MAP_INVITE, MAP_LINES } from '../../content/mapLines';
 import { services, currentProfile, updateProfile } from '../../app/services';
 import { say, instruct, stopSpeech } from '../../app/speech';
 import { audio } from '../../core/audio';
@@ -51,6 +52,11 @@ export default class MapScene extends WWScene {
       const img = addImage(this, pos.x, pos.y + 60, MAP_ICON[place.id]).setDepth(10 + pos.y / 100);
       if (state !== 'open') img.setAlpha(state === 'later' ? 0.55 : 0.8);
       if (state === 'building') addImage(this, pos.x + 70, pos.y + 70, 'map.building').setDepth(11 + pos.y / 100).setScale(0.8);
+      if (state === 'later') {
+        // asleep until its turn in the story: a little "zzz" says "not yet" before anyone taps it
+        const zzz = addImage(this, pos.x + 80, pos.y - 70, 'emote.zzz').setDepth(21).setScale(1.1);
+        if (!motion.reduced) this.tweens.add({ targets: zzz, y: zzz.y - 10, alpha: 0.6, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      }
       if (state === 'open' && !motion.reduced) this.tweens.add({ targets: img, y: img.y - 6, duration: 1400 + (pos.x % 400), yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       const q = prof.progress.quests[place.id];
       if (q?.status === 'done') addImage(this, pos.x - 70, pos.y - 110, 'map.star').setDepth(20);
@@ -80,7 +86,7 @@ export default class MapScene extends WWScene {
       this.tray?.remove();
       stopSpeech();
     });
-    this.time.delayedCall(500, () => void instruct('narrator', 'Where shall we go? Tap a place on the map.', () => this.demo()));
+    this.time.delayedCall(500, () => this.invite());
   }
 
   private buildTray(prof: ReturnType<typeof currentProfile>): void {
@@ -101,7 +107,7 @@ export default class MapScene extends WWScene {
             style: `width:72px;min-height:72px;padding:3px;border-radius:20px;${st !== 'open' ? 'opacity:.55' : ''}`,
             on: { click: () => void this.travel(pl) },
           },
-          h('span', { html: pieceSvg(MAP_ICON[pl.id]), style: 'width:58px;height:58px;display:block' }),
+          h('span', { class: 'jump-art', html: pieceSvg(MAP_ICON[pl.id]) }),
         );
       }),
     );
@@ -115,16 +121,13 @@ export default class MapScene extends WWScene {
     const pos = MAP_PLACES[place.id];
     const mark = this.marks.get(place.id);
     if (mark) this.tweens.add({ targets: mark, scale: 1.12, duration: 120, yoyo: true });
-    if (state === 'building') {
-      audio.play('bonk', { pitch: 1.4 });
-      this.token.emote('question', 1600);
-      void say('narrator', `Rowan is still building ${place.label}. It isn’t ready yet.`);
-      return;
-    }
-    if (state === 'later') {
-      audio.play('bonk', { pitch: 1.2 });
-      this.token.emote('zzz', 1600);
-      void say('narrator', 'This path opens later in the story.');
+    if (state === 'building' || state === 'later') {
+      // not yet: say so, then point at where to go instead
+      audio.play('bonk', { pitch: state === 'later' ? 1.2 : 1.4 });
+      this.travelling = true;
+      await say('narrator', (state === 'later' ? MAP_LINES.asleep : MAP_LINES.building).text);
+      this.travelling = false;
+      this.invite();
       return;
     }
     this.travelling = true;
@@ -140,13 +143,29 @@ export default class MapScene extends WWScene {
     services.nav.goTo(place.scene);
   }
 
-  private demo(): void {
+  /** The next Lantern Trail stop (open, not finished yet), or null once the story is done. */
+  private nextPlace(): PlaceInfo | null {
     const prof = currentProfile();
-    const next =
-      PLACES.find((p) => p.requires !== undefined || p.id === 'windmill-kite' ? placeState(prof, p) === 'open' && prof.progress.quests[p.id]?.status !== 'done' : false) ??
-      PLACES.find((p) => p.id === 'clubhouse')!;
+    return PLACES.find((p) => (p.requires !== undefined || p.id === 'windmill-kite') && placeState(prof, p) === 'open' && prof.progress.quests[p.id]?.status !== 'done') ?? null;
+  }
+
+  /** Name the next place (or invite a free choice) and show where to tap. */
+  private invite(): void {
+    const next = this.nextPlace();
+    const line = (next && MAP_INVITE[next.id]) || MAP_LINES.choose;
+    void instruct(line.speaker, line.text, () => this.demo());
+    if (next) this.demo();
+  }
+
+  private demo(): void {
+    const next = this.nextPlace() ?? PLACES.find((p) => p.id === 'clubhouse')!;
     const pos = MAP_PLACES[next.id];
     void this.hand.tapAt(pos.x, pos.y, 2);
+  }
+
+  protected override beaconTarget(): string | null {
+    const next = this.nextPlace();
+    return !this.travelling && next ? `place-${next.id}` : null;
   }
 
   override hint(): void {
