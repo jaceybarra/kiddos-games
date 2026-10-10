@@ -65,6 +65,10 @@ The game runs on your computer, and the iPad opens it over your home Wi-Fi.
    **Add**.
 5. Open Wonderwood from the new Home Screen icon and do the grown-up setup there.
 
+If `npm run play` says "Port 4173 is already in use", or the iPad shows "Blocked request", an older copy
+is still running. Quit Terminal completely (Cmd+Q on a Mac, choosing Terminate if asked), then start
+again.
+
 Each time they play, the computer must be on, awake, and running `npm run play`, and the iPad must be on
 the same Wi-Fi. While it runs, any device on that Wi-Fi can open the game, so only do this at home.
 
