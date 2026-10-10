@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 dist/
 dist-e2e/
 coverage/
@@ -11,3 +11,4 @@ playwright-report/
 dist-audit/
 dist-dev2/
 .claude/worktrees/
+dist-kid/
