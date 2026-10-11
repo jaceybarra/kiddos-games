@@ -23,7 +23,8 @@ import {
   validStory,
   type StageEvent,
 } from '../../src/content/stage/stageModel';
-import { STAGE_LINES, STAGE_GUIDE } from '../../src/content/stage/stageLines';
+import { ASK_AGAIN, ASK_REMOVE, ASK_THROW, ENDING_CHOICES, STAGE_LINES, STAGE_GUIDE, STAGE_TALK, TAP_PUPPET, YOUR_TURN } from '../../src/content/stage/stageLines';
+import { SIMPLE_PROPS, SIMPLE_TEMPLATES, pristine, showScenes, starActor } from '../../src/content/stage/stageModel';
 import { hasIcon } from '../../src/ui/icons';
 
 describe('Story Stage catalogue', () => {
@@ -172,5 +173,92 @@ describe('Story Stage scene continuity', () => {
     // once edited (no longer fresh) it keeps its own cast
     s.scenes[1] = { ...s.scenes[1], fresh: undefined, actors: [] };
     expect(refreshScene(s, 1).scenes[1].actors).toEqual([]);
+  });
+});
+
+describe('Story Stage guidance (said by Rowan, for children who can’t read)', () => {
+  const all = [...Object.values(STAGE_TALK), ...Object.values(YOUR_TURN), ...Object.values(TAP_PUPPET)];
+
+  it('every line is a Line said by Rowan, short enough to follow (about 12 words)', () => {
+    for (const l of all) {
+      expect(l.speaker, l.text).toBe('rowan');
+      expect(l.text.split(/\s+/).length, l.text).toBeLessThanOrEqual(14);
+    }
+    // the plain-text view used by the content checks covers every line
+    expect(Object.keys(STAGE_GUIDE)).toHaveLength(all.length);
+  });
+
+  it('"tap the …" always names something you can see: a colour, a picture, or where it is', () => {
+    const seen = /tap the (big red button|green play button|purple button|orange puppet button|heart|hand|yellow star|square|next picture at the bottom|plus at the bottom)/i;
+    for (const l of all) for (const m of l.text.matchAll(/tap the [^,.!?]+/gi)) expect(m[0], l.text).toMatch(seen);
+  });
+
+  it('every puppet has a "your turn" line and an "action, tap …" line that names them', () => {
+    for (const p of PUPPET_REFS) {
+      expect(YOUR_TURN[p].text).toMatch(/^Your turn! Tap the big red button/);
+      expect(TAP_PUPPET[p].text).toMatch(/^Action!/);
+    }
+    expect(YOUR_TURN.pip.text).toBe('Your turn! Tap the big red button, then tap Pip to make Pip wave!');
+  });
+
+  it('no stage words a four-year-old wouldn’t know', () => {
+    for (const l of all) expect(l.text, l.text).not.toMatch(/\b(backdrop|prop|props|scene|template|record|recording|intention|alternate)\b/i);
+  });
+
+  it('questions come with two picture choices, each with an icon and a label to read aloud', () => {
+    for (const set of [ASK_AGAIN, ASK_THROW, ASK_REMOVE, ENDING_CHOICES]) {
+      expect(set).toHaveLength(2);
+      for (const c of set) {
+        expect(hasIcon(c.icon), c.label).toBe(true);
+        expect(c.label.length).toBeGreaterThan(0);
+      }
+    }
+    // the safe answer comes first
+    expect(ASK_AGAIN[0].id).toBe('keep');
+    expect(ASK_THROW[0].id).toBe('keep');
+    expect(ASK_REMOVE[0].id).toBe('keep');
+  });
+});
+
+describe('Story Stage for "More help"', () => {
+  it('fewer story starts, each (but the empty stage) with a friend to tap first', () => {
+    expect(SIMPLE_TEMPLATES.length).toBeLessThanOrEqual(3);
+    expect(SIMPLE_TEMPLATES).toContain('blank');
+    for (const t of SIMPLE_TEMPLATES) {
+      if (t === 'blank') continue;
+      expect(starActor(templateOpening(t))?.kind, t).toBe('puppet');
+    }
+  });
+
+  it('fewer, familiar things in the props box', () => {
+    expect(SIMPLE_PROPS.length).toBeLessThanOrEqual(8);
+    for (const p of SIMPLE_PROPS) expect(PROPS).toContain(p);
+  });
+});
+
+describe('Story Stage shows', () => {
+  it('the whole show skips pictures nobody has touched (no watching a still stage)', () => {
+    const s = newStory('join-game', 'simple');
+    expect(showScenes(s)).toHaveLength(1);
+    s.scenes[1] = { ...s.scenes[1], fresh: undefined, events: [{ t: 10, a: 'act', id: 'a1', act: 'wave' }] };
+    expect(showScenes(s)).toHaveLength(2);
+    expect(showOrder(s, null)).toHaveLength(2);
+  });
+
+  it('the first friend to tap is the first puppet (or the first thing when there are no puppets)', () => {
+    expect(starActor(templateOpening('join-game'))?.ref).toBe('pip');
+    expect(starActor(templateOpening('two-explorers'))?.ref).toBe('fizz');
+    const props = addActor(emptyScene(), 'prop', 'ball', 300, 600).scene;
+    expect(starActor(props)?.ref).toBe('ball');
+    expect(starActor(emptyScene())).toBeNull();
+  });
+
+  it('a story start nobody has changed is safe to swap for a new one; anything made is not', () => {
+    const s = newStory('invention', 'simple');
+    expect(pristine(s)).toBe(true);
+    expect(pristine(addScene(newStory('invention', 'full'), 0))).toBe(true);
+    const made = { ...s, scenes: [s.scenes[0], { ...s.scenes[1], fresh: undefined, events: [{ t: 5, a: 'sfx' as const, sfx: 'bell' as const }] }, s.scenes[2]] };
+    expect(pristine(made)).toBe(false);
+    expect(pristine({ ...s, scenes: [{ ...s.scenes[0], backdrop: 'pond' as const }, ...s.scenes.slice(1)] })).toBe(false);
   });
 });

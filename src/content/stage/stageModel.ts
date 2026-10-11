@@ -20,6 +20,8 @@ export const PUPPET_REFS: PuppetRef[] = ['pip', 'moss', 'fizz', 'luma', 'rowan',
 
 export type PropId = 'invitation' | 'cake' | 'ball' | 'crown' | 'chest' | 'umbrella' | 'invention' | 'drum' | 'lantern' | 'map' | 'boat' | 'telescope' | 'kite' | 'flower';
 export const PROPS: PropId[] = ['invitation', 'cake', 'ball', 'crown', 'chest', 'umbrella', 'invention', 'drum', 'lantern', 'map', 'boat', 'telescope', 'kite', 'flower'];
+/** "More help" sees fewer, more familiar things at once. */
+export const SIMPLE_PROPS: PropId[] = ['ball', 'cake', 'crown', 'chest', 'umbrella', 'drum', 'kite', 'flower'];
 /** Props that switch on/off when used (and stay that way); the rest do a little animation. */
 export const PROP_TOGGLES: PropId[] = ['invitation', 'cake', 'chest', 'umbrella', 'lantern', 'map', 'telescope', 'flower'];
 
@@ -84,6 +86,8 @@ export interface StageScene {
 
 export type TemplateId = 'wrong-house' | 'two-explorers' | 'invention' | 'join-game' | 'blank';
 export const TEMPLATES: TemplateId[] = ['wrong-house', 'two-explorers', 'invention', 'join-game', 'blank'];
+/** "More help" picks from fewer story starts (each with a friend to tap first). */
+export const SIMPLE_TEMPLATES: TemplateId[] = ['join-game', 'invention', 'blank'];
 
 export interface Story {
   v: 1;
@@ -290,7 +294,24 @@ export function schedule(sc: StageScene): StageEvent[] {
 /** The whole show, in order: scenes, then the chosen ending (if any). */
 export function showOrder(story: Story, ending: number | null): StageScene[] {
   const tail = ending !== null && story.endings[ending] ? [story.endings[ending]] : [];
-  return [...story.scenes, ...tail];
+  return [...showScenes(story), ...tail];
+}
+
+/** The scenes a show plays: an untouched picture (nothing acted, nothing changed) is skipped, so nobody watches a still stage. */
+export function showScenes(story: Story): StageScene[] {
+  return story.scenes.filter((s, i) => i === 0 || s.events.length > 0 || !s.fresh);
+}
+
+/** The friend to tap first in a scene: the first puppet (or the first thing, if there are no puppets). */
+export function starActor(sc: StageScene): StageActor | null {
+  return sc.actors.find((a) => a.kind === 'puppet') ?? sc.actors[0] ?? null;
+}
+
+/** Nothing has been made yet: just the story start as it came (safe to replace without asking). */
+export function pristine(story: Story): boolean {
+  if (story.endings.length || story.title) return false;
+  if (JSON.stringify(story.scenes[0]) !== JSON.stringify(templateOpening(story.template))) return false;
+  return story.scenes.slice(1).every((s) => s.fresh && !s.events.length);
 }
 
 /** Switch between the simple three-scene strip and the full stage, keeping as much as fits. */
