@@ -185,6 +185,23 @@ const hatZone = piece('tk.hatzone', [0, 0, 340, 250], rrect(4, 4, 332, 242, 20, 
 const handleRot = piece('tk.h.rotate', [-40, -40, 80, 80], circle(0, 0, 34, P.paper, 5) + path('M-16 8 A18 18 0 1 1 10 16', 'none', 0, `stroke="${P.ink}" stroke-width="6" stroke-linecap="round"`) + path('M2 22 L16 18 L12 4 Z', P.ink));
 const handleDel = piece('tk.h.delete', [-40, -40, 80, 80], circle(0, 0, 34, P.paper, 5) + line('M-13 -13 L13 13 M13 -13 L-13 13', 7));
 const handleFlip = piece('tk.h.flip', [-40, -40, 80, 80], circle(0, 0, 34, P.paper, 5) + path('M-16 -6 L10 -6 L10 -14 L20 0 L10 14 L10 6 L-16 6 Z', P.sea, 3));
+/** The goal star: "get it here". */
+const starPts = (r1: number, r2: number) =>
+  Array.from({ length: 10 }, (_, i) => {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const r = i % 2 ? r2 : r1;
+    return `${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`;
+  }).join(' L');
+const goalStar = piece('tk.star', [-64, -64, 128, 128], path(`M${starPts(58, 26)} Z`, P.lantern, 6) + path(`M${starPts(40, 18)} Z`, P.glow, 0) + circle(-12, -4, 4.5, P.ink) + circle(12, -4, 4.5, P.ink) + line('M-8 10 Q0 17 8 10', 3.5));
+/** A paper lantern: shown by each friend's mailbox once their parcel arrives. */
+const lanternGift = piece(
+  'tk.lantern',
+  [-34, -60, 68, 96],
+  line('M0 -58 L0 -44', 3, P.inkSoft) + rrect(-14, -46, 28, 8, 3, P.woodDark, 3) + ellipse(0, -8, 28, 34, P.lantern, 4) + ellipse(0, -8, 16, 30, 'none', 0, `stroke="${P.berry}" stroke-width="3" opacity="0.6"`) + ellipse(0, -8, 14, 18, P.glow, 0, 'opacity="0.8"') + rrect(-14, 22, 28, 8, 3, P.woodDark, 3),
+);
+/** Music Machine: one bubble per note heard (empty, then lit). */
+const noteOff = piece('tk.note', [-44, -44, 88, 88], circle(0, 0, 38, P.paper, 5, 'fill-opacity="0.7" stroke-dasharray="10 8"') + path('M-6 14 L-6 -18 L14 -22 L14 8', 'none', 0, `stroke="${P.inkSoft}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"`) + circle(-12, 14, 7, P.inkSoft, 0, 'opacity="0.45"') + circle(8, 8, 7, P.inkSoft, 0, 'opacity="0.45"'));
+const noteOn = piece('tk.note.on', [-44, -44, 88, 88], circle(0, 0, 38, P.sun, 5) + path('M-6 14 L-6 -18 L14 -22 L14 8', 'none', 0, `stroke="${P.ink}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"`) + circle(-12, 14, 7, P.ink) + circle(8, 8, 7, P.ink) + shine(-14, -18, 12, 6, -30, 0.45));
 const ghostRing = piece('tk.ghost', [-70, -70, 140, 140], circle(0, 0, 60, 'none', 0, `stroke="#fff" stroke-width="6" stroke-dasharray="12 10" opacity="0.9"`));
 const cards: ArtPiece[] = [
   piece('tk.card.mail', [-80, -70, 160, 140], path('M-60 10 Q-66 -14 -42 -16 Q-36 -40 -8 -36 Q14 -50 36 -34 Q64 -36 64 -8 Q76 0 66 10 Z', P.cloud, 4) + rrect(-18, 20, 36, 32, 5, '#d9b27e', 3.5) + line('M0 20 L0 52 M-18 36 L18 36', 3, P.berry)),
@@ -236,6 +253,10 @@ export const TINKER_PIECES: ArtPiece[] = [
   handleDel,
   handleFlip,
   ghostRing,
+  goalStar,
+  lanternGift,
+  noteOff,
+  noteOn,
   ...cards,
 ];
 

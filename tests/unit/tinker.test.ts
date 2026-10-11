@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CHALLENGES, CHALLENGE_ORDER, layoutFor, dedupeNotes, HAT_ZONE, NOTES } from '../../src/content/tinker/challenges';
+import { CHALLENGES, CHALLENGE_ORDER, layoutFor, dedupeNotes, HAT_ZONE, MAIL_PLANS, MAIL_ROUNDS, NOTES, type ChallengeOptions } from '../../src/content/tinker/challenges';
 import { Sim, simulate, SIM, type Part } from '../../src/content/tinker/sim';
+import { TINKER_LINES } from '../../src/content/tinker/tinkerLines';
 
 describe('Tinker Grove toy physics', () => {
   it('is deterministic: the same build always gives the same result', () => {
@@ -53,7 +54,7 @@ describe('Tinker Grove challenges', () => {
     expect(new Set(kinds).size).toBeGreaterThanOrEqual(3);
   });
 
-  it('Cloud Mail lets the child choose who gets the parcel (different builds reach different mailboxes)', () => {
+  it('Cloud Mail: different builds reach different mailboxes', () => {
     const targets = CHALLENGES['cloud-mail'].references.map((r) => r.options?.pad);
     expect(new Set(targets).size).toBeGreaterThanOrEqual(2);
   });
@@ -88,6 +89,91 @@ describe('Tinker Grove challenges', () => {
       { t: 1, type: 'chime', note: 0, partId: 'a' },
       { t: 2, type: 'chime', note: 2, partId: 'b' },
     ])).toEqual([0, 2]);
+  });
+});
+
+describe('Tinker Grove guided builds (the dotted spots)', () => {
+  const run = (id: (typeof CHALLENGE_ORDER)[number], parts: Part[], o: ChallengeOptions, preset: 'more-help' | 'more-exploring') => {
+    const c = CHALLENGES[id];
+    const r = simulate(layoutFor(id, parts, o));
+    return c.evaluate(r.events, parts, o, preset);
+  };
+
+  for (const id of CHALLENGE_ORDER) {
+    const c = CHALLENGES[id];
+    it(`${id}: copying the dotted spots works for both children`, () => {
+      for (const preset of ['more-help', 'more-exploring'] as const) {
+        const o = c.defaultOptions(preset);
+        if (preset === 'more-help' && id === 'snail-express') o.hatZone = false;
+        const out = run(id, c.plan(o), o, preset);
+        expect(out.status, `${preset}: ${out.line}`).toBe('success');
+      }
+    });
+    it(`${id}: every dotted spot uses a part the More help tray has`, () => {
+      for (const p of c.plan(c.defaultOptions('more-help'))) expect(c.palette['more-help'], p.kind).toContain(p.kind);
+    });
+    it(`${id}: the goal star and the opening line exist`, () => {
+      const o = c.defaultOptions('more-help');
+      expect(TINKER_LINES[c.intro(o, 'more-help')]).toBeTruthy();
+      if (id !== 'music-machine') expect(c.goal(o)).toBeTruthy();
+    });
+  }
+
+  it('Cloud Mail: each friend’s plan builds on the last one (Pip, then Rowan, then Fizz)', () => {
+    const c = CHALLENGES['cloud-mail'];
+    // the parts left from the round before, moved or added to as the next plan shows
+    let parts: Part[] = [];
+    for (const pad of MAIL_ROUNDS) {
+      const plan = MAIL_PLANS[pad];
+      const next = plan.map((s) => ({ ...s }));
+      // nothing left over from earlier rounds gets in the way: every earlier part is reused by a dotted spot
+      expect(parts.length).toBeLessThanOrEqual(next.length);
+      parts = next;
+      for (const preset of ['more-help', 'more-exploring'] as const) {
+        const out = run('cloud-mail', parts, { ...c.defaultOptions(preset), pad }, preset);
+        expect(out, `${pad} ${preset}`).toMatchObject({ status: 'success' });
+      }
+    }
+  });
+
+  it('Cloud Mail: the last friend’s build sends a parcel for an earlier friend too far, and the tip says so', () => {
+    const c = CHALLENGES['cloud-mail'];
+    const o = { ...c.defaultOptions('more-help'), pad: 'rowan' as const };
+    const out = run('cloud-mail', MAIL_PLANS.pip, o, 'more-help');
+    expect(out).toMatchObject({ status: 'partial', line: 'luma.mailAtPip' });
+    expect(c.tip(out, o, 'more-help')).toMatchObject({ line: 'moss.tipHigher', kind: 'fan' });
+  });
+
+  it('every try that does not work gets one suggestion, and it names a part from the tray', () => {
+    for (const id of CHALLENGE_ORDER) {
+      const c = CHALLENGES[id];
+      for (const preset of ['more-help', 'more-exploring'] as const) {
+        const o = c.defaultOptions(preset);
+        const out = run(id, [], o, preset);
+        expect(out.status).not.toBe('success');
+        const tip = c.tip(out, o, preset);
+        expect(tip, `${id} ${preset} ${out.line}`).toBeTruthy();
+        expect(TINKER_LINES[tip!.line]).toBeTruthy();
+        if (tip!.kind) expect(c.palette[preset], `${id} ${preset}`).toContain(tip!.kind);
+      }
+    }
+  });
+
+  it('every outcome line a challenge can give is a real line', () => {
+    const lines = new Set(Object.keys(TINKER_LINES));
+    const src = Object.values(CHALLENGES).map((c) => c.evaluate.toString() + c.tip.toString()).join('\n');
+    const found = [...src.matchAll(/['"`]((?:luma|moss|pip|fizz|rowan)\.[A-Za-z]+)['"`]/g)].map((m) => m[1]);
+    expect(found.length).toBeGreaterThan(20);
+    for (const id of found) expect(lines.has(id), id).toBe(true);
+  });
+
+  it('every Tinker line is short enough to hear in one go (12 words at most)', () => {
+    for (const [id, l] of Object.entries(TINKER_LINES)) expect(l.text.split(/\s+/).length, id).toBeLessThanOrEqual(12);
+  });
+
+  it('a stalled roll ends the try soon, so nobody waits for a crawl', () => {
+    const r = simulate(layoutFor('snail-express', [], CHALLENGES['snail-express'].defaultOptions('more-help')));
+    expect(r.time).toBeLessThan(8);
   });
 });
 

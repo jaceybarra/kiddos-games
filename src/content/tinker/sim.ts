@@ -85,6 +85,9 @@ export interface Body {
   /** time spent slow inside a goal/pad */
   restTime: number;
   touching: boolean;
+  /** time spent slowing down along the ground (a dying roll that won't get anywhere) */
+  slowTime: number;
+  lastSpeed: number;
 }
 
 export type SimEvent =
@@ -103,6 +106,10 @@ export const SIM = {
   maxParts: 40,
   maxTime: 14,
   maxSpeed: 2400,
+  /** below this speed (px/s) a body counts as stopped */
+  crawl: 24,
+  /** a body slowing down along the ground below this speed (px/s) for 1.5 s has stopped */
+  dying: 90,
 };
 
 /** friction = rolling slow-down per second on wood (toy value) */
@@ -270,7 +277,7 @@ export class Sim {
     );
     for (const b of layout.bodies.slice(0, SIM.maxBodies)) {
       const props = BODY_PROPS[b.kind];
-      this.bodies.push({ kind: b.kind, x: b.x, y: b.y, vx: b.vx ?? 0, vy: b.vy ?? 0, ...props, angle: 0, alive: true, maxSpeed: 0, restTime: 0, touching: false });
+      this.bodies.push({ kind: b.kind, x: b.x, y: b.y, vx: b.vx ?? 0, vy: b.vy ?? 0, ...props, angle: 0, alive: true, maxSpeed: 0, restTime: 0, touching: false, slowTime: 0, lastSpeed: 0 });
     }
   }
 
@@ -324,6 +331,9 @@ export class Sim {
       }
       b.angle += (b.vx * dt) / b.r;
       const speed = Math.hypot(b.vx, b.vy);
+      // rolling slowly along the ground and still slowing down: it's stopping
+      b.slowTime = b.touching && speed < SIM.dying && speed <= b.lastSpeed + 0.5 ? b.slowTime + dt : 0;
+      b.lastSpeed = speed;
       if (b.touching || this.t > 0.5) b.maxSpeed = Math.max(b.maxSpeed, b.touching ? speed : b.maxSpeed);
       // zones
       for (const z of this.layout.zones) {
@@ -344,9 +354,11 @@ export class Sim {
         b.alive = false;
         this.events.push({ t: this.t, type: 'lost', body: bi });
       }
-      if (b.alive && speed > 6) moving = true;
+      // a crawl this slow isn't going anywhere: don't make children wait for it
+      if (b.alive && speed > SIM.crawl) moving = true;
     });
     if (!this.bodies.some((b) => b.alive) || this.t >= SIM.maxTime) this.done = true;
+    if (this.bodies.every((b) => !b.alive || b.slowTime > 1.5)) this.done = true;
     // everything settled for a while → done
     if (!moving && this.t > 1.5) this.settle += SIM.dt;
     else this.settle = 0;
