@@ -57,14 +57,21 @@ export function groundY(x: number): number {
 export const L = {
   perchX: 300,
   gliderX: 380,
-  landingX: 1080,
+  /** where the avatar arrives after the glider: next to Pip, with the stuck kite in view */
+  landingX: 1250,
   dandelions: [880, 1010, 1180],
   pondX: 1320,
   sockLineX: 820,
-  pipX: 1590,
+  /** Pip's spot by the launcher (left of the red pump, so it never hides it) */
+  pipX: 1480,
+  /** where Pip steps aside to while the child aims */
+  pipAsideX: 1300,
   launcherX: 1700,
-  windsockX: 1520,
-  nestStartX: 1830,
+  /** where the avatar stands to aim: left of the red pump, so the pump stays in view */
+  aimStandX: 1470,
+  /** next to the launcher, so the streaming sock shows the wind while aiming */
+  windsockX: 2060,
+  nestStartX: 1880,
   spoolX: 2450,
   mushroomX: 2700,
   windmillX: 3000,
@@ -146,11 +153,31 @@ export function simulateLaunch(deg: number, wind: WindLevel | 'none', kite = KIT
   return { points, hit: false, end: { x, y }, endReason: 'sky' };
 }
 
-/** Angles offered by preset. Order is fixed (low → high) so positions are learnable. */
+/** Angles offered by preset. Order is fixed (low → high) so positions are learnable.
+ * More help gets two clearly different arrows (one right, one far too high). */
 export const ANGLES = {
-  'more-help': [46, 62],
+  'more-help': [46, 74],
   'more-exploring': [28, 46, 62, 74],
 } as const;
+
+/**
+ * Which way a missed shot was off, so Pip can say what to change:
+ * a bonk on the windmill or a pass below the kite is "too low", anything else "too high".
+ */
+export function missKind(res: ArcResult, kite = KITE_HOME): 'high' | 'low' {
+  if (res.endReason === 'windmill') return 'low';
+  if (res.endReason === 'sky') return 'high';
+  let best = res.points[0];
+  let bd = Infinity;
+  for (const p of res.points) {
+    const d = Math.hypot(p.x - kite.x, p.y - kite.y);
+    if (d < bd) {
+      bd = d;
+      best = p;
+    }
+  }
+  return best.y > kite.y ? 'low' : 'high';
+}
 
 /** Pip's own (unlucky) practice launches: always angles the wind spoils. */
 export const PIP_PRACTICE = [62, 28];

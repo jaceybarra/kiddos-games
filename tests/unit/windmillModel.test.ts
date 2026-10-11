@@ -3,8 +3,10 @@ import {
   ANGLES,
   NEST_SPOTS,
   PIP_PRACTICE,
+  L,
   bestSpot,
   catches,
+  missKind,
   kiteLanding,
   releasePoint,
   simulateLaunch,
@@ -27,6 +29,25 @@ describe('Windmill Kite puzzle guarantees', () => {
 
   it('a correct choice works the first time (no forced failure)', () => {
     for (const w of winds) expect(simulateLaunch(46, w).hit).toBe(true);
+  });
+
+  it('More help offers two clearly different arrows (far apart, easy to tell apart)', () => {
+    const [a, b] = ANGLES['more-help'];
+    expect(b - a).toBeGreaterThanOrEqual(25);
+  });
+
+  it('a missed shot tells you which way to change the arrow', () => {
+    for (const w of winds) {
+      expect(missKind(simulateLaunch(28, w))).toBe('low');
+      expect(missKind(simulateLaunch(62, w))).toBe('high');
+      expect(missKind(simulateLaunch(74, w))).toBe('high');
+    }
+  });
+
+  it('the avatar aims from beside the red pump, not on top of it', () => {
+    // the pump sits 92 units left of the launcher and is about 120 wide
+    expect(L.launcherX - 92 - L.aimStandX).toBeGreaterThanOrEqual(110);
+    expect(L.aimStandX - L.pipAsideX).toBeGreaterThanOrEqual(150);
   });
 
   it("Pip's practice shots miss in a way that shows the wind", () => {

@@ -327,6 +327,8 @@ const spool = piece(
 const ribbonLoop = piece('wh.ribbon.loop', [-40, -40, 80, 80], path('M-28 8 Q-36 -30 0 -30 Q36 -30 28 8 Q20 30 0 22 Q-20 30 -28 8 Z', 'none', 0, `stroke="${P.ink}" stroke-width="13" stroke-linecap="round"`) + path('M-28 8 Q-36 -30 0 -30 Q36 -30 28 8 Q20 30 0 22 Q-20 30 -28 8 Z', 'none', 0, `stroke="${P.berry}" stroke-width="7" stroke-linecap="round"`));
 const ribbonTrail = piece('wh.ribbon.trail', [-120, -30, 240, 60], line('M-110 10 Q-70 -24 -30 6 Q10 30 50 0 Q80 -20 110 4', 12, P.ink) + line('M-110 10 Q-70 -24 -30 6 Q10 30 50 0 Q80 -20 110 4', 6, P.berry));
 const chock = piece('wh.chock', [-34, -40, 68, 46], path('M-28 0 L28 0 L-20 -34 Z', P.woodLight, 4.5) + line('M-14 -6 L10 -6', 3, P.woodDark, 'opacity="0.5"'));
+// the falling kite's shadow on the grass (a flattened kite shape)
+const kiteShadow = piece('wh.kiteshadow', [-80, -22, 160, 44], path('M0 -18 L72 0 L0 18 L-72 0 Z', P.ink, 0, 'opacity="0.5"') + ellipse(0, 0, 24, 8, P.ink, 0, 'opacity="0.25"'));
 const flag = piece('wh.flag', [-10, -110, 70, 116], line('M0 0 L0 -104', 5) + path('M2 -102 L58 -86 L2 -68 Z', P.sun, 4) + path('M18 -86 L26 -94 L34 -86 L26 -78 Z', P.berry, 2.5));
 
 // ------------------------------------------------------------------ meadow things
@@ -432,10 +434,18 @@ const bush = piece('wh.bush', [-110, -100, 220, 106], path(blobPath([[-100, 0], 
 const fence = piece('wh.fence', [-110, -100, 220, 106], rrect(-100, -70, 200, 14, 5, P.woodLight, 4) + rrect(-100, -36, 200, 14, 5, P.woodLight, 4) + [-90, -30, 30, 90].map((x) => path(`M${x - 10} 0 L${x - 10} -86 L${x} -96 L${x + 10} -86 L${x + 10} 0 Z`, P.wood, 4)).join(''));
 const angleBtn = piece('wh.anglebtn', [-46, -46, 92, 92], circle(0, 0, 40, P.cream, 5) + circle(0, 0, 32, P.woodLight, 0, 'opacity="0.5"') + path('M-22 -8 L8 -8 L8 -20 L28 0 L8 20 L8 8 L-22 8 Z', P.berry, 4));
 const dot = piece('wh.dot', [-10, -10, 20, 20], circle(0, 0, 7, '#fff', 3));
-const seedRing = piece('wh.seedring', [-80, -80, 160, 160], Array.from({ length: 14 }, (_, i) => {
-  const a = (i / 14) * Math.PI * 2;
-  return circle(Math.cos(a) * 64, Math.sin(a) * 64, 9, '#fffdf6', 3);
-}).join('') + circle(0, 0, 64, 'none', 0, `stroke="${P.glow}" stroke-width="5" opacity="0.6"`));
+// a solid golden ring (easy to see against the sky) studded with white seeds
+const seedRing = piece(
+  'wh.seedring',
+  [-84, -84, 168, 168],
+  circle(0, 0, 66, 'none', 0, `stroke="${P.ink}" stroke-width="20"`) +
+    circle(0, 0, 66, 'none', 0, `stroke="${P.lantern}" stroke-width="13"`) +
+    circle(0, 0, 66, 'none', 0, `stroke="${P.glow}" stroke-width="5"`) +
+    Array.from({ length: 10 }, (_, i) => {
+      const a = (i / 10) * Math.PI * 2;
+      return circle(Math.cos(a) * 66, Math.sin(a) * 66, 7, '#fffdf6', 3);
+    }).join(''),
+);
 const snail = piece(
   'wh.snail',
   [-60, -70, 120, 76],
@@ -505,6 +515,7 @@ export const WINDMILL_PIECES: ArtPiece[] = [
   ribbonLoop,
   ribbonTrail,
   chock,
+  kiteShadow,
   flag,
   mushroomStem,
   mushroomCap,

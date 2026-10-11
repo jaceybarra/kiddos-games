@@ -2,9 +2,10 @@
  * Pip at the launcher — the stateful social encounter in The Windmill Kite.
  *
  * Pure reducer: (state, event) → (state, effects). The scene performs the
- * effects (lines, launches, choice trays). Every path leads to the child being
- * able to use the launcher, and walking away is always allowed — the windmill
- * route never depends on this conversation.
+ * effects in order (a line is finished before the next effect starts, and a
+ * choice tray only opens after the question that goes with it has been said).
+ * Every path leads to the child being able to use the launcher, and walking
+ * away is always allowed — the windmill route never depends on this conversation.
  */
 
 export type PipMode =
@@ -12,7 +13,7 @@ export type PipMode =
   | 'offered' // Pip has invited the child and is waiting for an answer
   | 'notYet' // Pip asked for one more go before handing over
   | 'childTurn' // the launcher is the child's
-  | 'together' // working as a pair (roles)
+  | 'together' // working as a pair: the child aims, Pip pumps
   | 'resting' // child said "not now"; Pip carries on and may ask once more later
   | 'elsewhere'; // Pip has left the launcher (repairing ribbon / celebrating)
 
@@ -36,23 +37,22 @@ export interface PipState {
 }
 
 export type PipEvent =
+  | { type: 'MEET' }
   | { type: 'WATCHED_LAUNCH' }
   | { type: 'WAVE' }
   | { type: 'ASK_TURN' }
-  | { type: 'ASK_WHAT' }
   | { type: 'ASK_TOGETHER' }
   | { type: 'ACCEPT' }
   | { type: 'DECLINE' }
   | { type: 'WAIT' }
   | { type: 'EXPLORE' }
-  | { type: 'ROLE'; role: Role }
   | { type: 'PIP_LAUNCH_START' }
   | { type: 'PIP_LAUNCH_DONE' }
   | { type: 'CHILD_RETURNED' }
   | { type: 'LEAVE_LAUNCHER' }
   | { type: 'BACK_TO_LAUNCHER' };
 
-export type ChoiceSet = 'approach' | 'invite' | 'notYet' | 'role' | 'none';
+export type ChoiceSet = 'approach' | 'invite' | 'notYet' | 'none';
 
 export type PipEffect =
   | { kind: 'say'; line: PipLine }
@@ -64,15 +64,12 @@ export type PipEffect =
   | { kind: 'waitThenHandOver' };
 
 export type PipLine =
-  | 'pip.whoa'
+  | 'pip.askHelp'
   | 'pip.invite'
   | 'pip.oneMore'
   | 'pip.notYetMid'
   | 'pip.sure'
-  | 'pip.what'
   | 'pip.together'
-  | 'pip.roleAim'
-  | 'pip.rolePump'
   | 'pip.okayLater'
   | 'pip.reinvite'
   | 'pip.savedTurn'
@@ -88,6 +85,11 @@ const note = (s: PipState, what: string): string[] => (s.approaches.includes(wha
 export function pipReduce(s: PipState, e: PipEvent): { state: PipState; effects: PipEffect[] } {
   const out = (state: PipState, ...effects: PipEffect[]) => ({ state, effects });
   switch (e.type) {
+    case 'MEET':
+      // Pip has just lost the kite and asks for help straight away
+      if (s.mode !== 'busy' && s.mode !== 'resting') return out(s);
+      return out({ ...s, mode: 'offered' }, { kind: 'say', line: 'pip.askHelp' }, { kind: 'choices', set: 'invite' });
+
     case 'PIP_LAUNCH_START':
       return out({ ...s, midLaunch: true });
 
@@ -98,7 +100,8 @@ export function pipReduce(s: PipState, e: PipEvent): { state: PipState; effects:
         if (s.owedTurn) return out({ ...base, mode: 'busy' });
         return out({ ...base, mode: 'childTurn' }, { kind: 'say', line: 'pip.thanksWaiting' }, { kind: 'handOver' });
       }
-      return out(base, { kind: 'say', line: 'pip.whoa' });
+      // ordinary practice: the scene decides whether anyone is near enough to hear a "whoosh"
+      return out(base);
     }
 
     case 'WATCHED_LAUNCH': {
@@ -125,22 +128,12 @@ export function pipReduce(s: PipState, e: PipEvent): { state: PipState; effects:
       return out({ ...st, mode: 'childTurn' }, { kind: 'say', line: 'pip.sure' }, { kind: 'handOver' });
     }
 
-    case 'ASK_WHAT': {
-      const st = { ...s, approaches: note(s, 'asked Pip what they were making') };
-      return out({ ...st, mode: 'offered' }, { kind: 'say', line: 'pip.what' }, { kind: 'choices', set: 'invite' });
-    }
-
     case 'ASK_TOGETHER': {
+      // one tray, a real split of the work: the child picks the arrow, Pip pushes the pump
+      if (s.mode === 'childTurn' || s.mode === 'together') return out(s);
       const st = { ...s, approaches: note(s, 'asked to work together') };
-      return out({ ...st, mode: 'offered' }, { kind: 'say', line: 'pip.together' }, { kind: 'choices', set: 'role' });
+      return out({ ...st, mode: 'together', role: 'aim' }, { kind: 'say', line: 'pip.together' }, { kind: 'together', role: 'aim' });
     }
-
-    case 'ROLE':
-      return out(
-        { ...s, mode: 'together', role: e.role, approaches: note(s, `worked together (${e.role === 'aim' ? 'aimer' : 'pumper'})`) },
-        { kind: 'say', line: e.role === 'aim' ? 'pip.roleAim' : 'pip.rolePump' },
-        { kind: 'together', role: e.role },
-      );
 
     case 'ACCEPT':
       if (s.mode !== 'offered') return out(s);
@@ -178,18 +171,18 @@ export function pipReduce(s: PipState, e: PipEvent): { state: PipState; effects:
 }
 
 /** Which choices to offer for a set, per assistance preset (2 vs 3). */
-export function choicesFor(set: ChoiceSet, preset: 'more-help' | 'more-exploring'): { id: PipEvent['type'] | `ROLE_${Role}`; icon: string; label: string }[] {
+export function choicesFor(set: ChoiceSet, preset: 'more-help' | 'more-exploring'): { id: PipEvent['type']; icon: string; label: string }[] {
   switch (set) {
     case 'approach':
       return preset === 'more-help'
         ? [
-            { id: 'WAVE', icon: 'wave', label: 'Wave for a turn' },
+            { id: 'WAVE', icon: 'wave', label: 'Wave hello' },
             { id: 'ASK_TURN', icon: 'ask', label: '“Can I try?”' },
           ]
         : [
-            { id: 'WAVE', icon: 'wave', label: 'Wave for a turn' },
+            { id: 'WAVE', icon: 'wave', label: 'Wave hello' },
             { id: 'ASK_TURN', icon: 'ask', label: '“Can I try?”' },
-            { id: 'ASK_WHAT', icon: 'explore', label: '“What are you making?”' },
+            { id: 'ASK_TOGETHER', icon: 'together', label: '“Let’s do it together!”' },
           ];
     case 'invite':
       return preset === 'more-help'
@@ -199,18 +192,13 @@ export function choicesFor(set: ChoiceSet, preset: 'more-help' | 'more-exploring
           ]
         : [
             { id: 'ACCEPT', icon: 'yes', label: '“Yes please!”' },
-            { id: 'ASK_TOGETHER', icon: 'together', label: '“Together?”' },
+            { id: 'ASK_TOGETHER', icon: 'together', label: '“Let’s do it together!”' },
             { id: 'DECLINE', icon: 'notnow', label: '“Not now”' },
           ];
     case 'notYet':
       return [
         { id: 'WAIT', icon: 'wait', label: '“Okay, I’ll wait”' },
         { id: 'EXPLORE', icon: 'explore', label: 'Look around' },
-      ];
-    case 'role':
-      return [
-        { id: 'ROLE_aim', icon: 'eye', label: 'I’ll aim' },
-        { id: 'ROLE_pump', icon: 'hand', label: 'I’ll pump' },
       ];
     case 'none':
       return [];

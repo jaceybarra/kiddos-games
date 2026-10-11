@@ -13,6 +13,30 @@ function run(events: PipEvent[], start: PipState = initialPip()) {
 }
 
 describe('Pip at the launcher (social encounter)', () => {
+  it('Pip asks for help when you first meet: a question, then the answer cards', () => {
+    const { s, effects } = run([{ type: 'MEET' }]);
+    expect(s.mode).toBe('offered');
+    expect(effects).toEqual(['say:pip.askHelp', 'choices:invite']);
+    expect(run([{ type: 'ACCEPT' }], s).s.mode).toBe('childTurn');
+  });
+
+  it('every choice tray comes right after a spoken question', () => {
+    const events: PipEvent[] = [{ type: 'MEET' }, { type: 'WATCHED_LAUNCH' }, { type: 'PIP_LAUNCH_START' }, { type: 'ASK_TURN' }];
+    let s = initialPip();
+    for (const e of events) {
+      const r = pipReduce(s, e);
+      r.effects.forEach((fx, i) => {
+        if (fx.kind === 'choices') expect(r.effects[i - 1]?.kind, e.type).toBe('say');
+      });
+      s = e.type === 'MEET' ? initialPip() : r.state;
+    }
+  });
+
+  it('ordinary practice shots are quiet in the reducer (the scene only says "whoosh" to a child nearby)', () => {
+    const { effects } = run([{ type: 'PIP_LAUNCH_START' }, { type: 'PIP_LAUNCH_DONE' }]);
+    expect(effects).toEqual([]);
+  });
+
   it('watching first is valid: Pip notices and invites', () => {
     const { s, effects } = run([{ type: 'PIP_LAUNCH_START' }, { type: 'PIP_LAUNCH_DONE' }, { type: 'WATCHED_LAUNCH' }]);
     expect(s.mode).toBe('offered');
@@ -49,11 +73,11 @@ describe('Pip at the launcher (social encounter)', () => {
     expect(s.mode).toBe('resting');
   });
 
-  it('working together lets the child pick a role', () => {
-    const { s, effects } = run([{ type: 'ASK_TOGETHER' }, { type: 'ROLE', role: 'pump' }]);
-    expect(effects).toContain('choices:role');
+  it('working together is one answer, and a real split: the child aims, Pip pumps', () => {
+    const { s, effects } = run([{ type: 'MEET' }, { type: 'ASK_TOGETHER' }]);
+    expect(effects).toEqual(['say:pip.askHelp', 'choices:invite', 'say:pip.together', 'together']);
     expect(s.mode).toBe('together');
-    expect(s.role).toBe('pump');
+    expect(s.role).toBe('aim');
   });
 
   it('a turn the child already has survives Pip leaving to help with the ribbon', () => {
@@ -70,13 +94,12 @@ describe('Pip at the launcher (social encounter)', () => {
     const childEvents: PipEvent[] = [
       { type: 'WAVE' },
       { type: 'ASK_TURN' },
-      { type: 'ASK_WHAT' },
       { type: 'ASK_TOGETHER' },
       { type: 'ACCEPT' },
       { type: 'DECLINE' },
       { type: 'WAIT' },
       { type: 'EXPLORE' },
-      { type: 'ROLE', role: 'aim' },
+      { type: 'MEET' },
       { type: 'WATCHED_LAUNCH' },
       { type: 'PIP_LAUNCH_START' },
       { type: 'PIP_LAUNCH_DONE' },
@@ -104,5 +127,6 @@ describe('Pip at the launcher (social encounter)', () => {
     expect(choicesFor('approach', 'more-help')).toHaveLength(2);
     expect(choicesFor('approach', 'more-exploring')).toHaveLength(3);
     expect(choicesFor('invite', 'more-help')).toHaveLength(2);
+    expect(choicesFor('invite', 'more-exploring')).toHaveLength(3);
   });
 });

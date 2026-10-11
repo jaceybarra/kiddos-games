@@ -36,6 +36,12 @@ export class NestWagon {
     this.c.y = (l + r) / 2;
   }
 
+  /** Put the wagon at x straight away (resuming a saved game). */
+  place(x: number): void {
+    this.c.x = x;
+    this.updateTilt();
+  }
+
   setChocks(on: boolean): void {
     this.chocked = on;
     for (const c of this.chocks) c.setVisible(on);
@@ -124,8 +130,9 @@ export class NestWagon {
     return this.toWorld(0, -110);
   }
 
-  bounce(): void {
-    this.scene.tweens.add({ targets: this.c, scaleY: 0.86, scaleX: 1.06, duration: 110, yoyo: true, ease: 'Quad.easeOut' });
-    audio.play('boing', { pitch: 0.8, vol: 0.7 });
+  /** Squish and spring back (a soft landing). Higher pitch = a bigger, happier boing. */
+  bounce(pitch = 0.8): void {
+    if (!motion.reduced) this.scene.tweens.add({ targets: this.c, scaleY: 0.8, scaleX: 1.1, duration: 120, yoyo: true, ease: 'Quad.easeOut' });
+    audio.play('boing', { pitch, vol: 0.8 });
   }
 }

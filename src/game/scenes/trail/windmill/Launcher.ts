@@ -99,6 +99,7 @@ export class Launcher {
     audio.play('puff', { pitch: 1.2 });
     const total = res.points[res.points.length - 1].t;
     const speedUp = 1.15;
+    let lastTrail = 0;
     return new Promise((resolve) => {
       const proxy = { t: 0 };
       this.scene.tweens.add({
@@ -112,6 +113,12 @@ export class Launcher {
           ball.setPosition(p.x, p.y);
           ball.rotation += 0.08;
           follow?.(p.x, p.y);
+          // a short fading trail, so you can see the wind bend the shot
+          if (i - lastTrail >= 5) {
+            lastTrail = i;
+            const d = addImage(this.scene, p.x, p.y, 'wh.dot').setDepth(depth - 1).setAlpha(0.8).setScale(0.8);
+            this.scene.tweens.add({ targets: d, alpha: 0, scale: 0.3, duration: motion.reduced ? 400 : 1100, onComplete: () => d.destroy() });
+          }
         },
         onComplete: () => {
           this.firing = false;
