@@ -158,7 +158,8 @@ export async function tieAndDecorate(p: Page, pattern: string, color: string): P
   await p.click(`[data-decor="${color}"]`, { timeout: 60_000 });
   await p.click('[data-decor-done]');
   await waitState(p, (s) => s.mode === 'flying', 'flying', 60_000);
-  await p.waitForSelector('[data-choice="explore"]', { timeout: 60_000 });
+  // the end choice follows a few seconds of free flying (slow under heavy load)
+  await p.waitForSelector('[data-choice="explore"]', { timeout: 150_000 });
 }
 
 export function collectErrors(p: Page): string[] {

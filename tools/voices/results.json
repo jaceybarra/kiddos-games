@@ -1,0 +1,723 @@
+{
+ "narrator|Welcome to the clubhouse! Everything you make can live here.": {
+  "file": "a2445b7e75bc.mp3",
+  "ms": 3360,
+  "heard": "Welcome to the clubhouse, everything you make can live here.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Your kite tail from Windmill Hill!": {
+  "file": "433d944975a2.mp3",
+  "ms": 1872,
+  "heard": "Your kite tale from Windmill Hill.",
+  "score": 0.833,
+  "attempt": 0
+ },
+ "narrator|A souvenir from Windmill Hill will hang here.": {
+  "file": "3fc8ee8f9c75.mp3",
+  "ms": 2520,
+  "heard": "A souvenir from Windmill Hill will hang here.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|The pinwheel from the snail on the windmill.": {
+  "file": "036f58fb1558.mp3",
+  "ms": 2328,
+  "heard": "The pinwheel from the snail on the windmill.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Something you make will go here.": {
+  "file": "be24ea6c71b6.mp3",
+  "ms": 1752,
+  "heard": "Something you make will go here.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|This frame is waiting for a place Rowan is still building.": {
+  "file": "0161c438c5a7.mp3",
+  "ms": 3384,
+  "heard": "This frame is waiting for place, Rowan is still building.",
+  "score": 0.952,
+  "attempt": 0
+ },
+ "narrator|The snacks from your picnic! Crunch, squish, slurp.": {
+  "file": "dfe7f23f3a24.mp3",
+  "ms": 3048,
+  "heard": "The snacks from your picnic, crunch, squish, slurp.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Your puppet show! Watch the first scene.": {
+  "file": "513d67a28f15.mp3",
+  "ms": 2328,
+  "heard": "Your puppet show, watch the first scene.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|The flag from the Picnic Bridge. Everyone made it across!": {
+  "file": "c7dd9ec5a878.mp3",
+  "ms": 3504,
+  "heard": "The flag from the picnic bridge, everyone made it across,",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|A little paddle wheel from the mill. Splish, clunk!": {
+  "file": "88ea87a89485.mp3",
+  "ms": 3120,
+  "heard": "A little paddle wheel from the mill. Splish, clunk.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|A lantern from the launch night. Every job helped.": {
+  "file": "5ca07339cdfb.mp3",
+  "ms": 3216,
+  "heard": "A lantern from the launch night, every job helped.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|The dress-up chest! Everyone can wear anything.": {
+  "file": "9ec563a0574b.mp3",
+  "ms": 2880,
+  "heard": "The dress up chest, everyone can wear anything.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "luma|This is my quiet corner. You can sit here too, if you like.": {
+  "file": "daad4b64320a.mp3",
+  "ms": 3720,
+  "heard": "This is my quiet corner, you can sit here too if you like.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "luma|Stay as long as you like. Tap when you want to get up.": {
+  "file": "801e0647f415.mp3",
+  "ms": 3120,
+  "heard": "Stay as long as you like, tap when you want to get up.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "luma|Bye for now!": {
+  "file": "d6709efcb9f0.mp3",
+  "ms": 1200,
+  "heard": "Bye for now.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "luma|I’m reading about the moon. It has no lanterns at all!": {
+  "file": "1b6bfb139ff0.mp3",
+  "ms": 3216,
+  "heard": "I'm reading about the moon. It has no lanterns at all.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "moss|I’m fixing a music box. Listen!": {
+  "file": "232ea83e8275.mp3",
+  "ms": 2616,
+  "heard": "I'm fixing a music box. Listen.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "moss|Hmm. One note was wobbly. I’ll keep tinkering.": {
+  "file": "f6bd31cd97b9.mp3",
+  "ms": 3312,
+  "heard": "Hem one note was wobbly. I'll keep tinkering.",
+  "score": 0.875,
+  "attempt": 0
+ },
+ "narrator|Tap the paper glider!": {
+  "file": "32a191a0d345.mp3",
+  "ms": 1464,
+  "heard": "Tap the paper glider.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Tap high or low to steer through the seed rings.": {
+  "file": "6491ba5a54fc.mp3",
+  "ms": 2808,
+  "heard": "Tap high or low to steer through the seed rings.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|My kite! The wind snapped the string!": {
+  "file": "3016b4a55681.mp3",
+  "ms": 2328,
+  "heard": "My kite, the wind snapped the string.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Oh no… it’s stuck on the windmill.": {
+  "file": "babedc802632.mp3",
+  "ms": 2088,
+  "heard": "Oh no, it's stuck on the windmill.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Tap anywhere to walk. Tap things to try them.": {
+  "file": "f0a36eb2bc43.mp3",
+  "ms": 2880,
+  "heard": "Tap anywhere to walk, tap things to try them.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Whoa! The wind pushed it back!": {
+  "file": "99126da72cfa.mp3",
+  "ms": 1776,
+  "heard": "Whoa the wind pushed it back.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Bonk! Too low that time.": {
+  "file": "7f1dc4e9988f.mp3",
+  "ms": 1752,
+  "heard": "Bonk too low that time.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Hey! Want a turn with my launcher?": {
+  "file": "d53e163ec523.mp3",
+  "ms": 2040,
+  "heard": "Hey, want a turn with my launcher?",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|One more go, then it’s your turn!": {
+  "file": "37970e905a8f.mp3",
+  "ms": 2040,
+  "heard": "One more go, then it's your turn.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Not yet — I’m in the middle of one! After this?": {
+  "file": "25a1e8d92248.mp3",
+  "ms": 2736,
+  "heard": "Not yet, I'm in the middle of one. After this.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Sure! Pick an arrow, then pump the bellows.": {
+  "file": "f31f14ec50f7.mp3",
+  "ms": 2448,
+  "heard": "Sure, pick an arrow, then pump the bellows.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|A kite rescuer! My kite’s stuck up there. Want to help?": {
+  "file": "9f3e11d7da3c.mp3",
+  "ms": 3240,
+  "heard": "A kite rescuer. My kite stuck up there wanna help.",
+  "score": 0.762,
+  "attempt": 0
+ },
+ "pip|Yes! Do you want to aim, or pump?": {
+  "file": "56df4a016c70.mp3",
+  "ms": 1992,
+  "heard": "Yes, do you want to aim or pump?",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|You pick the arrow. I’ll pump when you say go!": {
+  "file": "b5e295b3fca1.mp3",
+  "ms": 2592,
+  "heard": "You pick the arrow. I'll pump when you say go.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Tap the arrow you think, and I’ll point it. Then you pump!": {
+  "file": "9a4e95db223f.mp3",
+  "ms": 3072,
+  "heard": "Tap the arrow you think and I'll point it. Then you pump.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Okay! I’ll be right here if you change your mind.": {
+  "file": "197b056c7e9e.mp3",
+  "ms": 2736,
+  "heard": "Okay, I'll be right here if you change your mind.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Still missing! Want to try now? It’s fine if not.": {
+  "file": "e265556c1fff.mp3",
+  "ms": 2952,
+  "heard": "Still missing. Wanna try now? It's fine if not.",
+  "score": 0.842,
+  "attempt": 0
+ },
+ "pip|There you are! I saved your turn.": {
+  "file": "30a6ddf3eb1d.mp3",
+  "ms": 2040,
+  "heard": "There you are, I saved your turn.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Thanks for waiting. Your turn!": {
+  "file": "5a9307b0a952.mp3",
+  "ms": 1896,
+  "heard": "Thanks for waiting, your turn.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Okay! Your turn will be here when you’re back.": {
+  "file": "b566bcc0826c.mp3",
+  "ms": 2376,
+  "heard": "Okay, your turn will be here when you're back.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Pick an arrow, then pump!": {
+  "file": "2a8e586d47de.mp3",
+  "ms": 1368,
+  "heard": "Pick an arrow then pump.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|You got it! Look — it’s floating down!": {
+  "file": "af8538af5685.mp3",
+  "ms": 2160,
+  "heard": "You got it. Look, it's floating down.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|The wind blew it back! Maybe a different arrow?": {
+  "file": "8dab56fcaefe.mp3",
+  "ms": 2688,
+  "heard": "The wind blew it back, maybe a different arrow.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Bonk! That one hit the windmill.": {
+  "file": "6e62000dc01e.mp3",
+  "ms": 1848,
+  "heard": "Bonk, that one hit the windmill.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Way up high! The wind sent it back.": {
+  "file": "e9920f1f5ff4.mp3",
+  "ms": 2280,
+  "heard": "Way up high, the wind sent it back.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|If it lands in the soft nest, it won’t get squished.": {
+  "file": "1302523a6f4e.mp3",
+  "ms": 2904,
+  "heard": "If it lands in the soft nest, it won't get squished.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Right into the nest! Perfect landing!": {
+  "file": "c6b53f844ef7.mp3",
+  "ms": 2280,
+  "heard": "Right into the nest. Perfect landing.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|It landed there… whoosh! The windmill breeze blew it back up!": {
+  "file": "d1911bdf5f4a.mp3",
+  "ms": 3768,
+  "heard": "It landed there. Whoosh, the windmull breeze blew it back up.",
+  "score": 0.909,
+  "attempt": 0
+ },
+ "pip|I put a flag where it touched down.": {
+  "file": "e0c5d30b847f.mp3",
+  "ms": 1824,
+  "heard": "I put a flag where it touched down.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Eep! My ribbon!": {
+  "file": "1f15405b52dc.mp3",
+  "ms": 1152,
+  "heard": "Ape my ribbon.",
+  "score": 0.667,
+  "attempt": 0
+ },
+ "pip|I left my spool right at the bottom of the hill. Sorry!": {
+  "file": "b0f7080ee8b5.mp3",
+  "ms": 3408,
+  "heard": "I left my spool right at the bottom of the hill. Sorry.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Thanks for saying sorry. Let’s untangle it together!": {
+  "file": "960c8aa8e3b2.mp3",
+  "ms": 3048,
+  "heard": "Thanks for saying sorry. Let's untangle it together.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Good idea! You pull the loops, I’ll wind.": {
+  "file": "fcebde5df0b0.mp3",
+  "ms": 2520,
+  "heard": "Good idea. You pull the loops, I'll wind.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Of course! You pull the loops, I’ll wind.": {
+  "file": "86c0450c4cde.mp3",
+  "ms": 2448,
+  "heard": "Of course, you pull the loops I'll wind.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Whenever you’re ready, we can untangle it.": {
+  "file": "c2c0218e62d8.mp3",
+  "ms": 2280,
+  "heard": "Whenever you're ready, we can untangle it.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|All untangled! We make a good team.": {
+  "file": "f8634537df9a.mp3",
+  "ms": 2304,
+  "heard": "All untangled, we make a good team.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Wedges under the wheels — now it stays put.": {
+  "file": "64c387565e7e.mp3",
+  "ms": 2568,
+  "heard": "Wedges under the wheels, now it stays put.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Where should the nest go?": {
+  "file": "652604002b5e.mp3",
+  "ms": 1176,
+  "heard": "Where should the nest go?",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "rowan|Hello there. These pumpkins are getting big!": {
+  "file": "a00b4de48526.mp3",
+  "ms": 3216,
+  "heard": "Hello there. These pumpkins are getting big.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "rowan|Checking pumpkins. They’re heavy — good for holding things down.": {
+  "file": "19a05af6cc36.mp3",
+  "ms": 4296,
+  "heard": "Checking pumpkins. They're heavy, good for holding things down.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "rowan|Happy to help. Is it that stiff old windmill brake?": {
+  "file": "a9cf8c1ae76e.mp3",
+  "ms": 3720,
+  "heard": "Happy to help, is it that stiff old windmill break?",
+  "score": 0.9,
+  "attempt": 0
+ },
+ "rowan|You pull, I’ll hold it steady.": {
+  "file": "09624b16f7fc.mp3",
+  "ms": 2160,
+  "heard": "You pull, I'll hold it steady.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "rowan|See you later!": {
+  "file": "155585c4ba50.mp3",
+  "ms": 1320,
+  "heard": "See you later.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "rowan|Looks like you’ve got it. Nicely done.": {
+  "file": "ef3b144b7e51.mp3",
+  "ms": 2736,
+  "heard": "Looks like you've got it, nicely done.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "rowan|That lever lets the windmill turn. It’s very stiff, though.": {
+  "file": "a81ef94aa471.mp3",
+  "ms": 3888,
+  "heard": "That lever lets the windmill turn. It's very stiff though.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|It won’t budge. Something heavy might help.": {
+  "file": "5e06dada340a.mp3",
+  "ms": 2472,
+  "heard": "It won't budge, something heavy might help.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Clunk! The sails start to turn…": {
+  "file": "d97a53a26137.mp3",
+  "ms": 2064,
+  "heard": "Clunk, the sails start to turn.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|You turned the whole windmill! What an idea!": {
+  "file": "f6b89b741a46.mp3",
+  "ms": 2328,
+  "heard": "You turned the whole windmill. What an idea.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Ha! The pumpkin rolled out. The brake’s back on.": {
+  "file": "bcea6408057f.mp3",
+  "ms": 2880,
+  "heard": "Ha, the pumpkin rolled out. The brakes back on.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Oh! Its tail came off in the tumble.": {
+  "file": "9d35e7b5dd3f.mp3",
+  "ms": 2184,
+  "heard": "Oh, its tail came off in the tumble.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|We can use my ribbon! Tie the knots with me?": {
+  "file": "a156e8cb1fa8.mp3",
+  "ms": 2640,
+  "heard": "We can use my ribbon. Tie the knots with me.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|What should the tail look like?": {
+  "file": "83d4f2857219.mp3",
+  "ms": 1464,
+  "heard": "What should the tail look like?",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Pick a colour!": {
+  "file": "a243cd77f60f.mp3",
+  "ms": 936,
+  "heard": "Pick a color.",
+  "score": 0.667,
+  "attempt": 0
+ },
+ "pip|Ready? Hold the string… it’s lifting!": {
+  "file": "dd22724285f5.mp3",
+  "ms": 2328,
+  "heard": "Ready, hold the string. It's lifting.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|It’s flying! Swoop it up and down!": {
+  "file": "c6f774719dde.mp3",
+  "ms": 2208,
+  "heard": "It's flying. Swoop it up and down.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Your aiming was spot on. Thank you!": {
+  "file": "80d4dfa832c2.mp3",
+  "ms": 2136,
+  "heard": "Your aiming was spot on. Thank you.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Turning the windmill — I’d never have thought of that. Thank you!": {
+  "file": "9526a2501fef.mp3",
+  "ms": 3240,
+  "heard": "Turning the windmill? I'd never have thought of that. Thank you.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|I’ll tie it to this post so it can fly all day.": {
+  "file": "651bdbf37333.mp3",
+  "ms": 2904,
+  "heard": "I'll tie it to this post, so it can fly all day.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|A copy of your kite tail will hang in the clubhouse.": {
+  "file": "2e7070e7d846.mp3",
+  "ms": 2952,
+  "heard": "A copy of your kite tail will hang in the clubhouse.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|A snail on the balcony! It gives you a pinwheel.": {
+  "file": "1bce8cf6d8b1.mp3",
+  "ms": 2952,
+  "heard": "A snail on the balcony, it gives you a pinwheel.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "pip|Hi again! The kite’s still flying.": {
+  "file": "af58dfe2ed6a.mp3",
+  "ms": 2256,
+  "heard": "High again, the kite still flying.",
+  "score": 0.667,
+  "attempt": 0
+ },
+ "narrator|Time to finish now. Your things are saved.": {
+  "file": "1771ffa0e6d7.mp3",
+  "ms": 2592,
+  "heard": "Time to finish now. Your things are saved.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|It’s nearly time to finish.": {
+  "file": "86792b794a8f.mp3",
+  "ms": 1656,
+  "heard": "It's nearly time to finish.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Keep playing": {
+  "file": "8394947c2518.mp3",
+  "ms": 984,
+  "heard": "Keep playing.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Go to the map": {
+  "file": "1dbcf9274404.mp3",
+  "ms": 1056,
+  "heard": "Go to the map.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Save and finish": {
+  "file": "c15902eb5073.mp3",
+  "ms": 1176,
+  "heard": "Save and finish.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Finish this part": {
+  "file": "79ca8eb959b3.mp3",
+  "ms": 1176,
+  "heard": "Finish this part.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Sit quietly": {
+  "file": "e9ad388e333f.mp3",
+  "ms": 1032,
+  "heard": "Sit quietly.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "avatar|“What are you reading?”": {
+  "file": "1442c3ecc3f1.mp3",
+  "ms": 1296,
+  "heard": "What are you reading?",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "avatar|“Bye!”": {
+  "file": "d152d7e6a10e.mp3",
+  "ms": 816,
+  "heard": "Bye.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Where shall we go? Tap a place on the map.": {
+  "file": "a8f04eaf9364.mp3",
+  "ms": 2544,
+  "heard": "Where shall we go? Tap a place on the map.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|This path opens later in the story.": {
+  "file": "75997856b528.mp3",
+  "ms": 2112,
+  "heard": "This path opens later in the story.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Look around": {
+  "file": "b16917b13b83.mp3",
+  "ms": 1008,
+  "heard": "Look around.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "avatar|“Sorry, Pip!”": {
+  "file": "429f949e8e08.mp3",
+  "ms": 1128,
+  "heard": "Sorry, Pip.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "avatar|“Let’s fix it”": {
+  "file": "110ae0bf6d05.mp3",
+  "ms": 1128,
+  "heard": "Let's fix it.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "avatar|“Can you help me?”": {
+  "file": "a1565fbe1507.mp3",
+  "ms": 1200,
+  "heard": "Can you help me?",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "avatar|“What are you doing?”": {
+  "file": "fd523ebd3dfc.mp3",
+  "ms": 1200,
+  "heard": "What are you doing?",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Keep exploring": {
+  "file": "2ca90749c456.mp3",
+  "ms": 1152,
+  "heard": "Keep exploring.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Play it again": {
+  "file": "12b5e3954b81.mp3",
+  "ms": 1056,
+  "heard": "Play it again.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "avatar|“See you!”": {
+  "file": "8f26b2867eca.mp3",
+  "ms": 984,
+  "heard": "S D U",
+  "score": 0.0,
+  "attempt": 0
+ },
+ "narrator|Map": {
+  "file": "bc239b5e15bd.mp3",
+  "ms": 672,
+  "heard": "Map",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Pause": {
+  "file": "415aa943cf09.mp3",
+  "ms": 720,
+  "heard": "Pause.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Hear it again": {
+  "file": "219f12592738.mp3",
+  "ms": 984,
+  "heard": "Hear it again.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Show me how": {
+  "file": "5b3a6978c57e.mp3",
+  "ms": 936,
+  "heard": "Show me how.",
+  "score": 1.0,
+  "attempt": 0
+ },
+ "narrator|Pick your explorer, then a colour!": {
+  "file": "bd7c0810bec8.mp3",
+  "ms": 1800,
+  "heard": "Pick your Explorer, then a color.",
+  "score": 0.833,
+  "attempt": 0
+ }
+}
