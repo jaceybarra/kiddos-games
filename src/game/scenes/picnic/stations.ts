@@ -27,9 +27,10 @@ import {
   type Shape,
   type Size,
   type Topping,
+  type Wish,
 } from '../../../content/picnic/food';
 import type { ScenarioDef, Station } from '../../../content/picnic/scenarios';
-import type { HostLineId } from '../../../content/picnic/picnicLines';
+import { CUT_LINE, FILL_LINE, FRUIT_LINE, type HostLineId } from '../../../content/picnic/picnicLines';
 import type { PresetId } from '../../../save/schema';
 import type { ChoiceOption } from '../../../ui/choices';
 
@@ -42,11 +43,17 @@ export interface StationHost {
   addTarget(t: Target): void;
   removeTarget(id: string): void;
   tapPoint(): { x: number; y: number } | null;
-  host(line: HostLineId): Promise<void>;
+  /** say a step's instruction (remembered for the replay button and hints); skipped if `still()` turns false while waiting to speak */
+  host(line: HostLineId, still?: () => boolean): Promise<void>;
+  /** say a short reaction (not an instruction) */
+  say(line: HostLineId): Promise<void>;
+  /** what the friend we're making this for asked for (null: free choice) */
+  wish(): Wish | null;
   /** true when there's no room on the tray for another dish (stations check before starting one) */
   trayFull(): boolean;
   /** put a finished dish on the tray (false if the tray is full) */
   deliver(dish: Omit<Dish, 'id'>, from: { x: number; y: number }): Promise<boolean>;
+  /** ask a question that has already been said out loud */
   ask(options: ChoiceOption[]): Promise<string | null>;
   /** lantern picnic: may pause for the friends' cutter talk; returns the cut's label */
   cutWith(shape: Shape): Promise<{ forGuest?: string; share: boolean; shape: Shape }>;
@@ -54,6 +61,8 @@ export interface StationHost {
   demoTap(x: number, y: number): void;
   /** decorate: the dish being decorated has changed */
   updateDish(d: Dish): void;
+  /** decorate: finished decorating (the scene says what's next) */
+  decorated(): void;
 }
 
 export abstract class StationBase {
@@ -63,13 +72,33 @@ export abstract class StationBase {
   protected ids: string[] = [];
   protected busy = false;
   private listeners: [string, (...a: never[]) => void][] = [];
+  private lastKey = '';
 
   constructor(protected h: StationHost) {}
 
   abstract open(): void;
   /** the next thing to tap (for the help hand) */
   abstract demo(): void;
+  /** the target the next-thing marker sits on */
+  abstract beacon(): string | null;
+  /** this step's instruction, and a key that changes when the step does */
+  protected abstract instruction(): { key: string; line: HostLineId } | null;
   onArrow(_dx: number): void {}
+
+  get isBusy(): boolean {
+    return this.busy;
+  }
+
+  /** Say what to do now (once per step; `force` says it again, e.g. coming back from serving). */
+  announce(force = false): void {
+    if (this.busy || !this.objs.length) return;
+    const i = this.instruction();
+    if (!i) return;
+    if (!force && i.key === this.lastKey) return;
+    this.lastKey = i.key;
+    // if the child has already moved on by the time it's quiet, this step's line is skipped
+    void this.h.host(i.line, () => !this.busy && this.active() && this.instruction()?.key === i.key);
+  }
 
   close(): void {
     for (const id of this.ids) this.h.removeTarget(id);
@@ -105,6 +134,12 @@ export abstract class StationBase {
     void this.h.host('trayFull');
   }
 
+  /** a tap that can't do anything right now still answers: a soft bonk and a little wiggle */
+  protected nope(o?: Phaser.GameObjects.Image): void {
+    audio.play('bonk', { pitch: 1.4, vol: 0.6 });
+    if (o && !motion.reduced) this.h.scene.tweens.add({ targets: o, angle: { from: -6, to: 6 }, duration: 70, yoyo: true, repeat: 2, onComplete: () => o.setAngle(0) });
+  }
+
   protected rect(x: number, y: number, w: number, hh: number, pad = 16): Phaser.Geom.Rectangle {
     return new Phaser.Geom.Rectangle(x - w / 2 - pad, y - hh / 2 - pad, w + pad * 2, hh + pad * 2);
   }
@@ -130,6 +165,21 @@ export abstract class StationBase {
     if (motion.reduced) return;
     this.h.scene.tweens.add({ targets: o, y: o.y - 8, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
+
+  /** a soft glow pulse on the thing to press next (the green tick, the oven) */
+  protected pulse(o: Phaser.GameObjects.Image, base = 1): void {
+    this.h.scene.tweens.killTweensOf(o);
+    o.setScale(base);
+    if (motion.reduced) {
+      o.setScale(base * 1.08);
+      return;
+    }
+    this.h.scene.tweens.add({ targets: o, scale: base * 1.12, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  protected active(): boolean {
+    return this.objs.length > 0;
+  }
 }
 
 // ================================================================== dough: knead, cut, bake
@@ -142,10 +192,24 @@ export class DoughStation extends StationBase {
   private kneads = 0;
   private dough?: Phaser.GameObjects.Image;
   private lumps?: Phaser.GameObjects.Image;
+  private oven?: Phaser.GameObjects.Image;
   private cutterImgs = new Map<Shape, Phaser.GameObjects.Image>();
+  private bakeNow?: () => void;
 
   open(): void {
-    this.img(OVEN.x, OVEN.y, 'pc.oven', -1);
+    this.oven = this.img(OVEN.x, OVEN.y, 'pc.oven', -1);
+    // More help: tap the oven to bake (one tap, always soft)
+    this.target({
+      id: 'oven',
+      label: 'Bake it in the oven',
+      bounds: () => this.rect(OVEN.x, OVEN.y - 110, 280, 240, 6),
+      enabled: () => this.step === 'bake' && !!this.bakeNow,
+      activate: () => {
+        const go = this.bakeNow;
+        this.bakeNow = undefined;
+        go?.();
+      },
+    });
     this.startDough();
   }
 
@@ -164,6 +228,29 @@ export class DoughStation extends StationBase {
     });
   }
 
+  protected instruction(): { key: string; line: HostLineId } | null {
+    if (this.step === 'knead') return { key: 'knead', line: 'knead' };
+    if (this.step === 'cut') {
+      const want = this.wantedShape();
+      return { key: `cut:${want ?? ''}`, line: want ? CUT_LINE[want] : 'cutAny' };
+    }
+    if (this.step === 'bake' && this.bakeNow) return { key: 'bake', line: 'bakeTap' };
+    return null;
+  }
+
+  private wantedShape(): Shape | null {
+    const s = this.h.wish()?.shape;
+    return s && this.cutterImgs.has(s) ? s : null;
+  }
+
+  beacon(): string | null {
+    if (this.busy) return null;
+    if (this.step === 'knead') return 'dough';
+    if (this.step === 'cut') return `cutter-${this.wantedShape() ?? this.cutterImgs.keys().next().value}`;
+    if (this.step === 'bake' && this.bakeNow) return 'oven';
+    return null;
+  }
+
   private async knead(bowl: Phaser.GameObjects.Image): Promise<void> {
     const d = this.dough!;
     this.h.poke();
@@ -173,12 +260,14 @@ export class DoughStation extends StationBase {
     this.h.scene.tweens.killTweensOf(d);
     d.setScale(1);
     this.h.scene.tweens.add({ targets: [d, this.lumps], scaleY: 0.66, scaleX: 1.28, duration: 90, yoyo: true, ease: 'Quad.easeOut' });
+    dust(this.h.scene, BOWL.x + Phaser.Math.Between(-60, 60), BOWL.y - 90, 3, this.h.depth + 5);
     this.lumps!.setAlpha(Math.max(0, 1 - this.kneads / KNEADS[this.h.preset]));
-    if (this.kneads === 2) void this.h.host('kneadMore');
+    if (this.kneads === 2 && KNEADS[this.h.preset] > 3) void this.h.say('kneadMore');
     if (this.kneads < KNEADS[this.h.preset]) return;
     this.busy = true;
     this.untarget('dough');
-    sparkle(this.h.scene, BOWL.x, BOWL.y - 90, 8, this.h.depth + 5);
+    sparkle(this.h.scene, BOWL.x, BOWL.y - 90, 10, this.h.depth + 5);
+    audio.play('sparkle');
     await this.wait(250);
     // roll it flat on the board
     await this.tween({ targets: [d, this.lumps, bowl], alpha: 0, duration: 220 });
@@ -186,12 +275,12 @@ export class DoughStation extends StationBase {
     const sheet = this.img(BOWL.x + 30, BOWL.y - 40, 'pc.dough.sheet', 1).setScale(0.4, 0.7);
     const pinImg = this.img(BOWL.x - 170, BOWL.y - 60, 'pc.pin', 2).setScale(0.8);
     audio.play('stretch');
-    await Promise.all([this.tween({ targets: pinImg, x: BOWL.x + 230, duration: 700, ease: 'Sine.easeInOut' }), this.tween({ targets: sheet, scaleX: 1, scaleY: 1, duration: 700, ease: 'Sine.easeOut' })]);
-    await this.tween({ targets: pinImg, alpha: 0, duration: 200 });
+    await Promise.all([this.tween({ targets: pinImg, x: BOWL.x + 230, duration: 600, ease: 'Sine.easeInOut' }), this.tween({ targets: sheet, scaleX: 1, scaleY: 1, duration: 600, ease: 'Sine.easeOut' })]);
+    await this.tween({ targets: pinImg, alpha: 0, duration: 160 });
     this.busy = false;
     this.step = 'cut';
     this.showCutters(sheet, boardImg);
-    void this.h.host('kneaded');
+    this.announce();
   }
 
   private showCutters(sheet: Phaser.GameObjects.Image, boardImg: Phaser.GameObjects.Image): void {
@@ -221,53 +310,67 @@ export class DoughStation extends StationBase {
     const ox = cutter.x;
     const oy = cutter.y;
     audio.play('pickup');
-    await this.tween({ targets: cutter, x: BOWL.x + 30, y: BOWL.y - 120, scale: res.share ? 1.3 : 1, duration: 320, ease: 'Quad.easeOut' });
-    await this.tween({ targets: cutter, y: BOWL.y - 50, duration: 140, ease: 'Quad.easeIn' });
+    await this.tween({ targets: cutter, x: BOWL.x + 30, y: BOWL.y - 120, scale: res.share ? 1.3 : 1, duration: 300, ease: 'Quad.easeOut' });
+    await this.tween({ targets: cutter, y: BOWL.y - 50, duration: 130, ease: 'Quad.easeIn' });
     audio.play('squish', { pitch: 0.8 });
     const raw = this.img(BOWL.x + 30, BOWL.y - 50, `pc.cookie.${res.shape}.soft`, 2).setTint(0xfff3dc).setScale(res.share ? 1.35 : 1);
-    await this.tween({ targets: cutter, y: BOWL.y - 140, duration: 200, ease: 'Quad.easeOut' });
+    await this.tween({ targets: cutter, y: BOWL.y - 140, duration: 180, ease: 'Quad.easeOut' });
     void this.tween({ targets: cutter, x: ox, y: oy, scale: 0.72, duration: 300 });
-    await this.tween({ targets: [sheet, boardImg], alpha: 0, duration: 260 });
+    await this.tween({ targets: [sheet, boardImg], alpha: 0, duration: 240 });
     for (const s of this.cutterImgs.keys()) this.untarget(`cutter-${s}`);
     for (const im of this.cutterImgs.values()) void this.tween({ targets: im, alpha: 0, duration: 200 });
-    // bake: a little (soft) or a long time (crunchy)
     this.step = 'bake';
-    void this.h.host('bake');
-    const pick = await this.h.ask([
-      { id: 'soft', icon: 'wait', label: 'A little bake (soft)', art: pieceSvg(`pc.cookie.${res.shape}.soft`) },
-      { id: 'crunchy', icon: 'wait', label: 'A long bake (crunchy)', art: pieceSvg(`pc.cookie.${res.shape}.crunchy`) },
-    ]);
-    if (!this.active()) return;
-    const texture = pick === 'crunchy' ? 'crunchy' : 'soft';
-    await this.tween({ targets: raw, x: OVEN.x, y: OVEN.y - 60, scale: 0.6, duration: 380, ease: 'Quad.easeInOut' });
+    let texture: 'soft' | 'crunchy' = 'soft';
+    if (this.h.preset === 'more-help') {
+      // one tap on the oven bakes it
+      await new Promise<void>((resolve) => {
+        this.bakeNow = resolve;
+        this.busy = false; // waiting for the child: hints and the marker can show the oven
+        this.pulse(this.oven!);
+        this.announce();
+      });
+      if (!this.active()) return;
+      this.busy = true;
+      this.h.poke();
+      this.h.scene.tweens.killTweensOf(this.oven!);
+      this.oven!.setScale(1);
+    } else {
+      // soft or crunchy: the question is said first, then the two pictures
+      await this.h.host('bakeAsk');
+      if (!this.active()) return;
+      const pick = await this.h.ask([
+        { id: 'soft', icon: 'wait', label: 'Soft', art: pieceSvg(`pc.cookie.${res.shape}.soft`) },
+        { id: 'crunchy', icon: 'wait', label: 'Crunchy', art: pieceSvg(`pc.cookie.${res.shape}.crunchy`) },
+      ]);
+      if (!this.active()) return;
+      texture = pick === 'crunchy' ? 'crunchy' : 'soft';
+    }
+    await this.tween({ targets: raw, x: OVEN.x, y: OVEN.y - 60, scale: 0.6, duration: 360, ease: 'Quad.easeInOut' });
     const glow = this.img(OVEN.x, OVEN.y, 'pc.oven.glow', -1).setAlpha(0);
     raw.setDepth(this.h.depth - 2);
     audio.play('whirr', { pitch: 0.7, vol: 0.5 });
-    await this.tween({ targets: glow, alpha: 1, duration: 300, yoyo: true, repeat: texture === 'crunchy' ? 2 : 0 });
+    await this.tween({ targets: glow, alpha: 1, duration: 280, yoyo: true, repeat: texture === 'crunchy' ? 2 : 0 });
     audio.play('ding');
     const cooked = this.img(OVEN.x, OVEN.y - 60, `pc.cookie.${res.shape}.${texture}`, 4).setScale(res.share ? 0.8 : 0.6);
     raw.destroy();
-    await this.tween({ targets: cooked, y: OVEN.y - 140, scale: res.share ? 1.35 : 1, duration: 360, ease: 'Back.easeOut' });
-    void this.h.host('baked');
+    await this.tween({ targets: cooked, y: OVEN.y - 150, scale: res.share ? 1.35 : 1, duration: 360, ease: 'Back.easeOut' });
+    sparkle(this.h.scene, cooked.x, cooked.y, 14, this.h.depth + 6);
+    audio.play('sparkle');
+    await this.wait(350);
     const ok = await this.h.deliver({ kind: 'cookie', shape: res.shape, texture, deco: [], share: res.share || undefined, forGuest: res.forGuest }, { x: cooked.x, y: cooked.y });
     cooked.destroy();
+    glow.destroy();
     this.busy = false;
-    if (ok && this.active()) {
-      glow.destroy();
-      this.startDough();
-    }
-  }
-
-  private active(): boolean {
-    return this.objs.length > 0;
+    if (ok && this.active()) this.startDough();
   }
 
   demo(): void {
     if (this.step === 'knead') this.h.demoTap(BOWL.x, BOWL.y - 80);
     else if (this.step === 'cut') {
-      const first = this.cutterImgs.values().next().value;
-      if (first) this.h.demoTap(first.x, first.y);
-    }
+      const want = this.wantedShape();
+      const im = (want && this.cutterImgs.get(want)) || this.cutterImgs.values().next().value;
+      if (im) this.h.demoTap(im.x, im.y);
+    } else if (this.step === 'bake' && this.bakeNow) this.h.demoTap(OVEN.x, OVEN.y - 100);
   }
 }
 
@@ -277,6 +380,7 @@ const STACKX = 360;
 const PLATE_Y = 870;
 const BREAD_Y = PLATE_Y - 24;
 const LAYER_H = 22;
+const TOPBREAD = { x: 800, y: 790 };
 
 export class StackStation extends StationBase {
   readonly id = 'stack';
@@ -287,6 +391,7 @@ export class StackStation extends StationBase {
   private hoverDx = 0;
   private fallen: { f: Filling; img: Phaser.GameObjects.Image; tall: boolean } | null = null;
   private dishImgs = new Map<Filling, Phaser.GameObjects.Image>();
+  private topBread?: Phaser.GameObjects.Image;
 
   open(): void {
     this.img(STACKX, PLATE_Y, 'pc.plate', 0);
@@ -299,8 +404,9 @@ export class StackStation extends StationBase {
       this.dishImgs.set(f, im);
       this.target({ id: `filling-${f}`, label: f, bounds: () => this.rect(x, y, 160, 100, 10), enabled: () => !this.busy, activate: () => this.pick(f) });
     });
-    const tb = this.img(800, 790, 'pc.bread.top', 1).setScale(0.9);
-    this.target({ id: 'topbread', label: 'Top bread: finish the sandwich', bounds: () => this.rect(800, 780, 230, 90, 14), enabled: () => !this.busy, activate: () => void this.finish(tb) });
+    const tb = this.img(TOPBREAD.x, TOPBREAD.y, 'pc.bread.top', 1).setScale(0.9);
+    this.topBread = tb;
+    this.target({ id: 'topbread', label: 'Top bread: finish the sandwich', bounds: () => this.rect(TOPBREAD.x, TOPBREAD.y - 10, 230, 90, 14), enabled: () => !this.busy, activate: () => void this.finish(tb) });
     this.target({
       id: 'stackzone',
       label: 'Drop it here',
@@ -312,7 +418,6 @@ export class StackStation extends StationBase {
         void this.drop(tp ? tp.x - STACKX : this.hoverDx);
       },
     });
-    void this.h.host(this.h.preset === 'more-help' ? 'stackStart' : 'stackWhere');
   }
 
   private startSandwich(): void {
@@ -320,6 +425,53 @@ export class StackStation extends StationBase {
     this.layers = [];
     for (const im of this.layerImgs) im.destroy();
     this.layerImgs = [this.img(STACKX, BREAD_Y, 'pc.bread.bottom', 2)];
+    this.updateTopBread();
+  }
+
+  /** How many fillings the friend's sandwich needs ("big tall" is three or more). */
+  private needed(): number {
+    const w = this.h.wish();
+    if (w?.size === 'big') return 3;
+    if (w?.size === 'small') return 1;
+    return 2;
+  }
+
+  private wantedFilling(): Filling | null {
+    const f = this.h.wish()?.filling;
+    return f && this.dishImgs.has(f) && !this.layers.some((l) => l.f === f) ? f : null;
+  }
+
+  private ready(): boolean {
+    return this.layers.length >= this.needed() && !this.wantedFilling();
+  }
+
+  protected instruction(): { key: string; line: HostLineId } | null {
+    if (this.fallen) return null; // "it slid off" was just said
+    if (this.inHand) return { key: `drop:${this.layers.length}`, line: 'stackDrop' };
+    if (this.ready()) return { key: 'done', line: 'stackDone' };
+    const want = this.wantedFilling();
+    if (want) return { key: `fill:${want}`, line: FILL_LINE[want] };
+    if (!this.layers.length) return { key: 'start', line: this.h.preset === 'more-help' ? 'stackStart' : 'stackWhere' };
+    return { key: `more:${this.layers.length}`, line: 'stackMore' };
+  }
+
+  beacon(): string | null {
+    if (this.busy) return null;
+    if (this.fallen) return 'fallen';
+    if (this.inHand) return 'stackzone';
+    if (this.ready()) return 'topbread';
+    return `filling-${this.wantedFilling() ?? this.dishImgs.keys().next().value}`;
+  }
+
+  /** the top bread glows once the sandwich is tall enough */
+  private updateTopBread(): void {
+    const tb = this.topBread;
+    if (!tb) return;
+    if (this.layers.length && this.ready()) this.pulse(tb, 0.9);
+    else {
+      this.h.scene.tweens.killTweensOf(tb);
+      tb.setScale(0.9);
+    }
   }
 
   private topY(): number {
@@ -345,6 +497,7 @@ export class StackStation extends StationBase {
     this.hoverDx = 0;
     this.hover = this.img(STACKX, this.topY() - 110, `pc.fill.${f}`, 6);
     this.bob(this.hover);
+    this.announce();
   }
 
   override onArrow(dx: number): void {
@@ -373,7 +526,8 @@ export class StackStation extends StationBase {
       audio.play('squish', { pitch: 1.1 + this.layers.length * 0.05 });
       this.wobble();
       this.busy = false;
-      if (this.layers.length === 2) void this.h.host('stackDone');
+      this.updateTopBread();
+      this.announce();
       return;
     }
     // it slides off and bounces onto the table (tap it to pop it back on)
@@ -390,8 +544,8 @@ export class StackStation extends StationBase {
       enabled: () => !this.busy,
       activate: () => void this.popFallen(),
     });
-    void this.h.host(r.reason === 'tall' ? 'stackTall' : r.reason === 'lean' ? 'stackLean' : 'stackSlid');
     this.busy = false;
+    void this.h.host(r.reason === 'tall' ? 'stackTall' : r.reason === 'lean' ? 'stackLean' : 'stackSlid');
   }
 
   private async popFallen(): Promise<void> {
@@ -406,6 +560,7 @@ export class StackStation extends StationBase {
       await this.tween({ targets: fl.img, x: home.x, y: home.y - 10, angle: 0, alpha: 0, duration: 380 });
       fl.img.destroy();
       this.busy = false;
+      this.announce(true);
       return;
     }
     const r = popBack(this.layers, fl.f);
@@ -417,6 +572,8 @@ export class StackStation extends StationBase {
     this.layerImgs.push(fl.img);
     this.wobble();
     this.busy = false;
+    this.updateTopBread();
+    this.announce(true);
   }
 
   private returnFallen(): void {
@@ -444,24 +601,24 @@ export class StackStation extends StationBase {
     this.inHand = null;
     this.hover?.destroy();
     this.busy = true;
+    this.h.scene.tweens.killTweensOf(tb);
     const top = this.layers.length ? this.layers[this.layers.length - 1].dx : 0;
-    const ox = tb.x;
-    const oy = tb.y;
     await this.tween({ targets: tb, x: STACKX + top * 0.6, y: this.topY() - 70, scale: 1, duration: 300, ease: 'Quad.easeOut' });
     await this.tween({ targets: tb, y: this.topY() - 14, duration: 140, ease: 'Quad.easeIn' });
     audio.play('squish', { pitch: 0.7 });
     const all = [...this.layerImgs, tb];
     await this.tween({ targets: all, scaleY: 0.85, duration: 100, yoyo: true });
-    if (!this.layers.length) void this.h.host('breadOnly');
+    sparkle(this.h.scene, STACKX, this.topY() - 40, 14, this.h.depth + 6);
+    audio.play('sparkle');
+    if (!this.layers.length) await this.h.say('breadOnly');
+    await this.wait(300);
     const ok = await this.h.deliver({ kind: 'sandwich', layers: this.layers, deco: [] }, { x: STACKX, y: this.topY() });
     if (!this.objs.length) return;
+    tb.setPosition(TOPBREAD.x, TOPBREAD.y).setScale(0.9);
     if (ok) {
       for (const im of this.layerImgs) im.destroy();
       this.layerImgs = [];
-      tb.setPosition(ox, oy).setScale(0.9);
       this.startSandwich();
-    } else {
-      tb.setPosition(ox, oy).setScale(0.9);
     }
     this.busy = false;
   }
@@ -469,10 +626,11 @@ export class StackStation extends StationBase {
   demo(): void {
     if (this.inHand) this.h.demoTap(STACKX, this.topY() - 80);
     else if (this.fallen) this.h.demoTap(this.fallen.img.x, this.fallen.img.y);
-    else if (this.layers.length >= 2) this.h.demoTap(800, 780);
+    else if (this.ready()) this.h.demoTap(TOPBREAD.x, TOPBREAD.y - 10);
     else {
-      const first = this.dishImgs.values().next().value;
-      if (first) this.h.demoTap(first.x, first.y);
+      const want = this.wantedFilling();
+      const im = (want && this.dishImgs.get(want)) || this.dishImgs.values().next().value;
+      if (im) this.h.demoTap(im.x, im.y);
     }
   }
 }
@@ -480,15 +638,18 @@ export class StackStation extends StationBase {
 // ================================================================== juice: combine, blend, pour
 
 const JUG = { x: 300, y: 890 };
+const BUTTON = { x: JUG.x + 170, y: JUG.y - 40 };
 const CUPS: Record<Size, { x: number; y: number }> = { small: { x: 690, y: 890 }, big: { x: 840, y: 890 } };
 const POUR = { x: 560, y: 900 };
 
 export class JuiceStation extends StationBase {
   readonly id = 'juice';
   private fruits: Fruit[] = [];
+  private fruitImgs = new Map<Fruit, Phaser.GameObjects.Image>();
   private chunks: Phaser.GameObjects.Image[] = [];
   private liquid?: Phaser.GameObjects.Image;
   private jug?: Phaser.GameObjects.Image;
+  private button?: Phaser.GameObjects.Image;
   private cup: Size | null = null;
   private glugs = 0;
   private cupImgs = new Map<Size, Phaser.GameObjects.Image>();
@@ -498,24 +659,30 @@ export class JuiceStation extends StationBase {
   open(): void {
     this.liquid = this.img(JUG.x, JUG.y, 'pc.jug.liquid', 0).setScale(1, 0.001).setAlpha(0);
     this.jug = this.img(JUG.x, JUG.y, 'pc.jug', 2);
-    this.img(JUG.x + 170, JUG.y - 40, 'pc.jug.button', 2);
+    this.button = this.img(BUTTON.x, BUTTON.y, 'pc.jug.button', 2);
     const list = this.h.def.fruits[this.h.preset];
     list.forEach((f, i) => {
       const x = 160 + i * 140;
       const y = 530;
-      this.img(x, y, `pc.fruit.${f}`, 1).setScale(1.1);
+      this.fruitImgs.set(f, this.img(x, y, `pc.fruit.${f}`, 1).setScale(1.1));
       this.target({ id: `fruit-${f}`, label: `${f}`, bounds: () => this.rect(x, y, 110, 110, 8), enabled: () => this.step === 'fruit' && !this.busy, activate: () => void this.addFruit(f, x, y) });
     });
-    this.target({ id: 'blend', label: 'Blend', bounds: () => this.rect(JUG.x + 170, JUG.y - 40, 92, 92, 18), enabled: () => this.step === 'fruit' && this.fruits.length > 0 && !this.busy, activate: () => void this.blend() });
+    this.target({
+      id: 'blend',
+      label: 'Blend',
+      bounds: () => this.rect(BUTTON.x, BUTTON.y, 92, 92, 18),
+      enabled: () => this.step === 'fruit' && !this.busy,
+      activate: () => (this.fruits.length ? void this.blend() : this.nope(this.button)),
+    });
     for (const size of ['small', 'big'] as Size[]) {
       const c = CUPS[size];
       this.cupImgs.set(size, this.img(c.x, c.y, `pc.cup.${size}`, 3));
-      this.target({ id: `cup-${size}`, label: `${size} cup`, bounds: () => this.rect(c.x, c.y - (size === 'big' ? 85 : 55), 120, size === 'big' ? 180 : 120, 10), enabled: () => this.step === 'cup' && !this.busy, activate: () => void this.chooseCup(size) });
+      // More help skips choosing a cup (one fewer step); the cup comes on its own
+      if (this.h.preset === 'more-exploring') this.target({ id: `cup-${size}`, label: `${size} cup`, bounds: () => this.rect(c.x, c.y - (size === 'big' ? 85 : 55), 120, size === 'big' ? 180 : 120, 10), enabled: () => this.step === 'cup' && !this.busy, activate: () => void this.chooseCup(size) });
     }
     this.target({ id: 'jug', label: 'Pour', bounds: () => this.rect(JUG.x, JUG.y - 150, 200, 300, 6), enabled: () => this.step === 'pour' && !this.busy, activate: () => void this.pour() });
     this.target({ id: 'cup', label: 'Put the juice on the tray', priority: 2, bounds: () => this.rect(POUR.x, POUR.y - 80, 130, 180, 10), enabled: () => this.step === 'pour' && this.glugs > 0 && !this.busy, activate: () => void this.finish() });
     this.reset();
-    void this.h.host('juiceStart');
   }
 
   private reset(): void {
@@ -531,14 +698,54 @@ export class JuiceStation extends StationBase {
     this.saucer?.destroy();
     this.saucer = undefined;
     for (const [size, im] of this.cupImgs) im.setPosition(CUPS[size].x, CUPS[size].y).setAlpha(1);
+    if (this.button) {
+      this.h.scene.tweens.killTweensOf(this.button);
+      this.button.setScale(1);
+    }
+  }
+
+  private wantedFruit(): Fruit | null {
+    const f = this.h.wish()?.flavor;
+    return f && this.fruitImgs.has(f) && !this.fruits.includes(f) ? f : null;
+  }
+
+  private wantedCup(): Size {
+    return this.h.wish()?.size ?? 'small';
+  }
+
+  private full2(): boolean {
+    return !!this.cup && this.glugs >= CUP_GLUGS[this.cup];
+  }
+
+  protected instruction(): { key: string; line: HostLineId } | null {
+    if (this.step === 'fruit') {
+      const want = this.wantedFruit();
+      if (want) return { key: `fruit:${want}`, line: FRUIT_LINE[want] };
+      return this.fruits.length ? { key: 'blend', line: 'juiceBlend' } : { key: 'start', line: 'juiceStart' };
+    }
+    if (this.step === 'cup') return { key: 'cup', line: 'juiceCup' };
+    if (this.step === 'pour') return this.full2() ? { key: 'full', line: 'juiceFull' } : { key: 'pour', line: 'juicePour' };
+    return null;
+  }
+
+  beacon(): string | null {
+    if (this.busy) return null;
+    if (this.step === 'fruit') {
+      const want = this.wantedFruit();
+      if (want) return `fruit-${want}`;
+      return this.fruits.length ? 'blend' : `fruit-${this.fruitImgs.keys().next().value}`;
+    }
+    if (this.step === 'cup') return `cup-${this.wantedCup()}`;
+    if (this.step === 'pour') return this.full2() ? 'cup' : 'jug';
+    return null;
   }
 
   private async addFruit(f: Fruit, x: number, y: number): Promise<void> {
     this.h.poke();
     if (!this.fruits.length && this.h.trayFull()) return this.full();
     if (this.fruits.length >= MAX_FRUITS[this.h.preset]) {
-      audio.play('bonk', { pitch: 1.3 });
-      void this.h.host('juiceBlend');
+      this.nope(this.fruitImgs.get(f));
+      this.announce(true);
       return;
     }
     this.busy = true;
@@ -550,26 +757,34 @@ export class JuiceStation extends StationBase {
     await this.tween({ targets: chunk, y: JUG.y - 40 - n * 46, duration: 260, ease: 'Bounce.easeOut' });
     audio.play('pop', { pitch: 0.8 + n * 0.1 });
     this.busy = false;
-    if (n === 1) void this.h.host('juiceBlend');
+    if (!this.wantedFruit()) this.pulse(this.button!);
+    this.announce();
   }
 
   private async blend(): Promise<void> {
     this.h.poke();
     this.busy = true;
+    this.h.scene.tweens.killTweensOf(this.button!);
+    this.button!.setScale(1);
     audio.play('whirr', { pitch: 1.4 });
     if (!motion.reduced) this.h.scene.tweens.add({ targets: [this.jug, ...this.chunks], x: '+=6', duration: 50, yoyo: true, repeat: 9 });
     await this.tween({ targets: this.chunks, angle: 720, scale: 0.1, alpha: 0, duration: 900 });
     const color = juiceColor(this.fruits);
     this.liquid!.setTint(hex(color)).setAlpha(1);
     await this.tween({ targets: this.liquid, scaleY: 0.75, duration: 400, ease: 'Quad.easeOut' });
+    sparkle(this.h.scene, JUG.x, JUG.y - 200, isRainbow(this.fruits) ? 16 : 8, this.h.depth + 6);
+    if (isMuddy(this.fruits)) await this.h.say('juiceMuddy');
+    else if (isRainbow(this.fruits)) await this.h.say('juiceRainbow');
+    if (!this.active()) return;
+    if (this.h.preset === 'more-help') {
+      // the cup slides over by itself
+      this.busy = false;
+      await this.chooseCup(this.wantedCup());
+      return;
+    }
     this.step = 'cup';
     this.busy = false;
-    if (isMuddy(this.fruits)) await this.h.host('juiceMuddy');
-    else if (isRainbow(this.fruits)) {
-      sparkle(this.h.scene, JUG.x, JUG.y - 200, 12, this.h.depth + 6);
-      await this.h.host('juiceRainbow');
-    }
-    void this.h.host('juiceCup');
+    this.announce();
   }
 
   private async chooseCup(size: Size): Promise<void> {
@@ -584,14 +799,16 @@ export class JuiceStation extends StationBase {
     this.cupFill = this.img(POUR.x, POUR.y, `pc.cup.${size}.fill`, 2).setTint(hex(juiceColor(this.fruits))).setScale(1, 0.001);
     this.step = 'pour';
     this.busy = false;
-    void this.h.host('juicePour');
+    this.announce();
   }
 
   private async pour(): Promise<void> {
     if (!this.cup) return;
     this.h.poke();
     this.busy = true;
-    const r = pourGlug(this.glugs, this.cup);
+    const cap = CUP_GLUGS[this.cup];
+    // More help: one tap fills the cup
+    const glugs = this.h.preset === 'more-help' ? cap - this.glugs : 1;
     const jug = this.jug!;
     const color = hex(juiceColor(this.fruits));
     await this.tween({ targets: [jug, this.liquid], x: POUR.x - 150, angle: 38, duration: 260, ease: 'Quad.easeOut' });
@@ -600,26 +817,39 @@ export class JuiceStation extends StationBase {
     this.objs.push(stream);
     audio.play('pour');
     await this.tween({ targets: stream, scaleY: 1, duration: 200 });
-    this.glugs = r.glugs;
-    const cap = CUP_GLUGS[this.cup];
-    await this.tween({ targets: this.cupFill, scaleY: this.glugs / cap, duration: 260, ease: 'Sine.easeOut' });
+    let spilled = false;
+    for (let i = 0; i < Math.max(1, glugs); i++) {
+      const r = pourGlug(this.glugs, this.cup);
+      this.glugs = r.glugs;
+      spilled = r.spilled;
+      await this.tween({ targets: this.cupFill, scaleY: this.glugs / cap, duration: 260, ease: 'Sine.easeOut' });
+    }
     void this.tween({ targets: this.liquid, scaleY: Math.max(0.15, 0.75 - (this.glugs / 4) * 0.5), duration: 260 });
-    if (r.spilled) {
+    if (spilled) {
       splash(this.h.scene, POUR.x + 40, POUR.y - 10, this.h.depth + 6);
       const drip = this.h.scene.add.ellipse(POUR.x + 44, POUR.y + 4, 44, 12, color).setDepth(this.h.depth + 3).setStrokeStyle(3, 0x3b2a20);
       this.objs.push(drip);
-      void this.h.host('juiceSpill');
+      void this.h.say('juiceSpill');
     }
     stream.destroy();
     this.objs = this.objs.filter((o) => o !== stream);
     await this.tween({ targets: [jug, this.liquid], x: JUG.x, angle: 0, duration: 240 });
     this.busy = false;
+    if (this.h.preset === 'more-help') {
+      // full: off it goes to the tray, no extra tap needed
+      await this.finish();
+      return;
+    }
+    if (!spilled) this.announce();
   }
 
   private async finish(): Promise<void> {
     if (!this.cup || !this.glugs) return;
     this.h.poke();
     this.busy = true;
+    sparkle(this.h.scene, POUR.x, POUR.y - 100, 12, this.h.depth + 6);
+    audio.play('sparkle');
+    await this.wait(300);
     const ok = await this.h.deliver({ kind: 'juice', fruits: [...this.fruits], cup: this.cup, glugs: this.glugs, deco: [] }, { x: POUR.x, y: POUR.y - 80 });
     if (!this.objs.length) return;
     if (ok) this.reset();
@@ -627,24 +857,32 @@ export class JuiceStation extends StationBase {
   }
 
   demo(): void {
-    if (this.step === 'fruit' && !this.fruits.length) this.h.demoTap(160, 530);
-    else if (this.step === 'fruit') this.h.demoTap(JUG.x + 170, JUG.y - 40);
-    else if (this.step === 'cup') this.h.demoTap(CUPS.small.x, CUPS.small.y - 60);
-    else if (this.step === 'pour' && this.glugs < CUP_GLUGS[this.cup ?? 'small']) this.h.demoTap(JUG.x, JUG.y - 150);
+    const b = this.beacon();
+    if (!b) return;
+    if (b.startsWith('fruit-')) {
+      const im = this.fruitImgs.get(b.slice(6) as Fruit);
+      if (im) this.h.demoTap(im.x, im.y);
+    } else if (b === 'blend') this.h.demoTap(BUTTON.x, BUTTON.y);
+    else if (b.startsWith('cup-')) {
+      const c = CUPS[b.slice(4) as Size];
+      this.h.demoTap(c.x, c.y - 60);
+    } else if (b === 'jug') this.h.demoTap(JUG.x, JUG.y - 150);
     else this.h.demoTap(POUR.x, POUR.y - 70);
   }
-
 }
 
 // ================================================================== decorate
 
 const DECO_AT = { x: 380, y: 900 };
+const DONE = { x: 800, y: 840 };
 const TOOL_SPOTS = [
   { x: 720, y: 520 },
   { x: 880, y: 520 },
   { x: 720, y: 690 },
   { x: 880, y: 690 },
 ];
+/** toppings before the green tick starts to glow */
+const ENOUGH_TAPS = 3;
 
 export class DecorateStation extends StationBase {
   readonly id = 'decorate';
@@ -652,6 +890,7 @@ export class DecorateStation extends StationBase {
   private dish: Dish | null = null;
   private tool: Deco | null = null;
   private toolImgs = new Map<Deco, Phaser.GameObjects.Image>();
+  private doneImg?: Phaser.GameObjects.Image;
   private stroke: number[] | null = null;
   private placed = 0;
 
@@ -664,8 +903,8 @@ export class DecorateStation extends StationBase {
       this.toolImgs.set(d, im);
       this.target({ id: `tool-${d}`, label: d, bounds: () => this.rect(s.x, s.y, 110, 140, 8), enabled: () => this.step === 'deco', activate: () => this.pickTool(d) });
     });
-    this.img(800, 840, 'pc.done', 2);
-    this.target({ id: 'deco-done', label: 'Finished decorating', bounds: () => this.rect(800, 840, 104, 104, 12), enabled: () => this.step === 'deco' && !this.busy, activate: () => void this.done() });
+    this.doneImg = this.img(DONE.x, DONE.y, 'pc.done', 2);
+    this.target({ id: 'deco-done', label: 'Finished decorating', bounds: () => this.rect(DONE.x, DONE.y, 104, 104, 12), enabled: () => this.step === 'deco' && !this.busy, activate: () => void this.done() });
     this.target({
       id: 'decozone',
       label: 'Decorate here',
@@ -687,7 +926,6 @@ export class DecorateStation extends StationBase {
       this.stroke = null;
       if (s && s.length >= 8) this.addSwirl(s);
     });
-    void this.h.host('decoratePick');
   }
 
   /** Called by the scene when the child picks a dish from the tray. */
@@ -700,12 +938,48 @@ export class DecorateStation extends StationBase {
     this.objs.push(this.view);
     this.step = 'deco';
     this.placed = 0;
-    if (!this.tool) this.pickTool(this.h.def.decos[this.h.preset][0], true);
-    void this.h.host('decorate');
+    const want = this.wantedTool();
+    if (!this.tool || want) this.pickTool(want ?? this.h.def.decos[this.h.preset][0], true);
+    this.updateTick();
+    this.announce();
   }
 
   get dishId(): string | null {
     return this.dish?.id ?? null;
+  }
+
+  private wantedTool(): Deco | null {
+    const d = this.h.wish()?.deco;
+    return d && this.toolImgs.has(d) ? d : null;
+  }
+
+  private enough(): boolean {
+    return this.placed >= ENOUGH_TAPS;
+  }
+
+  protected instruction(): { key: string; line: HostLineId } | null {
+    if (this.step === 'pick') return { key: 'pick', line: 'decoratePick' };
+    if (this.step === 'deco') return this.enough() ? { key: 'tick', line: 'decorateTick' } : { key: 'deco', line: 'decorate' };
+    return null;
+  }
+
+  beacon(): string | null {
+    if (this.busy) return null;
+    if (this.step === 'pick') return 'tray-0';
+    if (this.step !== 'deco') return null;
+    const want = this.wantedTool();
+    if (want && this.tool !== want) return `tool-${want}`;
+    return this.enough() ? 'deco-done' : 'decozone';
+  }
+
+  private updateTick(): void {
+    const im = this.doneImg;
+    if (!im) return;
+    if (this.step === 'deco' && this.enough()) this.pulse(im);
+    else {
+      this.h.scene.tweens.killTweensOf(im);
+      im.setScale(1);
+    }
   }
 
   private zone(): Phaser.Geom.Rectangle {
@@ -734,7 +1008,8 @@ export class DecorateStation extends StationBase {
     if (!this.dish || !this.view || !this.tool) return;
     this.h.poke();
     if (this.dish.deco.length >= MAX_TOPPINGS) {
-      audio.play('bonk', { pitch: 1.3 });
+      this.nope();
+      this.announce(true);
       return;
     }
     // keyboard: a gentle spiral of spots across the dish
@@ -758,6 +1033,9 @@ export class DecorateStation extends StationBase {
       this.dish.deco.push(t);
       this.view.addTopping(t);
     }
+    if (tp) sparkle(this.h.scene, tp.x, tp.y, 3, this.h.depth + 6);
+    this.updateTick();
+    this.announce();
   }
 
   private addSwirl(worldPts: number[]): void {
@@ -771,6 +1049,8 @@ export class DecorateStation extends StationBase {
     this.dish.deco.push(t);
     this.view.addTopping(t);
     audio.play('squish', { pitch: 1.4 });
+    this.updateTick();
+    this.announce();
   }
 
   private async done(): Promise<void> {
@@ -778,16 +1058,18 @@ export class DecorateStation extends StationBase {
     this.h.poke();
     this.busy = true;
     this.h.updateDish(this.dish);
-    sparkle(this.h.scene, DECO_AT.x, DECO_AT.y - 120, 10, this.h.depth + 6);
+    sparkle(this.h.scene, DECO_AT.x, DECO_AT.y - 120, 16, this.h.depth + 6);
     audio.play('sparkle');
-    void this.h.host('decorateDone');
     await this.tween({ targets: this.view, alpha: 0, scale: 0.6, duration: 260 });
     this.view?.destroy();
     this.objs = this.objs.filter((o) => o !== this.view);
     this.view = undefined;
     this.dish = null;
     this.step = 'pick';
+    this.updateTick();
+    await this.h.say('decorateDone');
     this.busy = false;
+    this.h.decorated();
   }
 
   /** The dish left the tray (served or kept): stop showing it here. */
@@ -798,6 +1080,7 @@ export class DecorateStation extends StationBase {
     this.view = undefined;
     this.dish = null;
     this.step = 'pick';
+    this.updateTick();
   }
 
   /** Save toppings back to the tray when the child switches away mid-decoration. */
@@ -806,18 +1089,18 @@ export class DecorateStation extends StationBase {
   }
 
   demo(): void {
-    if (this.step === 'pick') this.h.demoTap(820, 930);
-    else if (this.view && this.dish && this.dish.deco.length < 3) {
+    const b = this.beacon();
+    if (b === 'tray-0') this.h.demoTap(720, 900);
+    else if (b?.startsWith('tool-')) {
+      const im = this.toolImgs.get(b.slice(5) as Deco);
+      if (im) this.h.demoTap(im.x, im.y);
+    } else if (b === 'decozone') {
       const z = this.zone();
       this.h.demoTap(z.centerX, z.centerY);
-    } else this.h.demoTap(800, 840);
+    } else if (b === 'deco-done') this.h.demoTap(DONE.x, DONE.y);
   }
 }
 
 function clamp60(v: number): number {
   return Math.max(-60, Math.min(60, v));
-}
-
-export function crumbs(scene: Phaser.Scene, x: number, y: number, depth: number): void {
-  dust(scene, x, y, 6, depth);
 }

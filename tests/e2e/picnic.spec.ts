@@ -30,57 +30,80 @@ async function knead(page: Page) {
   await waitState(page, (s) => s.step === 'cut', 'dough rolled');
 }
 
-async function serveFirstTo(page: Page, guest: string) {
-  await notBusy(page);
-  await clickTarget(page, 'tray-0');
+/** A new snack lands on the tray already lifted, and the marker sits on the friend who asked for it: one tap serves it. */
+async function serveTo(page: Page, guest: string) {
+  await waitState(page, (s) => !s.busy && !!s.selected && s.beacon === `guest-${guest}`, `snack ready for ${guest}`);
   await clickTarget(page, `guest-${guest}`);
 }
 
+/** The kitchen button for the next friend's snack is marked (glow, arrow, and that friend's face). */
+async function expectMarkedTab(page: Page, station: string, guest: string) {
+  await waitState(page, (s) => s.marked === `${station}:${guest}`, `${station} button marked for ${guest}`);
+  const tab = page.locator(`[data-station="${station}"]`);
+  await expect(tab).toHaveClass(/glow/);
+  await expect(tab.locator('[data-mark]')).toBeVisible();
+  await expect(tab.locator('[data-face]')).toBeVisible();
+}
+
 test.describe('Picnic Parade', () => {
-  test('More help, music picnic: seat friends, talk about the loud drum, cook, serve, parade, and see the snacks in the clubhouse', async ({ page }) => {
+  test('More help, music picnic: seat friends, talk about the loud drum, follow the marked steps to cook and serve, parade, and see the snacks in the clubhouse', async ({ page }) => {
     const errors = collectErrors(page);
     await enterPicnic(page, 1);
     await page.click('[data-scenario="music"]');
     await waitState(page, (s) => s.phase === 'setup', 'setup');
     expect((await state(page)).preset).toBe('more-help');
+    // the kitchen stays hidden until it's time to cook; the marker shows Luma's quiet cushion
+    await expect(page.locator('[data-station="dough"]')).toBeHidden();
+    await waitState(page, (s) => s.beacon === 'cushion-0', 'quiet cushion marked for Luma');
     // Luma asked for a quiet seat; put her by the drum anyway and see what happens
     await clickTarget(page, 'guest-luma');
     await clickTarget(page, 'cushion-2');
     await notBusy(page);
     await clickTarget(page, 'guest-rowan');
     await clickTarget(page, 'cushion-0');
-    // two clear options on More help, and moving her works
+    // a spoken question, then two clear options on More help, and moving her works
     await page.waitForSelector('[data-choice="move"]', { timeout: 90_000 });
     await expect(page.locator('[data-choice]')).toHaveCount(2);
     await clickChoice(page, 'move');
     await waitState(page, (s) => (s.seats as Record<string, number>).luma === 0, 'Luma moved to the quiet cushion');
 
-    // a soft cookie for Luma
+    // More help only shows the kitchens the friends asked for
+    await waitState(page, (s) => s.phase === 'cook' && !s.busy, 'cooking');
+    expect((await state(page)).tabs).toEqual(['dough', 'juice']);
+    await expect(page.locator('[data-station="stack"]')).toBeHidden();
+
+    // a soft cookie for Luma: her wish is said, the cookie button is marked, each step has a marker
+    await expectMarkedTab(page, 'dough', 'luma');
     await page.click('[data-station="dough"]');
+    await waitState(page, (s) => s.beacon === 'dough', 'dough marked');
     await knead(page);
     await clickTarget(page, 'cutter-round');
-    await clickChoice(page, 'soft');
+    // More help bakes with one tap on the oven (always soft)
+    await waitState(page, (s) => s.beacon === 'oven', 'oven marked');
+    await clickTarget(page, 'oven');
     await waitState(page, (s) => (s.tray as string[]).length === 1, 'cookie on the tray');
-    await serveFirstTo(page, 'luma');
+    await serveTo(page, 'luma');
     await waitState(page, (s) => !!(s.happy as Record<string, string>).luma, 'Luma happy');
 
-    // berry juice for Rowan
+    // berry juice for Rowan: fruit, mix, one pour (the cup comes by itself and goes to the tray when full)
+    await expectMarkedTab(page, 'juice', 'rowan');
     await page.click('[data-station="juice"]');
+    await waitState(page, (s) => s.beacon === 'fruit-berry', 'berry marked');
     await clickTarget(page, 'fruit-berry');
     await notBusy(page);
+    await waitState(page, (s) => s.beacon === 'blend', 'mix button marked');
     await clickTarget(page, 'blend');
-    await waitState(page, (s) => s.step === 'cup', 'blended');
-    await clickTarget(page, 'cup-small');
-    await waitState(page, (s) => s.step === 'pour', 'cup chosen');
+    await waitState(page, (s) => s.step === 'pour', 'cup in place');
     await clickTarget(page, 'jug');
-    await page.waitForTimeout(1200);
-    await clickTarget(page, 'cup');
     await waitState(page, (s) => (s.tray as string[]).length === 1, 'juice on the tray');
-    await serveFirstTo(page, 'rowan');
+    await serveTo(page, 'rowan');
     await waitState(page, (s) => !!(s.happy as Record<string, string>).rowan, 'Rowan happy');
 
-    await notBusy(page);
+    // everyone happy: the bell is marked; then the camera pops up for the photo
+    await waitState(page, (s) => s.beacon === 'bell', 'bell marked');
     await clickTarget(page, 'bell');
+    await waitState(page, (s) => s.beacon === 'camera', 'camera marked', 120_000);
+    await clickTarget(page, 'camera');
     await waitState(page, (s) => s.phase === 'done', 'parade finished', 180_000);
     await flush(page);
     const prof = await profile(page);
@@ -101,6 +124,7 @@ test.describe('Picnic Parade', () => {
     await page.click('[data-scenario="windy"]');
     await waitState(page, (s) => s.phase === 'setup', 'setup');
     await clickTarget(page, 'weight-feather');
+    await waitState(page, (s) => s.beacon === 'corner-0', 'a flapping corner is marked once something is picked up');
     await clickTarget(page, 'corner-0');
     await page.waitForTimeout(800);
     await notBusy(page);
@@ -114,14 +138,17 @@ test.describe('Picnic Parade', () => {
     await expect(page.locator('[data-choice]')).toHaveCount(3);
     await clickChoice(page, 'cushions');
     await waitState(page, (s) => s.phase === 'cook', 'cooking');
+    expect((await state(page)).tabs).toEqual(['dough', 'stack', 'juice', 'decorate']);
 
     // Pip wants crunchy; make a soft one and keep it for yourself
+    await expectMarkedTab(page, 'dough', 'pip');
     await page.click('[data-station="dough"]');
     await knead(page);
+    await waitState(page, (s) => s.beacon === 'cutter-star', 'the star Pip asked for is marked');
     await clickTarget(page, 'cutter-star');
     await clickChoice(page, 'soft');
     await waitState(page, (s) => (s.tray as string[]).length === 1, 'cookie on the tray');
-    await serveFirstTo(page, 'pip');
+    await serveTo(page, 'pip');
     await page.waitForSelector('[data-choice="keep"]', { timeout: 60_000 });
     expect(await page.locator('[data-choice="try"]').count()).toBe(1);
     await clickChoice(page, 'keep');
@@ -147,37 +174,38 @@ test.describe('Picnic Parade', () => {
     await clickTarget(page, 'cutter-star');
     await clickChoice(page, 'crunchy');
     await waitState(page, (x) => (x.tray as string[]).length === 1, 'crunchy cookie');
-    await serveFirstTo(page, 'pip');
+    await serveTo(page, 'pip');
     await waitState(page, (x) => (x.happy as Record<string, string>).pip === 'yum', 'Pip happy');
 
-    // a big cucumber sandwich: tap a filling, then where to drop it
+    // a big cucumber sandwich: tap a filling, then where to drop it; then the top bread is marked
+    await expectMarkedTab(page, 'stack', 'rowan');
     await page.click('[data-station="stack"]');
+    await waitState(page, (x) => x.beacon === 'filling-cucumber', 'the cucumber Rowan asked for is marked');
     for (const f of ['cucumber', 'cheese', 'tomato']) {
       await notBusy(page);
       await clickTarget(page, `filling-${f}`);
       await clickTarget(page, 'stackzone');
     }
-    await notBusy(page);
+    await waitState(page, (x) => x.beacon === 'topbread', 'tall enough: the top bread is marked');
     await clickTarget(page, 'topbread');
-    await waitState(page, (x) => (x.tray as string[]).length === 1, 'sandwich on the tray');
     // Rowan chases his napkin and bumps the tray; saying it's okay is one fine answer
     await clickChoice(page, 'fine');
     await waitState(page, (x) => x.mixup === 'done' && !x.busy, 'mix-up resolved');
 
-    // decorate the (slightly squished) sandwich, then serve it
+    // decorate the (slightly squished) sandwich, tap the green tick, then serve it
     await page.click('[data-station="decorate"]');
     await clickTarget(page, 'tray-0');
     await clickTarget(page, 'tool-dots');
-    await clickTarget(page, 'decozone');
-    await clickTarget(page, 'decozone');
+    for (let i = 0; i < 3; i++) await clickTarget(page, 'decozone');
+    await waitState(page, (x) => x.beacon === 'deco-done', 'the green tick is marked');
     await clickTarget(page, 'deco-done');
     await waitState(page, (x) => (x.tray as string[])[0]?.includes('big sandwich'), 'decorated');
-    await serveFirstTo(page, 'rowan');
+    await serveTo(page, 'rowan');
     await waitState(page, (x) => !!(x.happy as Record<string, string>).rowan, 'Rowan happy');
     await flush(page);
     const prof = await profile(page);
     const saved = JSON.parse(prof.progress.quests['picnic:windy'].flags.state);
-    expect(saved.eaten.rowan.deco.length).toBeGreaterThanOrEqual(2);
+    expect(saved.eaten.rowan.deco.length).toBeGreaterThanOrEqual(3);
     expect(saved.eaten.rowan.squished).toBe(true);
   });
 
@@ -187,6 +215,7 @@ test.describe('Picnic Parade', () => {
     await waitState(page, (s) => s.phase === 'setup', 'setup');
     for (let i = 0; i < 3; i++) {
       await notBusy(page);
+      await waitState(page, (s) => s.beacon === `lantern-${i}`, `lantern ${i} marked`);
       await clickTarget(page, `lantern-${i}`);
     }
     await waitState(page, (s) => s.phase === 'cook', 'cooking');
@@ -200,7 +229,7 @@ test.describe('Picnic Parade', () => {
     await knead(page);
     await clickTarget(page, 'cutter-lantern');
     await clickChoice(page, 'turns');
-    await clickChoice(page, 'soft');
+    await clickTarget(page, 'oven');
     await waitState(page, (s) => (s.tray as string[]).length === 1, 'cookie on the tray');
     await waitState(page, (s) => (s.together as { turn: string }).turn === 'server', 'server’s turn');
 
