@@ -12,3 +12,7 @@ dist-audit/
 dist-dev2/
 .claude/worktrees/
 dist-kid/
+dist-garage/
+dist-garage-e2e/
+garage/certs/
+garage/test-results/
