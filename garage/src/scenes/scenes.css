@@ -1,0 +1,42 @@
+/* Scene-owned DOM pieces: garage menus, result recap, My Tiny Track slots. */
+.g-row { position: absolute; display: flex; gap: 22px; align-items: flex-end; pointer-events: none; }
+.g-row > * { pointer-events: auto; }
+.g-card { --size: 132px; width: 168px; height: 132px; border-radius: 26px; }
+.g-card svg { width: 92%; height: 92%; }
+.g-card .badge { position: absolute; right: -12px; top: -12px; width: 46px; height: 46px; border-radius: 50%; background: #fff; border: 4px solid var(--ink); display: grid; place-items: center; }
+.g-card .badge svg { width: 80%; height: 80%; }
+.g-tabs { position: absolute; left: calc(var(--edge) + var(--safe-l)); top: calc(110px + var(--safe-t)); display: flex; flex-direction: column; gap: 16px; pointer-events: none; }
+.g-tabs > * { pointer-events: auto; }
+.g-options { position: absolute; left: calc(var(--edge) + var(--safe-l) + 100px); top: calc(110px + var(--safe-t)); display: grid; grid-template-columns: repeat(2, 92px); gap: 16px; padding: 16px; border-radius: 28px; background: rgba(255, 246, 230, .94); border: 5px solid var(--ink); box-shadow: 0 8px 0 var(--wood-dark); }
+.g-options.wheels { grid-template-columns: repeat(2, 150px); }
+.g-options .gbtn { --size: 92px; }
+.g-options.wheels .gbtn { width: 150px; height: 120px; }
+.g-play { position: absolute; right: calc(var(--edge) + var(--safe-r) + 8px); bottom: calc(var(--edge) + var(--safe-b) + 8px); }
+.g-play-center { position: absolute; left: 50%; bottom: calc(6% + var(--safe-b)); transform: translateX(-50%); }
+.g-corner-tl { position: absolute; left: calc(var(--edge) + var(--safe-l)); top: calc(var(--edge) + var(--safe-t)); }
+.g-corner-tr { position: absolute; right: calc(var(--edge) + var(--safe-r)); top: calc(var(--edge) + var(--safe-t)); }
+.g-warn { width: 64px; height: 64px; border-radius: 50%; background: #fff6e6; border: 4px solid var(--ink); display: grid; place-items: center; }
+.g-warn svg { width: 70%; height: 70%; }
+.g-gear { --size: 64px; opacity: .85; }
+.g-silhouette { width: 168px; height: 132px; border-radius: 26px; border: 5px dashed rgba(58, 38, 24, .45); background: rgba(255, 246, 230, .35); }
+
+/* result: the silent three-panel recap */
+.r-recap { position: absolute; left: 50%; top: calc(10% + var(--safe-t)); transform: translateX(-50%); display: flex; align-items: center; gap: 14px; pointer-events: none; }
+.r-panel { width: min(24vw, 250px); aspect-ratio: 6 / 5; border-radius: 22px; border: 5px solid var(--ink); background: #fff6e6; box-shadow: 0 7px 0 var(--wood-dark); overflow: hidden; opacity: 0; transform: translateY(18px) scale(.94); transition: opacity .35s ease, transform .35s ease; }
+.r-panel.in { opacity: 1; transform: none; }
+.r-panel svg { width: 100%; height: 100%; display: block; }
+.r-arrow { width: 44px; height: 44px; opacity: 0; transition: opacity .35s ease; }
+.r-arrow.in { opacity: 1; }
+.r-arrow svg { width: 100%; height: 100%; }
+.r-chapter { position: absolute; left: 50%; top: calc(8% + var(--safe-t)); transform: translateX(-50%); display: flex; gap: 18px; align-items: flex-end; padding: 18px 26px; border-radius: 30px; background: rgba(255, 246, 230, .95); border: 5px solid var(--ink); box-shadow: 0 8px 0 var(--wood-dark); }
+.r-chapter .item { width: min(17vw, 170px); aspect-ratio: 1; }
+.r-chapter .item svg { width: 100%; height: 100%; }
+.r-chapter .item.glow { animation: g-pulse 1.2s ease-in-out infinite; }
+html.motion-reduced .r-panel, html.motion-reduced .r-arrow { transition: none; }
+
+/* My Tiny Track: three save slots with picture thumbnails */
+.c-slots { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 30px; pointer-events: none; }
+.c-slots > * { pointer-events: auto; }
+.c-slot { width: min(28vw, 300px); height: min(21vw, 220px); border-radius: 30px; }
+.c-slot svg { width: 90%; height: 90%; }
+.c-slot.empty { border-style: dashed; background: rgba(255, 246, 230, .8); }

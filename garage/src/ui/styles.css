@@ -1,0 +1,90 @@
+/* Wonder Garage UI layer: wood, paper and big friendly buttons over the game canvas. */
+:root {
+  --ink: #3a2618;
+  --ink-soft: #6b4a36;
+  --paper: #fbefd9;
+  --cream: #fff6e6;
+  --wood: #d39550;
+  --wood-light: #f0c27f;
+  --wood-dark: #9a5f2c;
+  --yellow: #ffd23f;
+  --orange: #f28c28;
+  --red: #e2493b;
+  --blue: #3f8fe0;
+  --teal: #2fb3a5;
+  --grass: #6db54c;
+  --focus: #1f6fd6;
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --edge: 18px;
+  --font: ui-rounded, 'SF Pro Rounded', 'Arial Rounded MT Bold', 'Nunito', 'Trebuchet MS', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #8fd0f0; overflow: hidden; overscroll-behavior: none; }
+body { font-family: var(--font); color: var(--ink); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+#app { position: fixed; inset: 0; }
+/* the game canvas never scrolls or zooms the page; grown-up panels can still be pinch-zoomed */
+#game-root { position: absolute; inset: 0; touch-action: none; }
+#game-root canvas { display: block; touch-action: none; outline: none; }
+#ui-root { position: absolute; inset: 0; pointer-events: none; }
+.layer { position: absolute; inset: 0; pointer-events: none; }
+.layer > * { pointer-events: auto; }
+.layer-hud, .layer-overlay, .layer-rotate { touch-action: none; }
+.layer-gate, .layer-panel .grownup { touch-action: pan-x pan-y pinch-zoom; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- picture buttons ---------- */
+.gbtn {
+  --size: 72px;
+  width: var(--size); height: var(--size); min-width: 64px; min-height: 64px;
+  border-radius: 28%; border: 5px solid var(--ink);
+  background: radial-gradient(circle at 35% 28%, #ffffff, var(--cream) 70%);
+  box-shadow: 0 7px 0 var(--wood-dark), 0 10px 16px rgba(58, 38, 24, .28);
+  display: grid; place-items: center; padding: 0; margin: 0; cursor: pointer; color: var(--ink);
+  transition: transform 70ms ease, box-shadow 70ms ease; touch-action: none;
+}
+.gbtn svg { width: 72%; height: 72%; pointer-events: none; }
+.gbtn-xl { --size: 128px; border-radius: 50%; border-width: 6px; }
+.gbtn-lg { --size: 104px; }
+.gbtn-md { --size: 76px; }
+.gbtn-primary { background: radial-gradient(circle at 35% 28%, #fff6c8, var(--yellow) 72%); }
+.gbtn-go { background: radial-gradient(circle at 35% 28%, #e4f7c8, #9bd46a 72%); }
+.gbtn-soft { background: radial-gradient(circle at 35% 28%, #ffffff, #e9f3fb 72%); }
+.gbtn.pressed, .gbtn:active { transform: translateY(6px); box-shadow: 0 1px 0 var(--wood-dark), 0 3px 6px rgba(58, 38, 24, .25); }
+.gbtn:focus-visible { outline: 6px solid var(--focus); outline-offset: 4px; }
+.gbtn[disabled] { opacity: .45; filter: saturate(.4); cursor: default; }
+.gbtn.selected { box-shadow: 0 0 0 6px #fff, 0 0 0 11px var(--ink), 0 7px 0 11px var(--wood-dark); }
+/* a gentle "this one" cue: a bouncing outline ring (shape + motion, never colour alone) */
+.gbtn.hint::after {
+  content: ''; position: absolute; inset: -14px; border-radius: inherit; border: 6px dashed var(--ink);
+  animation: g-ring 1.1s ease-in-out infinite; pointer-events: none;
+}
+.gbtn { position: relative; }
+
+/* ---------- reusable animation classes (also used inside picture SVGs) ---------- */
+@keyframes g-ring { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.08); opacity: .5; } }
+@keyframes g-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6%); } }
+@keyframes g-hop { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-14%); } }
+@keyframes g-spin { to { transform: rotate(360deg); } }
+@keyframes g-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes g-slide { 0% { transform: translateX(-12%); } 50% { transform: translateX(12%); } 100% { transform: translateX(-12%); } }
+@keyframes g-roll { from { transform: translateX(-30%); } to { transform: translateX(30%); } }
+@keyframes g-tap { 0%, 100% { transform: translate(0, 0); } 40% { transform: translate(0, 8%); } }
+.anim-bob { animation: g-bob 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.anim-hop { animation: g-hop 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom center; }
+.anim-spin { animation: g-spin 2.4s linear infinite; transform-box: fill-box; transform-origin: center; }
+.anim-pulse { animation: g-pulse 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.anim-slide { animation: g-slide 3s ease-in-out infinite; transform-box: fill-box; }
+.anim-roll { animation: g-roll 2.6s ease-in-out infinite alternate; transform-box: fill-box; }
+.anim-tap { animation: g-tap 1s ease-in-out infinite; transform-box: fill-box; }
+.anim-delay-1 { animation-delay: .35s; }
+.anim-delay-2 { animation-delay: .7s; }
+
+/* reduce motion: from the device, unless a grown-up chose "full"; or forced on by the grown-up setting */
+@media (prefers-reduced-motion: reduce) {
+  html:not(.motion-full) [class*='anim-'], html:not(.motion-full) .gbtn.hint::after { animation: none !important; }
+}
+html.motion-reduced [class*='anim-'], html.motion-reduced .gbtn.hint::after { animation: none !important; }
+html.motion-reduced .gbtn { transition: none; }

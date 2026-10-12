@@ -67,11 +67,29 @@ choice.
 
 ## Structure
 
-- `src/config` — tuning numbers and parent-editable content (Bentley's name, starting help, missions).
-- `src/core` — pure rules with unit tests: terrain, truck physics, input state, build validation, mission
-  state, track creator, save.
-- `src/content` — missions, pieces and cosmetics as typed data with stable ids.
-- `src/art` — original SVG art, rasterised to textures at load.
-- `src/scenes` — Phaser scenes: boot, garage, mission, creator.
-- `src/ui` — DOM controls and overlays: drive controls, build tray, end screen, parent settings, rotate card.
-- `public/sw.js` is generated at build time: it caches the whole game for offline play.
+- `src/config`: tuning numbers and parent-editable content (Bentley's name, starting help, mission settings).
+- `src/core`: pure rules with unit tests, no Phaser. Terrain, truck physics, build sockets and the layout test,
+  the mission state machine (single source of truth: driving → encounter → building → resolving → complete), and
+  My Tiny Track (legal connections, playability check with a suggested fix).
+- `src/content`: the three missions as typed data with stable ids, goals, route variants and help steps.
+  `levels.ts` turns a mission or a saved track into one drivable level.
+- `src/save`: versioned save format (validation, repair, migration), the IndexedDB store with a previous-record
+  fallback and honest write status, and idempotent progress changes (rewards and coins can't duplicate).
+- `src/art`: original SVG art, rasterised to atlas textures at load. `iconNames.ts` lists the DOM icon set.
+- `src/view`: Phaser drawing. The truck (separate wheels, tinted paint, pattern, decal, lean, squash, coils), the
+  world (parallax, ground and water from the real segments, logs, platforms, coins, flags), build pieces drawn on
+  their real geometry, the crew, small effects, the camera rig.
+- `src/scenes`: boot, garage, mission (with `mission/BuildController.ts` and `mission/stories.ts`), creator, result.
+- `src/ui`: DOM controls and overlays. Drive controls, HUD, pause / picture choices / end choices, rotate card,
+  grown-up gate and settings.
+- `src/app`: the app shell implementing the `AppContext` contract (`app/context.ts`) and the offline / update
+  handling. `sw.js` is generated at build time by `tools/sw-plugin.ts` and caches the whole game.
+
+## Contracts between parts
+
+- Scenes reach the app only through `app()` (`app/context.ts`): save, commit (resolves true only after the write
+  committed), settings, reduced motion, navigation, offline state, interrupts.
+- The scene renders the mission state. Taps become requests (`state.go(...)`), and illegal moves are refused, so a
+  late tap can't skip a build or finish twice.
+- Physics runs at a fixed 120 Hz step. Input is read once per frame, and the jump edge goes to the first sub-step.
+- Every interruption (pointercancel, blur, hidden tab, portrait, a modal) clears held input and pauses.

@@ -11,7 +11,7 @@ export type CrewId = 'milo' | 'pip' | 'nori';
 export type RewardId = 'pennant' | 'twin-ramp' | 'crew-banner';
 export type DiscoveryId = 'golden-acorn' | 'pinwheel' | 'rally-ribbon';
 
-export const G = TUNING.world.groundY;
+export const G: number = TUNING.world.groundY;
 const RAMP = TUNING.pieces.rampLaunch;
 const PAD = TUNING.pieces.padBounce;
 
@@ -33,8 +33,27 @@ export type Beat =
   | { kind: 'build'; zone: string }
   | { kind: 'finish'; x: number };
 
+/** How help unfolds (the scene implements these steps for every mission). */
+export type HelpStep =
+  | { when: 'two-misses-at-an-obstacle' | 'help-button-while-driving'; show: 'see-through-truck-demonstrates-the-jump' }
+  | { when: 'help-button-while-building' | 'two-tests-that-do-not-work'; show: 'hand-carries-the-example-piece-to-its-socket' }
+  | { when: 'a-test-that-does-not-work'; show: 'the-socket-that-would-help-bobs-with-an-arrow' };
+
+const HELP: HelpStep[] = [
+  { when: 'two-misses-at-an-obstacle', show: 'see-through-truck-demonstrates-the-jump' },
+  { when: 'help-button-while-driving', show: 'see-through-truck-demonstrates-the-jump' },
+  { when: 'a-test-that-does-not-work', show: 'the-socket-that-would-help-bobs-with-an-arrow' },
+  { when: 'two-tests-that-do-not-work', show: 'hand-carries-the-example-piece-to-its-socket' },
+  { when: 'help-button-while-building', show: 'hand-carries-the-example-piece-to-its-socket' },
+];
+
 export interface MissionDef {
   id: MissionId;
+  /** the visible primary objective, in grown-up words */
+  goal: string;
+  /** the safe ways through (each is tested end to end) */
+  variants: { id: string; how: string }[];
+  help: HelpStep[];
   /** for grown-ups and screen readers only; the child never needs to read it */
   title: string;
   /** world length */
@@ -58,6 +77,12 @@ export interface MissionDef {
 const wobbly: MissionDef = {
   id: 'wobbly-bridge',
   title: 'The Wobbly Bridge',
+  goal: "Get Milo's picnic wagon across the stream, then drive to the finish flags.",
+  variants: [
+    { id: 'bridge', how: 'Put the bridge across the stream; Milo pulls the wagon over it.' },
+    { id: 'ramp', how: 'Put the ramp (or the bouncy pad) before the stream; the truck and the wagon hop over to the far bank.' },
+  ],
+  help: HELP,
   length: 4500,
   startX: 260,
   segments: [
@@ -133,6 +158,12 @@ const wobbly: MissionDef = {
 const share: MissionDef = {
   id: 'ramp-we-share',
   title: 'The Ramp We Share',
+  goal: 'Pip wants the practice ramp too: share it or make a second path, then drive to the finish.',
+  variants: [
+    { id: 'turns', how: 'Take turns: the truck jumps the pond on the ramp first, then Pip has a quick go while the drive continues.' },
+    { id: 'path', how: 'Make another path: build a second way over the pond in front; the truck and Pip cross side by side.' },
+  ],
+  help: HELP,
   length: 4300,
   startX: 260,
   segments: [
@@ -208,6 +239,12 @@ const LEDGE = G - 150;
 const rally: MissionDef = {
   id: 'everyone-rally',
   title: 'The Everyone Rally',
+  goal: 'Put up the route sign, drive the gentle or the jumpy route, build the way up the last step, and meet everyone at the rally finish.',
+  variants: [
+    { id: 'gentle', how: 'The low gentle path with Nori (no jumps needed).' },
+    { id: 'jump', how: 'The high jump path with Pip (a hop and a bouncy pad), rejoining before the last build.' },
+  ],
+  help: HELP,
   length: 4700,
   startX: 260,
   segments: [

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { TUNING, type WheelKind } from '../../src/config/tuning';
 import { Terrain, flat } from '../../src/core/terrain';
 import { TruckSim, simulate, type DriveInput } from '../../src/core/truck';
-import { testLayout, canPlace, type Placement } from '../../src/core/build';
+import { testLayout, canPlace, segmentsFor, type Placement } from '../../src/core/build';
+import type { Lane } from '../../src/core/terrain';
 import { MISSIONS, G } from '../../src/content/missions';
 
 const none: DriveInput = { jumpHeld: false, jumpPressed: false, brakeHeld: false };
@@ -173,4 +174,31 @@ describe('missions', () => {
     expect(apex('spring', 1)).toBeGreaterThan(G - up.y + 10);
     expect(apex('chunky', 30)).toBeLessThan(G - up.y);
   });
+});
+
+describe('every route variant finishes, with either wheels (acceptance 4 and 5)', () => {
+  const finishOf = (m: (typeof MISSIONS)[number]) => (m.beats.find((b) => b.kind === 'finish') as { x: number }).x;
+  const drive = (m: (typeof MISSIONS)[number], placed: Placement[], lane: Lane, wheel: WheelKind, from = m.startX) => {
+    const extra = m.zones.flatMap((z) => segmentsFor(z, placed.filter((p) => z.sockets.some((s) => s.id === p.socket))));
+    return simulate(new Terrain(m.segments, m.walls).with(extra), from, finishOf(m) + 5, { wheel, input: 'auto', lane, maxSec: 60 });
+  };
+  for (const wheel of WHEELS) {
+    it(`mission 1 with a bridge, and with a ramp-and-landing (${wheel})`, () => {
+      const m = MISSIONS[0];
+      expect(drive(m, [{ socket: 'span', piece: 'bridge' }], 'back', wheel).reached).toBe(true);
+      expect(drive(m, [{ socket: 'launch', piece: 'ramp' }], 'back', wheel).reached).toBe(true);
+    });
+    it(`mission 2: taking turns on the practice ramp, and a second path in front (${wheel})`, () => {
+      const m = MISSIONS[1];
+      expect(drive(m, [], 'back', wheel).reached).toBe(true);
+      expect(drive(m, [{ socket: 'front-span', piece: 'bridge' }], 'front', wheel, 1080).reached).toBe(true);
+      expect(drive(m, [{ socket: 'front-launch', piece: 'ramp' }], 'front', wheel, 1080).reached).toBe(true);
+    });
+    it(`mission 3: the gentle route and the jump route both reach the rally finish (${wheel})`, () => {
+      const m = MISSIONS[2];
+      const built: Placement[] = [{ socket: 'span', piece: 'bridge' }, { socket: 'climb', piece: 'ramp' }];
+      expect(drive(m, built, 'front', wheel).reached).toBe(true);
+      expect(drive(m, built, 'back', wheel).reached).toBe(true);
+    });
+  }
 });

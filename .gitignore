@@ -16,3 +16,4 @@ dist-garage/
 dist-garage-e2e/
 garage/certs/
 garage/test-results/
+garage/.scratch/
