@@ -1,0 +1,24 @@
+/* Child-facing overlays (ui/overlays.ts). */
+.ov-backdrop { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(58, 38, 24, .38); padding: max(20px, var(--safe-t)) max(20px, var(--safe-r)) max(20px, var(--safe-b)) max(20px, var(--safe-l)); }
+.ov-backdrop.soft { background: rgba(58, 38, 24, .22); }
+.ov-panel { padding: 30px 38px; border-radius: 36px; background: linear-gradient(#f6d3a0, #d39550); border: 6px solid var(--ink); box-shadow: 0 10px 0 var(--wood-dark), 0 18px 30px rgba(0, 0, 0, .25); }
+.pause-row { display: flex; align-items: center; gap: 34px; }
+
+.choice-row { display: flex; gap: clamp(24px, 4vw, 56px); align-items: center; justify-content: center; flex-wrap: nowrap; }
+.choice-card { width: clamp(260px, 34vw, 420px); height: clamp(200px, 26vw, 320px); border-radius: 34px; background: #fffaf0; transition: transform .25s ease, opacity .3s ease; }
+.choice-card svg { width: 94%; height: 94%; }
+.choice-card.chosen { transform: scale(1.08); animation: none; }
+.choice-card.faded { opacity: .25; animation: none; }
+@media (max-width: 600px) { .choice-row { flex-direction: column; } .choice-card { width: min(78vw, 300px); height: min(56vw, 220px); } }
+
+.end-wrap { position: absolute; left: 0; right: 0; bottom: calc(5% + var(--safe-b)); display: flex; flex-direction: column; align-items: center; gap: 18px; pointer-events: none; }
+.end-wrap > * { pointer-events: auto; }
+.end-row { display: flex; gap: clamp(28px, 5vw, 70px); padding: 18px 30px; border-radius: 36px; background: rgba(255, 246, 230, .9); border: 5px solid var(--ink); box-shadow: 0 8px 0 var(--wood-dark); }
+.end-btn { width: clamp(120px, 13vw, 150px); height: clamp(120px, 13vw, 150px); }
+.rest-card { width: clamp(180px, 22vw, 260px); aspect-ratio: 4 / 3; border-radius: 26px; overflow: hidden; border: 5px solid var(--ink); background: #2a3a6a; box-shadow: 0 6px 0 var(--wood-dark); }
+.rest-card svg { width: 100%; height: 100%; display: block; }
+
+.rotate-card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: linear-gradient(#8fd0f0, #e4f6ff); }
+.rotate-pic { width: min(70vw, 360px); aspect-ratio: 1; }
+.rotate-pic svg { width: 100%; height: 100%; }
+.rotate-note { margin: 0; font: 600 18px/1.3 var(--font); color: var(--ink-soft); text-align: center; padding: 0 20px; }

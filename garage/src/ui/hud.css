@@ -1,0 +1,46 @@
+/* Drive controls (ui/controls.ts) and the HUD (ui/hud.ts). */
+.drive-controls { position: absolute; inset: 0; pointer-events: none; }
+.drive-controls > .gbtn { position: absolute; pointer-events: auto; }
+.drive-controls .jump-btn { bottom: calc(var(--edge) + var(--safe-b) + 6px); }
+.drive-controls .brake-btn { bottom: calc(var(--edge) + var(--safe-b) + 34px); }
+.drive-controls.side-right .jump-btn { right: calc(var(--edge) + var(--safe-r) + 6px); }
+.drive-controls.side-right .brake-btn { left: calc(var(--edge) + var(--safe-l) + 6px); }
+.drive-controls.side-left .jump-btn { left: calc(var(--edge) + var(--safe-l) + 6px); }
+.drive-controls.side-left .brake-btn { right: calc(var(--edge) + var(--safe-r) + 6px); }
+.drive-controls.hidden, .drive-controls .hidden { display: none; }
+/* the helper hand that shows a press on the jump button (fingertip at the button centre) */
+.demo-hand {
+  position: absolute; left: 50%; top: 50%; width: 92px; height: 110px; margin-left: -18px; margin-top: -6px;
+  pointer-events: none; opacity: 0; transition: opacity .2s ease;
+  background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-40 -10 100 120'%3E%3Cpath d='M-6 0 Q0 -6 6 0 L8 44 L30 40 Q46 40 48 56 L48 84 Q48 104 26 106 L4 106 Q-14 104 -20 88 L-30 60 Q-34 50 -24 48 Q-16 48 -10 58 L-8 64 Z' fill='%23ffffff' stroke='%233a2618' stroke-width='5' stroke-linejoin='round'/%3E%3Cpath d='M8 48 L8 66 M22 44 L22 66 M36 46 L36 66' stroke='%236b4a36' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.demo-hand.on { opacity: 1; transform: translateY(-10px); }
+.demo-hand.tap { opacity: 1; animation: g-handtap .45s ease-in-out; }
+@keyframes g-handtap { 0% { transform: translateY(-10px); } 45% { transform: translateY(4px); } 100% { transform: translateY(-10px); } }
+html.motion-reduced .demo-hand.tap { animation: none; }
+@media (prefers-reduced-motion: reduce) { html:not(.motion-full) .demo-hand.tap { animation: none; } }
+
+.hud { position: absolute; inset: 0; pointer-events: none; }
+.hud > * { position: absolute; pointer-events: auto; }
+.hud .hidden { display: none; }
+.hud-pause, .hud-back { left: calc(var(--edge) + var(--safe-l)); top: calc(var(--edge) + var(--safe-t)); }
+.hud-help { right: calc(var(--edge) + var(--safe-r)); top: calc(var(--edge) + var(--safe-t)); }
+.hud-save { right: calc(var(--edge) + var(--safe-r) + 96px); top: calc(var(--edge) + var(--safe-t)); }
+.hud-invite { right: calc(var(--edge) + var(--safe-r)); top: calc(var(--edge) + var(--safe-t) + 96px); }
+.hud-invite svg { width: 88%; height: 88%; }
+.hud-invite.on { box-shadow: 0 0 0 5px #fff, 0 0 0 9px var(--ink); }
+.hud-invite[disabled] { opacity: 1; filter: none; }
+.hud-invite .badge, .gbtn .badge { position: absolute; right: -10px; top: -10px; width: 38px; height: 38px; border-radius: 50%; background: #fff; border: 4px solid var(--ink); display: grid; place-items: center; }
+.hud-invite .badge svg { width: 80%; height: 80%; }
+.hud-undo { left: calc(var(--edge) + var(--safe-l)); bottom: calc(var(--edge) + var(--safe-b) + 96px); }
+.hud-clear { left: calc(var(--edge) + var(--safe-l)); bottom: calc(var(--edge) + var(--safe-b)); }
+.hud-test { right: calc(var(--edge) + var(--safe-r) + 6px); bottom: calc(var(--edge) + var(--safe-b) + 6px); }
+.hud-coins {
+  left: 50%; top: calc(var(--edge) + var(--safe-t)); transform: translateX(-50%); pointer-events: none;
+  display: flex; align-items: center; gap: 8px; padding: 6px 18px 6px 8px; border-radius: 999px;
+  background: rgba(255, 246, 230, .9); border: 4px solid var(--ink); font: 800 30px/1 var(--font); color: var(--ink);
+}
+.hud-coins .coin-icon { width: 44px; height: 44px; }
+.hud-coins .coin-icon svg { width: 100%; height: 100%; }
+.hud-coins.bump { animation: g-pulse .4s ease-out 1; }
+html.motion-reduced .hud-coins.bump { animation: none; }
