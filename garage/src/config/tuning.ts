@@ -8,7 +8,7 @@ export const TUNING = {
     /** baseline ground height in design units */
     groundY: 860,
     /** how far below the lowest ground the truck may fall before it counts as a miss */
-    fallDepth: 260,
+    fallDepth: 90,
   },
 
   drive: {
@@ -51,7 +51,7 @@ export const TUNING = {
 
   recovery: {
     /** a miss shows a soft puff for this long, then the truck is back at the checkpoint */
-    restoreMs: 900,
+    restoreMs: 800,
     /** misses at the same obstacle before the example and wider timing appear */
     missesBeforeHelp: 2,
   },

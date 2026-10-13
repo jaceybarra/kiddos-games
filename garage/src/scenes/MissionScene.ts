@@ -240,6 +240,7 @@ export default class MissionScene extends Phaser.Scene {
 
   override update(_t: number, deltaMs: number): void {
     if (!this.isReady || this.dead) return;
+    this.clockMs += deltaMs;
     const dt = Math.min(deltaMs / 1000, 0.1);
     this.world.update(dt);
     for (const c of this.crew.values()) c.update(dt);
@@ -305,19 +306,26 @@ export default class MissionScene extends Phaser.Scene {
     switch (e.type) {
       case 'land':
         if (e.impact > 0.15) this.fx.land(this.sim.x, this.sim.y, e.impact);
+        if (this.airBump) {
+          // a jump that bumped the log and came down still in front of it: one miss at that log
+          const w = this.base.walls.find((ww) => ww.id === this.airBump);
+          if (w && this.sim.x + this.sim.halfLength <= w.x + 4 && this.state.phase === 'driving') this.onMiss(`wall@${w.id}`, false);
+          this.airBump = null;
+        }
         break;
       case 'bounce':
       case 'launch':
         this.fx.sparks(this.sim.x, this.sim.y - 20, 3);
         break;
       case 'blocked':
-        if (!this.sim.grounded && this.state.phase === 'driving') this.onMiss(`wall@${e.wallId}`, false);
+        if (!this.sim.grounded) this.airBump = e.wallId;
         break;
       case 'fell':
         if (this.testing) void this.testFailed(true);
         else if (!this.restoring) void this.onFall(e.x);
         break;
       case 'jump':
+        this.jumps++;
         break;
     }
   }
@@ -456,25 +464,36 @@ export default class MissionScene extends Phaser.Scene {
     return g ? `gap@${Math.round(g.x0)}` : `fall@${Math.round(x / 200) * 200}`;
   }
 
+  private lastRestoreMs = 0;
+  /** the log the truck bumped during the current jump (a miss only if it lands short) */
+  private airBump: string | null = null;
+  private jumps = 0;
+  private clockMs = 0;
+
   private async onFall(x: number): Promise<void> {
     if (this.restoring) return;
     this.restoring = true;
+    const t0 = this.clockMs;
     this.controls.clear();
     const key = this.obstacleKeyAt(x);
     const gap = this.world.gaps.find((g) => x >= g.x0 - 80 && x <= g.x1 + 400);
     this.fx.splash(gap ? Math.min(Math.max(this.sim.x, gap.x0 + 30), gap.x1 - 30) : this.sim.x, G + 30);
     this.fx.puff(this.sim.x, Math.min(this.sim.y, G + 40));
-    await this.truck.fadeOut(dur(220, 120));
+    // the whole soft miss (puff, fade, back at the checkpoint) fits in TUNING.recovery.restoreMs
+    const fadeOut = dur(180, 100);
+    const fadeIn = dur(200, 100);
+    await this.truck.fadeOut(fadeOut);
     const n = this.state.miss(key, this.helpAfter, TUNING.jump.assistFactor);
     this.sim.assist = this.state.assist;
-    await wait(this, Math.max(0, TUNING.recovery.restoreMs - 320));
+    await wait(this, Math.max(0, TUNING.recovery.restoreMs - fadeOut - fadeIn));
     if (this.dead) return;
     this.sim.placeAt(this.state.checkpointX);
     this.groundY = this.sim.y;
     this.cam.snap(this.sim.x, this.groundY);
     this.truck.update(this.pose(), 0);
-    await this.truck.fadeIn(dur(260, 120));
+    await this.truck.fadeIn(fadeIn);
     this.restoring = false;
+    this.lastRestoreMs = Math.round(this.clockMs - t0); // scene time (what timers and tweens see; equals real time at 60 fps)
     this.onMiss(key, true, n);
   }
 
@@ -731,6 +750,8 @@ export default class MissionScene extends Phaser.Scene {
   pause(): void {
     if (!this.isReady || this.dead || this.closePause || this.state.phase === 'complete') return;
     this.controls.clear();
+    this.controlsWereOn = this.controls.active;
+    this.controls.show(false);
     this.build?.cancelDrag();
     this.scene.pause();
     this.closePause = showPauseMenu({
@@ -746,10 +767,13 @@ export default class MissionScene extends Phaser.Scene {
     });
   }
 
+  private controlsWereOn = false;
+
   private resume(): void {
     this.closePause = null;
     if (this.dead) return;
     this.controls.clear();
+    if (this.controlsWereOn) this.controls.show(true);
     this.scene.resume();
   }
 
@@ -808,6 +832,13 @@ export default class MissionScene extends Phaser.Scene {
       build: this.build?.inspect() ?? null,
       invited: [...this.invited],
       finishX: this.level.finishX,
+      jumpHeld: this.controls.holding,
+      lastRestoreMs: this.lastRestoreMs,
+      fps: Math.round(this.game.loop.actualFps),
+      presses: this.controls.presses,
+      jumps: this.jumps,
+      controlsOn: this.controls.active,
+      pauseMenu: !!this.closePause,
     };
   }
 

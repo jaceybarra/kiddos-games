@@ -78,7 +78,11 @@ export function openParentGate(): Promise<boolean> {
       };
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
-        b.setPointerCapture?.(e.pointerId);
+        try {
+      b.setPointerCapture?.(e.pointerId);
+    } catch {
+      /* synthetic or already-ended pointer */
+    }
         start();
       });
       b.addEventListener('pointerup', stop);
@@ -353,7 +357,11 @@ function resetButton(say: (m: string) => void, rerender: () => void): HTMLElemen
     };
     hold.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      hold.setPointerCapture?.(e.pointerId);
+      try {
+        hold.setPointerCapture?.(e.pointerId);
+      } catch {
+        /* synthetic or already-ended pointer */
+      }
       ring.classList.add('filling');
       t = setTimeout(async () => {
         t = null;

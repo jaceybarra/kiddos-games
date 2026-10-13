@@ -1,3 +1,4 @@
+import './hud.css';
 import { crewFace } from '../art/pictures';
 import type { CrewId } from '../content/missions';
 import { button, h, icon, layer } from './dom';

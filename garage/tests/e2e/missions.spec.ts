@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { drag, noProblems, openGame, save, startDriver, startFirstMission, state, stopDriver, tap, tapTarget, waitScene, waitState } from './play';
+import { drag, noProblems, openAll, openGame, save, startDriver, startFirstMission, state, stopDriver, tap, tapTarget, waitScene, waitState } from './play';
 
 /**
  * The three missions, played for real: every solution and route variant,
@@ -146,25 +146,4 @@ for (const wheel of ['chunky', 'spring'] as const) {
     noProblems(s);
     await s.context.close();
   });
-}
-
-/** Grown-up gate + "open all missions" so later missions can be tested on a fresh profile. */
-export async function openAll(page: Page): Promise<void> {
-  await waitScene(page, 'garage');
-  await tap(page, 'parent');
-  await page.locator('[data-testid="gate"]').waitFor({ timeout: 10_000 });
-  const asked = await page.locator('[data-testid="gate"]').getAttribute('data-asked');
-  const btn = page.locator(`[data-testid="gate-${asked}"]`);
-  const b = (await btn.boundingBox())!;
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
-  await page.mouse.down();
-  await page.waitForTimeout(2300);
-  await page.mouse.up();
-  await page.locator('[data-testid="settings"]').waitFor({ timeout: 10_000 });
-  await page.locator('[data-testid="set-openAll"]').check();
-  await page.waitForFunction(() => window.__garage!.save().settings.openAll === true);
-  await tap(page, 'settings-close');
-  // with everything open, Play opens the door into the garage instead of starting mission 1
-  await tap(page, 'play');
-  await waitState(page, "s.mode === 'interior'", 20_000);
 }

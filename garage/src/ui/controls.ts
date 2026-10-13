@@ -25,6 +25,8 @@ export class DriveControls {
   private enabled = false;
   private hand: HTMLElement;
   private offs: (() => void)[] = [];
+  /** how many jump presses were registered (tests) */
+  presses = 0;
   /** called on the frame the jump button goes down (for immediate visual feedback) */
   onJumpDown: (() => void) | null = null;
 
@@ -44,6 +46,7 @@ export class DriveControls {
       if (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W') {
         if (down && !this.keyJump && this.enabled) {
           this.jumpEdge = true;
+          this.presses++;
           this.onJumpDown?.();
         }
         this.keyJump = down && this.enabled;
@@ -84,6 +87,7 @@ export class DriveControls {
         this.jumpPointer = e.pointerId;
         this.jumpHeld = true;
         this.jumpEdge = true;
+        this.presses++;
         this.onJumpDown?.();
       } else {
         if (this.brakePointer !== null) return;
@@ -112,6 +116,11 @@ export class DriveControls {
     const pressed = this.jumpEdge;
     this.jumpEdge = false;
     return { jumpHeld: this.jumpHeld || this.keyJump, jumpPressed: pressed, brakeHeld: this.brakeHeld || this.keyBrake };
+  }
+
+  /** Are the controls taking input right now? */
+  get active(): boolean {
+    return this.enabled;
   }
 
   /** Is the jump button (or key) held right now? */

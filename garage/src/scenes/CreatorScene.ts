@@ -236,9 +236,8 @@ export default class CreatorScene extends Phaser.Scene {
     for (let i = 0; i < TRACK_SLOTS; i++) {
       const s = L.slot[i];
       const piece = this.slots[i];
-      const cx = s.x + s.w / 2;
       if (piece && !(this.drag?.moved && this.drag.from === i)) {
-        drawTrackIcon(g, piece, cx, L.ground - 70, s.w - 16, 170);
+        drawSlotPiece(g, piece, s.x, s.w, L.ground);
       } else {
         // an empty slot: a dashed socket; brighter (and bobbing via pulse) where the held piece may go
         const fits = dragPiece ? this.canDrop(i, dragPiece) : false;
@@ -265,7 +264,7 @@ export default class CreatorScene extends Phaser.Scene {
     const fix = L.slot[c.fixSlot];
     // the piece that would fix it, see-through, in the slot that needs it
     o.setAlpha(0.55 + 0.25 * Math.sin(this.pulse));
-    if (c.fixPiece) drawTrackIcon(o, c.fixPiece, fix.x + fix.w / 2, L.ground - 70, fix.w - 16, 170);
+    if (c.fixPiece) drawSlotPiece(o, c.fixPiece, fix.x, fix.w, L.ground);
     dashed(o, fix.x + 4, L.ground - 178, fix.w - 8, 186, 8, 1);
     if (c.problemSlot !== null && c.problemSlot !== c.fixSlot) {
       const p = L.slot[c.problemSlot];
@@ -354,7 +353,7 @@ export default class CreatorScene extends Phaser.Scene {
     if (d.target !== null) {
       const s = L.slot[d.target];
       this.float.setAlpha(0.6);
-      drawTrackIcon(this.float, d.piece, s.x + s.w / 2, L.ground - 70, s.w - 16, 170);
+      drawSlotPiece(this.float, d.piece, s.x, s.w, L.ground);
     } else {
       this.float.setAlpha(1);
       drawTrackIcon(this.float, d.piece, p.x, p.y - 70, TILE_W * 0.9, TILE_H * 0.9);
@@ -481,7 +480,7 @@ export default class CreatorScene extends Phaser.Scene {
       } as Phaser.Types.Tweens.TweenBuilderConfig);
     } else {
       hand.setPosition(to.x, to.y + 40);
-      drawTrackIcon(this.float, 'log', to.x, to.y, L.slot[i].w - 16, 170);
+      drawSlotPiece(this.float, 'log', L.slot[i].x, L.slot[i].w, L.ground);
     }
     await wait(this, dur(600, 1200));
     this.float.clear();
@@ -564,4 +563,62 @@ function dashed(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number,
   edge(x + w, y, x + w, y + h);
   edge(x + w, y + h, x, y + h);
   edge(x, y + h, x, y);
+}
+
+/**
+ * A piece as it sits on the track (not an icon): a log on the ground, a
+ * wooden ramp rising to the slot's right edge, or a pond cut into the earth.
+ * Shapes match the real track (core/track.ts): log in the slot's middle,
+ * ramp over its right half, pond across most of it.
+ */
+function drawSlotPiece(g: Phaser.GameObjects.Graphics, piece: TrackPiece, x: number, w: number, ground: number): void {
+  const ink = 0x3a2618;
+  if (piece === 'pond') {
+    const x0 = x + w * 0.1;
+    const x1 = x + w * 0.9;
+    g.fillStyle(0x7d4f2a, 1).fillRect(x0 - 6, ground - 6, x1 - x0 + 12, 70);
+    g.fillStyle(0x5cb8e6, 1).fillRect(x0, ground + 10, x1 - x0, 54);
+    g.fillStyle(0xa9e2fb, 1).fillRect(x0, ground + 10, x1 - x0, 8);
+    g.lineStyle(5, ink, 1).strokeRect(x0, ground - 6, x1 - x0, 70);
+    g.fillStyle(0x4fa64a, 1).fillEllipse(x0 + (x1 - x0) * 0.62, ground + 16, 34, 10);
+    g.lineStyle(3, ink, 1).strokeEllipse(x0 + (x1 - x0) * 0.62, ground + 16, 34, 10);
+    return;
+  }
+  if (piece === 'ramp') {
+    const x0 = x + w * 0.42;
+    const x1 = x + w - 4;
+    const top = ground - 6 - w * 0.26;
+    g.fillStyle(0xd39550, 1);
+    g.beginPath();
+    g.moveTo(x0, ground - 6);
+    g.lineTo(x1, top);
+    g.lineTo(x1, ground - 6);
+    g.closePath();
+    g.fillPath();
+    g.lineStyle(3, 0x9a5f2c, 0.7);
+    for (let i = 1; i < 4; i++) {
+      const t = i / 4;
+      const sx = x0 + (x1 - x0) * t;
+      g.lineBetween(sx, ground - 6 - (ground - 6 - top) * t, sx, ground - 6);
+    }
+    g.lineStyle(5, ink, 1);
+    g.beginPath();
+    g.moveTo(x0, ground - 6);
+    g.lineTo(x1, top);
+    g.lineTo(x1, ground - 6);
+    g.closePath();
+    g.strokePath();
+    // a chevron at the lip: this end throws you up
+    g.lineStyle(4, ink, 1).lineBetween(x1 - 26, top + 22, x1 - 14, top + 30).lineBetween(x1 - 26, top + 38, x1 - 14, top + 30);
+    return;
+  }
+  // log: lying across the track, end-on so it reads as "hop over me"
+  const cx = x + w * 0.5;
+  const r = Math.min(34, w * 0.18);
+  g.fillStyle(0xd39550, 1).fillRoundedRect(cx - r, ground - 6 - r * 2, r * 2.3, r * 2, r);
+  g.lineStyle(5, ink, 1).strokeRoundedRect(cx - r, ground - 6 - r * 2, r * 2.3, r * 2, r);
+  g.fillStyle(0xf0c27f, 1).fillCircle(cx - r * 0.2, ground - 6 - r, r * 0.9);
+  g.lineStyle(5, ink, 1).strokeCircle(cx - r * 0.2, ground - 6 - r, r * 0.9);
+  g.lineStyle(3, 0x9a5f2c, 0.8).strokeCircle(cx - r * 0.2, ground - 6 - r, r * 0.5);
+  g.fillStyle(0x9a5f2c, 1).fillCircle(cx - r * 0.2, ground - 6 - r, r * 0.15);
 }

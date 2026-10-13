@@ -123,7 +123,10 @@ export class TruckSim {
     else this.sincePress += dt;
     const canJump = this.grounded || (!this.jumping && this.sinceGround <= coyote);
     if (this.sincePress <= buffer && canJump) {
-      this.vy = -J.velocity[this.wheel];
+      // jumping on a ramp is never weaker than letting the ramp launch you
+      const ramp = this.grounded ? this.surface?.launch : undefined;
+      this.vy = -Math.max(J.velocity[this.wheel], ramp ?? 0);
+      if (ramp) this.airSpeed = Math.max(this.vx, TUNING.drive.speed);
       this.grounded = false;
       this.jumping = true;
       this.surface = null;

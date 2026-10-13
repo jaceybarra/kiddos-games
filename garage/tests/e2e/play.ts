@@ -175,3 +175,38 @@ export function noProblems(s: Session): void {
   expect(s.errors, 'console errors').toEqual([]);
   expect(s.foreign, 'third-party requests').toEqual([]);
 }
+
+/** Grown-up gate + "open all missions" so later missions can be tested on a fresh profile. */
+export async function openAll(page: Page, enter = true): Promise<void> {
+  await waitScene(page, 'garage');
+  await tap(page, 'parent');
+  await page.locator('[data-testid="gate"]').waitFor({ timeout: 10_000 });
+  const asked = await page.locator('[data-testid="gate"]').getAttribute('data-asked');
+  const btn = page.locator(`[data-testid="gate-${asked}"]`);
+  const b = (await btn.boundingBox())!;
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(2300);
+  await page.mouse.up();
+  await page.locator('[data-testid="settings"]').waitFor({ timeout: 10_000 });
+  await page.locator('[data-testid="set-openAll"]').check();
+  await page.waitForFunction(() => window.__garage!.save().settings.openAll === true);
+  await tap(page, 'settings-close');
+  if (!enter) return;
+  // with everything open, Play opens the door into the garage instead of starting mission 1
+  await tap(page, 'play');
+  await waitState(page, "s.mode === 'interior'", 20_000);
+}
+
+/** Pass the grown-up gate (hold the asked shape) and open the settings panel. */
+export async function openSettings(page: Page): Promise<void> {
+  await tap(page, 'parent');
+  await page.locator('[data-testid="gate"]').waitFor({ timeout: 10_000 });
+  const asked = await page.locator('[data-testid="gate"]').getAttribute('data-asked');
+  const b = (await page.locator(`[data-testid="gate-${asked}"]`).boundingBox())!;
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(2300);
+  await page.mouse.up();
+  await page.locator('[data-testid="settings"]').waitFor({ timeout: 10_000 });
+}

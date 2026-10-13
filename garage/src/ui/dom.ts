@@ -69,7 +69,11 @@ export function button(o: ButtonOpts): HTMLButtonElement {
     if (e.button !== 0) return;
     down = true;
     b.classList.add('pressed');
-    b.setPointerCapture?.(e.pointerId);
+    try {
+      b.setPointerCapture?.(e.pointerId);
+    } catch {
+      /* synthetic or already-ended pointer */
+    }
   });
   const up = (e: PointerEvent, fire: boolean) => {
     if (!down) return;
