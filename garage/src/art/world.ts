@@ -74,7 +74,7 @@ const mid = (() => {
 })();
 
 const clouds = [
-  piece('bg.cloud.1', [-130, -60, 260, 110], path(blobPath([[-120, 30], [-90, -20], [-30, -50], [40, -40], [100, -10], [120, 30]]), '#ffffff', 0, 'opacity="0.95"') + ellipse(0, 34, 118, 14, '#dceef8')),
+  piece('bg.cloud.1', [-130, -60, 260, 110], path(blobPath([[-114, 30], [-86, -20], [-30, -50], [40, -40], [96, -10], [114, 30]]), '#ffffff', 0, 'opacity="0.95"') + ellipse(0, 34, 114, 14, '#dceef8')),
   piece('bg.cloud.2', [-90, -45, 180, 80], path(blobPath([[-80, 22], [-56, -14], [0, -38], [56, -16], [80, 22]]), '#ffffff', 0, 'opacity="0.95"') + ellipse(0, 26, 78, 10, '#dceef8')),
 ];
 
@@ -86,7 +86,7 @@ const props = [
   piece(
     'prop.bush',
     [-76, -64, 152, 66],
-    path(blobPath([[-70, 0], [-62, -36], [-24, -58], [22, -56], [60, -34], [70, 0]]), P.grass, W) + shine(-26, -36, 20, 9, -20, 0.25) + circle(-30, -18, 6, P.red, 3) + circle(12, -30, 6, P.red, 3) + circle(38, -12, 6, P.red, 3),
+    path(blobPath([[-64, -1], [-58, -34], [-23, -55], [21, -53], [56, -32], [64, -1], [0, 1]]), P.grass, W) + shine(-26, -34, 20, 9, -20, 0.25) + circle(-30, -18, 6, P.red, 3) + circle(12, -30, 6, P.red, 3) + circle(38, -12, 6, P.red, 3),
   ),
   piece(
     'prop.flowers',
@@ -95,7 +95,7 @@ const props = [
       .map(([x, , c], i) => line(`M${x} 0 L${x} ${-28 - (i % 2) * 12}`, 4, P.leafDark) + circle(x as number, -30 - (i % 2) * 12, 9, c as string, 3.5) + circle(x as number, -30 - (i % 2) * 12, 3, P.yellowDark))
       .join(''),
   ),
-  piece('prop.rock', [-54, -46, 108, 48], path(blobPath([[-50, 0], [-40, -30], [-6, -44], [34, -34], [50, 0]]), '#a9a39a', W) + shine(-14, -28, 16, 7, -15, 0.35)),
+  piece('prop.rock', [-54, -46, 108, 48], path(blobPath([[-46, -2], [-37, -28], [-6, -40], [31, -31], [46, -2]]), '#a9a39a', W) + shine(-14, -26, 16, 7, -15, 0.35)),
   piece(
     'prop.fence',
     [-110, -86, 220, 88],
@@ -106,7 +106,7 @@ const props = [
     [-34, -54, 68, 56],
     rrect(-9, -26, 18, 26, 6, P.cream, 4) + path('M-30 -24 Q-30 -52 0 -52 Q30 -52 30 -24 Z', P.red, 4) + circle(-12, -38, 5, '#fff') + circle(10, -42, 4, '#fff'),
   ),
-  piece('prop.reeds', [-40, -96, 80, 98], [-22, -6, 10, 26].map((x, i) => line(`M${x} 0 Q${x - 4} -40 ${x + (i % 2 ? 6 : -6)} ${-70 - (i % 2) * 18}`, 5, P.leafDark) + ellipse(x + (i % 2 ? 6 : -6), -76 - (i % 2) * 18, 5, 14, P.woodDark, 3)).join('')),
+  piece('prop.reeds', [-40, -96, 80, 98], [-22, -6, 10, 26].map((x, i) => line(`M${x} 0 Q${x - 4} -36 ${x + (i % 2 ? 6 : -6)} ${-56 - (i % 2) * 14}`, 5, P.leafDark) + ellipse(x + (i % 2 ? 6 : -6), -64 - (i % 2) * 14, 5, 13, P.woodDark, 3)).join('')),
   piece('prop.lily', [-40, -14, 80, 22], ellipse(0, 0, 36, 10, P.leaf, 4) + path('M0 0 L30 -6 L30 6 Z', P.water)),
   // a pole that marks the spring-wheel route: a little spring on top (shape, not colour)
   piece(
@@ -115,7 +115,7 @@ const props = [
     rrect(-7, -110, 14, 110, 5, P.metalDark, W) +
       line('M0 -112 L-14 -120 L14 -130 L-14 -140 L14 -150 L0 -158', 9, P.ink) +
       line('M0 -112 L-14 -120 L14 -130 L-14 -140 L14 -150 L0 -158', 5, P.orange) +
-      circle(0, -162, 9, P.yellow, 4),
+      circle(0, -160, 8, P.yellow, 4),
   ),
 ];
 
@@ -127,9 +127,9 @@ const log = piece(
   // the log's left face is at x=0 (the wall), its top at y=-72 (the wall top)
   shadow(40, 0, 50, 6) +
     rrect(0, -72, 80, 72, 30, P.wood, 6) +
-    ellipse(4, -36, 22, 34, P.woodLight, 6) +
-    ellipse(4, -36, 13, 21, 'none', 0, `stroke="${P.woodDark}" stroke-width="3" fill="none"`) +
-    ellipse(4, -36, 5, 8, P.woodDark) +
+    ellipse(10, -36, 13, 33, P.woodLight, 6) +
+    ellipse(10, -36, 7, 20, 'none', 0, `stroke="${P.woodDark}" stroke-width="3"`) +
+    ellipse(10, -36, 3, 7, P.woodDark) +
     line('M30 -60 Q50 -56 70 -60 M34 -18 Q54 -14 72 -20', 3, P.woodDark, 'opacity="0.6"') +
     path('M40 -72 Q46 -84 54 -78 Q50 -72 40 -72 Z', P.leaf, 3),
 );
@@ -155,7 +155,10 @@ const coin = piece(
 const acorn = piece(
   'obj.acorn',
   [-40, -50, 80, 96],
-  ellipse(0, 12, 26, 30, P.yellow, W) + shine(-9, 6, 8, 12, -15, 0.5) + path('M-30 -8 Q-30 -34 0 -34 Q30 -34 30 -8 Q0 2 -30 -8 Z', P.woodDark, W) + line('M-18 -20 L18 -20 M-22 -12 L22 -12', 2.5, P.wood) + line('M0 -34 Q4 -46 12 -46', 6) + path('M-20 -46 L-14 -40 M24 4 L30 10', 0 as unknown as string),
+  ellipse(0, 12, 26, 30, P.yellow, W) + shine(-9, 6, 8, 12, -15, 0.5) + path('M-30 -8 Q-30 -34 0 -34 Q30 -34 30 -8 Q0 2 -30 -8 Z', P.woodDark, W) + line('M-18 -20 L18 -20 M-22 -12 L22 -12', 2.5, P.wood) + line('M0 -34 Q4 -46 12 -46', 6) +
+    // two small glints: it is the golden one
+    path('M-26 -44 Q-25 -38 -19 -37 Q-25 -36 -26 -30 Q-27 -36 -33 -37 Q-27 -38 -26 -44 Z', '#fff7c2', 2.5) +
+    path('M30 0 Q31 5 36 6 Q31 7 30 12 Q29 7 24 6 Q29 5 30 0 Z', '#fff7c2', 2.5),
 );
 
 const pinwheelHead = piece(
@@ -174,14 +177,14 @@ const ribbon = piece(
 const flagDown = piece(
   'obj.flag.down',
   [-20, -190, 90, 192],
-  shadow(0, 0, 18, 4) + rrect(-5, -180, 10, 180, 4, P.metal, 4) + circle(0, -184, 8, P.yellow, 4) + path('M5 -60 L44 -48 L5 -36 Z', P.cardDark, 4),
+  shadow(0, 0, 18, 4) + rrect(-5, -178, 10, 178, 4, P.metal, 4) + circle(0, -181, 7, P.yellow, 4) + path('M5 -60 L44 -48 L5 -36 Z', P.cardDark, 4),
 );
 const flagUp = piece(
   'obj.flag.up',
   [-20, -190, 110, 192],
   shadow(0, 0, 18, 4) +
-    rrect(-5, -180, 10, 180, 4, P.metal, 4) +
-    circle(0, -184, 8, P.yellow, 4) +
+    rrect(-5, -178, 10, 178, 4, P.metal, 4) +
+    circle(0, -181, 7, P.yellow, 4) +
     path('M5 -176 Q40 -186 82 -170 Q60 -150 82 -128 Q40 -138 5 -128 Z', P.blue, 4) +
     path('M38 -164 L41.5 -156 L50 -155.5 L43.5 -150 L45.5 -142 L38 -146 L30.5 -142 L32.5 -150 L26 -155.5 L34.5 -156 Z', P.yellow, 2.5),
 );
@@ -206,7 +209,7 @@ const finish = (() => {
   );
 })();
 
-const signPost = piece('obj.sign.post', [-14, -150, 28, 152], rrect(-8, -150, 16, 150, 5, P.woodDark, W));
+const signPost = piece('obj.sign.post', [-14, -150, 28, 152], rrect(-8, -147, 16, 147, 5, P.woodDark, W));
 const signHigh = piece(
   'obj.sign.high',
   [-90, -60, 180, 120],
@@ -228,7 +231,7 @@ const fx = [
   piece('fx.confetti.a', [-10, -6, 20, 12], rrect(-9, -5, 18, 10, 3, P.blue, 2.5)),
   piece('fx.confetti.b', [-10, -6, 20, 12], rrect(-9, -5, 18, 10, 3, P.pink, 2.5)),
   piece('fx.confetti.c', [-10, -6, 20, 12], rrect(-9, -5, 18, 10, 3, P.teal, 2.5)),
-  piece('fx.ring', [-70, -24, 140, 48], ellipse(0, 0, 64, 18, 'none', 0, `stroke="#ffffff" stroke-width="7" fill="none" opacity="0.9"`)),
+  piece('fx.ring', [-70, -24, 140, 48], ellipse(0, 0, 64, 18, 'none', 0, `stroke="#ffffff" stroke-width="7" opacity="0.9"`)),
   piece('fx.drop', [-10, -14, 20, 28], path('M0 -12 Q10 2 8 6 Q6 12 0 12 Q-6 12 -8 6 Q-10 2 0 -12 Z', P.waterLight, 2.5)),
   // a pointing hand (helper cue), fingertip at (0,0)
   piece(

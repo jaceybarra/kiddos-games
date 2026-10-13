@@ -37,16 +37,19 @@ const trim = piece(
     // roll bar over the bed
     line('M-118 -66 L-108 -100 L-34 -100 L-26 -66', 9, P.ink) +
     line('M-118 -66 L-108 -100 L-34 -100 L-26 -66', 4, P.metal) +
-    // headlight, tail light (shape + colour), door handle, exhaust
+    // headlight, tail light (shape + colour), door handle, exhaust stack
     path('M128 -58 L142 -56 L142 -42 L128 -44 Z', P.yellow, 4) +
     rrect(-134, -60, 10, 20, 3, P.red, 4) +
     rrect(30, -58, 18, 6, 3, P.ink) +
-    rrect(-6, -146 + 18, 10, 26, 4, P.metalDark, 4) +
+    // exhaust stack: bolted to the back of the cab, rising just above the roof line
+    rrect(-29, -118, 11, 54, 4, P.metal, 4) +
+    rrect(-32, -126, 17, 10, 3, P.metalDark, 3.5) +
+    line('M-29 -94 L-18 -94 M-29 -78 L-18 -78', 3, P.metalDark) +
     // bumpers
     rrect(132, -26, 18, 16, 6, P.metalDark, 5) +
-    rrect(-140, -26, 16, 16, 6, P.metalDark, 5) +
+    rrect(-137, -26, 15, 16, 6, P.metalDark, 5) +
     // chassis rail
-    rrect(-120, -12, 240, 14, 7, P.rubber, 4),
+    rrect(-120, -14, 240, 12, 6, P.rubber, 4),
 );
 
 /** Pattern overlays: drawn in white/ink on top of the paint, clipped to the panels. */

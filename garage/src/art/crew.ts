@@ -43,7 +43,7 @@ function milo(pose: Pose): string {
   const arms: Record<Pose, string> = {
     idle: arm(-30, -96, -40, -52, B, L) + arm(24, -96, 36, -52, B, L),
     notice: arm(24, -96, 36, -52, B, L) + arm(-30, -100, -88, -132, B, L),
-    help: plank(-8, -112) + arm(-30, -96, -50, -112, B, L) + arm(24, -96, 30, -112, B, L),
+    help: plank(-8, -84) + arm(-30, -96, -50, -84, B, L) + arm(24, -96, 30, -84, B, L),
     cheer: arm(-30, -100, -58, -168, B, L) + arm(24, -100, 50, -168, B, L),
   };
   const back = pose === 'help' ? '' : '';
@@ -132,8 +132,8 @@ function nori(pose: Pose): string {
   const arms: Record<Pose, string> = {
     idle: arm(-34, -70, -46, -36, S, S),
     notice: arm(-34, -74, -56, -112, S, S) + circle(-62, -118, 14, 'none', 5) + line('M-52 -108 L-44 -98', 6, P.woodDark),
-    help: arm(-34, -70, -78, -84, S, S) + line('M-80 -84 L-80 -150', 7, P.woodDark) + path('M-80 -150 L-30 -150 L-18 -136 L-30 -122 L-80 -122 Z', P.yellow, 5),
-    cheer: arm(-34, -74, -60, -150, S, S) + arm(30, -80, 54, -146, S, S),
+    help: line('M-84 -84 L-84 -204', 7, P.woodDark) + path('M-84 -204 L-38 -204 L-26 -190 L-38 -176 L-84 -176 Z', P.yellow, 5) + arm(-34, -70, -80, -90, S, S),
+    cheer: arm(-34, -74, -96, -112, S, S) + arm(30, -80, 54, -146, S, S),
   };
   const plates = [
     [-8, -86, 18],
