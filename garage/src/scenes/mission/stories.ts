@@ -184,9 +184,9 @@ async function noriFork(s: MissionScene): Promise<void> {
   s.setLane(picked === 'jump' ? 'back' : 'front');
   pip?.setPose('idle');
   // everyone goes their own way and meets up before the big step
-  if (nori) void nori.moveTo(3090, gy(s, 'front'), SPEED.nori);
-  if (milo) void milo.moveTo(3180, gy(s, 'front'), SPEED.milo);
-  if (pip) void pip.followPath([...pathAlong(s.base, pip.x, 3000, 'back', G - 170), { x: 3140, y: G }], SPEED.pip);
+  if (nori) void nori.moveTo(2850, gy(s, 'front'), SPEED.nori);
+  if (milo) void milo.moveTo(3040, gy(s, 'front'), SPEED.milo);
+  if (pip) void pip.followPath([...pathAlong(s.base, pip.x, 2940, 'back', G - 170)], SPEED.pip);
   await wait(s, dur(500, 100));
   if (s.dead) return;
   s.cameraBusy = false;

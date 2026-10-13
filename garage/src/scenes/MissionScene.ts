@@ -131,6 +131,7 @@ export default class MissionScene extends Phaser.Scene {
     const speedFactor = (a.settings.slowDriving ? TUNING.drive.slowFactor : 1) * missionSpeed;
     this.sim = new TruckSim(this.terrain, L.startX, { wheel: save.truck.wheel, speedFactor, assist: this.state.assist });
     this.groundY = this.sim.y;
+    this.checkpointY = this.sim.y;
 
     this.world = new WorldView(
       this,
@@ -342,6 +343,7 @@ export default class MissionScene extends Phaser.Scene {
     if (!this.sim.grounded) return;
     for (const cp of this.level.checkpoints) {
       if (this.sim.x >= cp.x && cp.x > this.state.checkpointX && this.state.reachCheckpoint(cp.id, cp.x)) {
+        this.checkpointY = this.sim.y;
         this.world.raiseFlag(cp.id);
         void this.persistFinds();
       }
@@ -465,6 +467,8 @@ export default class MissionScene extends Phaser.Scene {
   }
 
   private lastRestoreMs = 0;
+  /** ground height where the last checkpoint was reached */
+  private checkpointY: number = G;
   /** the log the truck bumped during the current jump (a miss only if it lands short) */
   private airBump: string | null = null;
   private jumps = 0;
@@ -487,7 +491,7 @@ export default class MissionScene extends Phaser.Scene {
     this.sim.assist = this.state.assist;
     await wait(this, Math.max(0, TUNING.recovery.restoreMs - fadeOut - fadeIn));
     if (this.dead) return;
-    this.sim.placeAt(this.state.checkpointX);
+    this.sim.placeAt(this.state.checkpointX, this.checkpointY);
     this.groundY = this.sim.y;
     this.cam.snap(this.sim.x, this.groundY);
     this.truck.update(this.pose(), 0);
@@ -670,7 +674,7 @@ export default class MissionScene extends Phaser.Scene {
     await this.truck.fadeOut(dur(220, 100));
     await wait(this, 500);
     if (this.dead) return;
-    this.sim.placeAt(b.zone.stopX);
+    this.sim.placeAt(b.zone.stopX, G);
     this.groundY = this.sim.y;
     this.truck.update(this.pose(), 0);
     await this.truck.fadeIn(dur(240, 100));
