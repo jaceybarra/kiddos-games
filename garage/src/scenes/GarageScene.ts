@@ -172,11 +172,9 @@ export default class GarageScene extends Phaser.Scene {
     this.mode = 'exterior';
     this.backdrop('garage.exterior', 0x6db54c);
     const o = this.origin();
-    // the door, masked to its opening so it can roll up out of sight
+    // the roll-up door: as it rises, only its lower part stays visible below the top of the opening
     const door = addImage(this, o.x + 610, o.y + 330, 'garage.door').setOrigin(0, 0);
-    const maskShape = this.make.graphics({}, false).fillStyle(0xffffff).fillRect(o.x + 610, o.y + 330, 700, 550);
-    door.setMask(maskShape.createGeometryMask());
-    this.objs.push(door, maskShape);
+    this.objs.push(door);
     this.nameText(o.x + 960, o.y + 250, 500);
     const play = button({ icon: 'play', label: 'Play', size: 'xl', variant: 'primary', testid: 'play', extraClass: 'g-play-center hint', onTap: () => void this.openDoor(door) });
     this.addUi(play);
@@ -188,7 +186,20 @@ export default class GarageScene extends Phaser.Scene {
     this.mode = 'leaving';
     for (const el of this.ui) el.remove();
     this.ui = [];
-    await tweenP(this, { targets: door, y: door.y - 560, duration: dur(1100, 250), ease: 'Sine.InOut' });
+    const top = door.y;
+    const roll = { d: 0 };
+    await tweenP(this, {
+      targets: roll,
+      d: door.height,
+      duration: dur(1100, 250),
+      ease: 'Sine.InOut',
+      onUpdate: () => {
+        const d = Math.min(door.height - 1, roll.d);
+        door.setCrop(0, d, door.width, door.height - d);
+        door.y = top - d;
+      },
+    } as Phaser.Types.Tweens.TweenBuilderConfig);
+    door.setVisible(false);
     if (this.dead) return;
     if (!this.save.progress.started && !this.save.settings.openAll) {
       // first time ever: the truck rolls straight out into the first mission
@@ -283,14 +294,14 @@ export default class GarageScene extends Phaser.Scene {
 
   private shelfSpots(o: { x: number; y: number }): { id: RewardId | DiscoveryId; x: number; y: number; scale: number }[] {
     const out: { id: RewardId | DiscoveryId; x: number; y: number; scale: number }[] = [];
-    REWARD_IDS.forEach((id, i) => out.push({ id, x: o.x + 760 + i * 240, y: o.y + 440, scale: 0.7 }));
-    DISCOVERY_IDS.forEach((id, i) => out.push({ id, x: o.x + 800 + i * 200, y: o.y + 615, scale: 0.85 }));
+    REWARD_IDS.forEach((id, i) => out.push({ id, x: o.x + 760 + i * 240, y: o.y + 405, scale: 0.68 }));
+    DISCOVERY_IDS.forEach((id, i) => out.push({ id, x: o.x + 800 + i * 200, y: o.y + 565, scale: 0.8 }));
     return out;
   }
 
   private shelf(o: { x: number; y: number }): void {
-    const s1 = addImage(this, o.x + 1000, o.y + 440, 'garage.shelf');
-    const s2 = addImage(this, o.x + 1000, o.y + 615, 'garage.shelf').setScale(0.9, 1);
+    const s1 = addImage(this, o.x + 1000, o.y + 405, 'garage.shelf');
+    const s2 = addImage(this, o.x + 1000, o.y + 565, 'garage.shelf').setScale(0.9, 1);
     this.objs.push(s1, s2);
     for (const spot of this.shelfSpots(o)) {
       const owned = (REWARD_IDS as string[]).includes(spot.id) ? this.save.progress.rewards.includes(spot.id as RewardId) : this.save.progress.discoveries.includes(spot.id as DiscoveryId);

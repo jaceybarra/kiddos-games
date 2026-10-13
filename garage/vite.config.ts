@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vitest/config';
-import { garageServiceWorker } from './tools/sw-plugin';
+import { garageServiceWorker } from './tools/sw-plugin.ts';
 
-const root = __dirname;
+const root = import.meta.dirname;
 
 /**
  * Optional HTTPS for `npm run garage:preview`: real offline install on the

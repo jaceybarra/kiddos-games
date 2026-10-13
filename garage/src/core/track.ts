@@ -130,7 +130,7 @@ export function checkTrack(slots: Slots, speedFactor = 1): TrackCheck {
       if (problem > 0 && slots[problem - 1] !== 'ramp') return { playable: false, problemSlot: problem, fixSlot: problem - 1, fixPiece: 'ramp' };
       return { playable: false, problemSlot: problem, fixSlot: problem, fixPiece: null };
     }
-    const stuck = slotAt(run.x + 110) ?? slotAt(run.x) ?? TRACK_SLOTS - 1;
+    const stuck = slotAt(run.x + 150) ?? slotAt(run.x) ?? TRACK_SLOTS - 1;
     return { playable: false, problemSlot: stuck, fixSlot: stuck, fixPiece: null };
   }
   return { playable: true, problemSlot: null, fixSlot: null, fixPiece: null };

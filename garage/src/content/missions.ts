@@ -123,7 +123,7 @@ const wobbly: MissionDef = {
   zones: [
     {
       id: 'stream',
-      stopX: 2690,
+      stopX: 2600,
       exitX: 3440,
       focusX: 3000,
       sockets: [

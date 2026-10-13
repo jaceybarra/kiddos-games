@@ -58,13 +58,17 @@ export async function state(page: Page): Promise<Record<string, any>> {
 }
 
 export async function waitState(page: Page, pred: string, timeout = 60_000): Promise<Record<string, any>> {
-  // pred is a JS expression over `s` (the scene state), e.g. "s.phase === 'building'"
-  await page.waitForFunction((p) => {
-    const s = window.__garage?.state() ?? {};
-    // eslint-disable-next-line no-new-func
-    return new Function('s', `return (${p});`)(s);
-  }, pred, { timeout, polling: 50 });
-  return state(page);
+  // pred is a JS expression over `s` (the scene state), e.g. "s.phase === 'building'".
+  // It's checked here in the test runner: the page's security policy (rightly) forbids eval.
+  // eslint-disable-next-line no-new-func
+  const fn = new Function('s', `try { return !!(${pred}); } catch (e) { return false; }`) as (s: Record<string, any>) => boolean;
+  const t0 = Date.now();
+  for (;;) {
+    const s = await state(page).catch(() => ({}) as Record<string, any>);
+    if (fn(s)) return s;
+    if (Date.now() - t0 > timeout) throw new Error(`waitState timed out: ${pred}\nlast state: ${JSON.stringify(s).slice(0, 600)}`);
+    await page.waitForTimeout(60);
+  }
 }
 
 export async function targets(page: Page): Promise<Target[]> {
@@ -138,7 +142,7 @@ export async function startDriver(page: Page, mode: 'jump' | 'miss' = 'jump'): P
         if (held === 0) key('keyup');
       } else if (d.mode === 'jump' && s && s.phase === 'driving' && !s.held && !s.scripted && !s.restoring && s.grounded && s.hazard) {
         const h = s.hazard as { kind: string; x0: number; x1: number };
-        const nose = s.x + 110;
+        const nose = s.x + 150;
         const near = h.kind === 'wall' ? h.x0 - nose < 60 && h.x0 - nose > -5 : h.x0 - s.x < 70 && h.x0 - s.x > -20;
         if (near) {
           key('keydown');

@@ -72,7 +72,7 @@ export class TruckSim {
     this.wheel = opts.wheel;
     this.speedFactor = opts.speedFactor ?? 1;
     this.assist = opts.assist ?? 1;
-    this.halfLength = opts.halfLength ?? 110;
+    this.halfLength = opts.halfLength ?? 150;
     this.lane = opts.lane ?? 'back';
     this.x = x;
     const s = terrain.surfaceBelow(x, -Infinity, 0, this.lane);
