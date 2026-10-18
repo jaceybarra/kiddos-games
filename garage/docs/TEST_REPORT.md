@@ -12,15 +12,16 @@ Environment: Linux container, Node 22.22, Chromium from Playwright 1.56.1 with s
 
 | Check | Command | Result |
 |---|---|---|
-| Install from lockfile | `npm ci` | ✅ |
+| Install from lockfile | `npm ci` | ✅ (0 vulnerabilities reported) |
 | Type check | `npx tsc --noEmit -p garage/tsconfig.json` (part of `npm run garage:build`) | ✅ no errors |
 | Production build | `npm run garage:build` | ✅ |
-| Unit tests | `npm run garage:test` | ✅ 80 passed |
+| Unit tests | `npm run garage:test` | ✅ 85 passed |
 | Browser tests | `npm run garage:e2e` | ✅ 19 passed (≈19 min) |
 
 ### Unit tests (Vitest, `garage/tests/unit`)
 
-- **Movement** (`physics.test.ts`): auto-drive and brake; a log makes the truck wait (no miss) and a tap clears it;
+- **Movement** (`physics.test.ts`): auto-drive and brake; a log makes the truck wait (no miss) and a tap clears it,
+  even from standstill flush against the log, with either wheels and with slower driving;
   spring wheels jump clearly higher; holding adds 10–40%; coyote time (90 ms works, 220 ms doesn't); input buffer
   (100 ms works, 300 ms doesn't); a missed gap is a soft "fell" event; ramps and pads throw at full speed even with
   slower driving. Every route variant finishes with **both wheel types**: mission 1 with a bridge, and with a ramp;
@@ -34,7 +35,9 @@ Environment: Linux container, Node 22.22, Chromium from Playwright 1.56.1 with s
 - **My Tiny Track**: only legal connections can be placed. *All 2,457 legal layouts* were simulated with both wheels:
   each is either drivable or gets a fix that is a ramp in the slot before the pond. Slower driving still clears every
   ramp jump. Damaged saved layouts are corrected.
-- **Rewards and saves** (`save.test.ts`): applying a mission result twice changes nothing the second time. The
+- **Rewards and saves** (`save.test.ts`): applying a mission result twice changes nothing the second time. Resume
+  points survive a round trip, and anything that doesn't match the mission data is dropped. Finishing a mission
+  clears its resume point. A save that can't be read at start is never written over. The
   unversioned format migrates to version 1. Bad values are repaired and non-saves refused, and a newer version is
   refused. IndexedDB write → reload works, with the previous record kept. A corrupted current record falls back to the
   previous one and is set aside, not deleted. A failed write reports `failed`, never success. Import accepts a real
@@ -105,6 +108,7 @@ before it was fixed.
 | Coin tally showed "0" on tracks; the fix hint was faint | Hidden on tracks; the fix piece is stronger and its tray card bobs |
 | Pause blocked during picture choices | The pause button works over a choice |
 | A save that couldn't be read at start could be overwritten | Never overwritten; reported to grown-ups; only a deliberate import or start-over replaces it |
+| (Found by the browser tests afterwards.) A tap while waiting flush against a log sometimes landed short | A jump taken at a log carries the truck forward over it (unit-tested for both wheels) |
 
 Things the reviewers called good (kept as they are): the closed garage with the name and one big Play; the jump lesson
 (the truck waits, a see-through truck and a hand show the jump); soft misses with coins kept; the build feedback
