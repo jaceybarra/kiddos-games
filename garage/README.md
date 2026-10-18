@@ -38,7 +38,7 @@ Run from the repository root. Tested with Node 22.22 on Linux, and the family Ma
 
 | On screen | What it does |
 |---|---|
-| Big Play (garage) | Opens the garage door. The very first time, the truck drives straight into Mission 1. |
+| Big Play (garage) | Opens the garage door. The very first time, the truck drives straight into Mission 1. If a mission was left part-way (a reload, the app closed), Play goes straight back to its last checkpoint. |
 | Big jump button (lower corner) | Tap to jump. Hold a moment to jump a little higher. A tap is always enough for every required jump. |
 | Small brake (other corner) | Hold to stop and look. Never needed. |
 | Pause (top left) | Pause menu: Resume, Retry, Garage. |
@@ -92,14 +92,17 @@ time). This keeps small fingers out. It isn't a lock.
   slower driving, more help from the start, session reminder (a calm picture at the end of a mission, never in the
   middle), and "open all missions" for trying things out.
 - **Saving**: where saves go, whether the last save worked (it never claims success after a failed write), and
-  "Keep saves safe" (asks the browser for persistent storage; it may say no).
+  "Keep saves safe" (asks the browser for persistent storage; it may say no). The game also asks once by itself after
+  the first finished mission, except in browsers where asking would show a permission prompt (Firefox).
 - **Backup**: export a small JSON file, import it later (it's checked first; a bad file changes nothing), or start
   over (progress cleared, these settings kept).
 - **Offline**: the honest offline state.
 
 ### Saves can be cleared by the browser
 
-Saves live in the browser's own storage (IndexedDB) on the iPad. Browsers may clear website storage when the device
+Saves live in the browser's own storage (IndexedDB) on the iPad. Progress is saved when a mission ends, at every
+checkpoint (coins found, and the place itself, so a reload continues from there), when the truck's look changes, and
+when settings change. If the stored save ever can't be read, the game plays on but never writes over it. Browsers may clear website storage when the device
 is low on space. Safari may also clear it for sites that haven't been used for a few weeks and weren't added to the
 Home Screen. Adding the game to the Home Screen and exporting a backup now and then are the best protection. The game
 keeps the previous good save next to the current one and falls back to it if the newest one is damaged.

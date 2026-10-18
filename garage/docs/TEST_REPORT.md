@@ -72,10 +72,45 @@ Measured in the help test: a missed jump is back at the checkpoint after **1.1�
 (scheduled at 0.8 s in `tuning.ts`; frame overhead adds the rest at this frame rate). The **wall-clock time is
 unverified** on an iPad.
 
-## Visual inspection
+## Visual inspection and independent review
 
-The screenshots in `docs/screenshots/` were looked at one by one, at 1024×768 (iPad landscape CSS size). See the
-independent review notes below for what was found and fixed.
+The screenshots in `docs/screenshots/` were looked at one by one, at 1024×768 (iPad landscape CSS size).
+
+Two reviewers who hadn't written the code also looked at it. One checked it requirement by requirement against the
+specification, with live probes. The other played every screen at 1024×768 as a six-year-old would and inspected each
+screenshot. Their automated re-check step was cut short by a usage limit, so each finding below was checked by hand
+before it was fixed.
+
+| Found | Fix |
+|---|---|
+| **Camera froze on replays and test drives** (the scene object is reused; per-run state wasn't reset) | Every per-run field resets on each start. The browser tests now check the truck stays on screen during a replay and a second track drive. |
+| Coins found in a later run weren't saved at checkpoints | Saved whenever something new is found |
+| Checkpoints weren't saved; a reload restarted the mission | A validated resume point is saved at each checkpoint (story beat, choice, solved builds, lane). Play continues there. Covered by unit and browser tests. |
+| Grown-up settings could end up under the child's buttons after a resize | Settings open above everything and close with the garage |
+| Import / start over didn't refresh the game | Settings re-applied, garage rebuilt on close |
+| Sockets hidden behind Milo and the truck; faint at rest | Drawn above everything, clearly, the next useful one bobbing |
+| Test could be tapped during the camera pan | Test waits until the tray is out |
+| Esc/P pause documented but missing | Added (and tested) |
+| Persistent storage only on request | Requested once after the first finished mission (not where it would prompt) |
+| A friend animation could run after the drive ended (one console error, timing dependent) | Friends are destroyed with the scene; their animations stop |
+| Name only on the garage sign | Also on milestone cards (new reward, chapter complete) |
+| The truck parked on top of the friend it was meeting | Story stops moved earlier; friends stand clear; invited friends help from their spot |
+| Mission 1 recap always showed a bridge | Shows the piece he actually used |
+| Choice and recap pictures showed a default red truck | They show his own truck |
+| Bouncy pad hidden under the bridge deck (mission 3) | Pads draw on top |
+| Celebration hidden behind the end choices | Raised into the clear middle of the screen |
+| Missing a jump could repeat forever | After three misses the truck waits at the edge until jump is pressed |
+| Chapter card's track picture pulsed like a button | Still picture |
+| Play pulsed after "Done" and after the chapter | Calm after Done; after the chapter only My Tiny Track is highlighted |
+| Coin tally showed "0" on tracks; the fix hint was faint | Hidden on tracks; the fix piece is stronger and its tray card bobs |
+| Pause blocked during picture choices | The pause button works over a choice |
+| A save that couldn't be read at start could be overwritten | Never overwritten; reported to grown-ups; only a deliberate import or start-over replaces it |
+
+Things the reviewers called good (kept as they are): the closed garage with the name and one big Play; the jump lesson
+(the truck waits, a see-through truck and a hand show the jump); soft misses with coins kept; the build feedback
+(wiggle, bold bobbing targets, gentle return, try-it pulse, arrow after a failed test); the wagon crossing; the choice
+cards and recaps; the garage shelf and coin jar; the pause menu, gate, rotate card and rest picture; child controls
+64–150 CSS px; no sad or helpless friends.
 
 ## Not verified
 
@@ -95,3 +130,17 @@ independent review notes below for what was found and fixed.
 
 The targets were under 8 MB (first load) and under 15 MB (offline region). The art is SVG in the code, turned into
 textures on the device, so there are no image downloads.
+
+## The three most important improvements to consider next
+
+1. **Play-test on Bentley's iPad and tune from what you see.** Use `PLAYTEST.md` and `DEVICE_CHECKLIST.md`. The feel
+   numbers (jump timing windows, speed, recovery time, help thresholds) are all in `src/config/tuning.ts`, and the
+   name and starting help are in `src/config/content.ts`.
+2. **Make offline real on the home network.** Over plain `http://`, the iPad can play only while the Mac is serving.
+   Either try the local-HTTPS steps in the README on the iPad, or choose a private HTTPS host.
+3. **Richer helping and continuing moments.** Today an invited friend helps with a heave-ho hop as the piece drops in.
+   Next they could carry the plank into place. Continuing after a reload also skips to the checkpoint's state; it
+   could instead replay the story moment he was in.
+
+Backlog ideas only (not started, on purpose, until he has played): a second region, a balloon or winch attachment,
+pass-and-play with a sibling, more authored missions.

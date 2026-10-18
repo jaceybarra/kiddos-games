@@ -34,6 +34,10 @@ timer anywhere.
 - The gameplay body is a point on the ground plus a box; lean, squash, wheel spin and suspension bob are
   visual only.
 
+- After three misses at the same gap, the truck waits at the gap's edge with the helper hand on the jump button and
+  goes when jump is pressed. That ends the miss loop without any penalty.
+- Checkpoints also save a validated resume point (story beat, choice, solved builds, lane), so a reload continues there.
+
 ## Building
 
 The truck stops at a build zone and the camera frames it. A tray holds at most three big pieces: **bridge**,

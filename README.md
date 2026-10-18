@@ -1,5 +1,9 @@
 # Wonderwood: The Lantern Club
 
+> **Also in this repository: Bentley's Wonder Garage**, a separate, silent monster-truck game in
+> [`garage/`](garage/README.md). Start there for its setup, iPad and offline instructions
+> (`npm run garage` builds and serves it).
+
 A local-first browser game center for young children. You join a club of woodland creatures getting
 ready for a lantern festival.
 
