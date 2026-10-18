@@ -10,6 +10,7 @@ import { autoInput, TruckSim, type DriveInput } from '../core/truck';
 import { missionLevel, trackLevel, type Level } from '../content/levels';
 import { G, type CrewId, type MissionId } from '../content/missions';
 import { addCoins, addDiscovery, applyMissionResult } from '../save/progress';
+import type { ResumePoint } from '../save/schema';
 import { DriveControls } from '../ui/controls';
 import { Hud } from '../ui/hud';
 import { showPauseMenu } from '../ui/overlays';
@@ -19,6 +20,7 @@ import { Fx } from '../view/fx';
 import { TruckView, type TruckPose } from '../view/TruckView';
 import { WorldView } from '../view/WorldView';
 import { registerSceneForTests } from '../dev/testHooks';
+import { askToKeepSaves } from '../app/storage';
 import { BuildController } from './mission/BuildController';
 import { runEncounter, runResolution } from './mission/stories';
 import { cssToGame, groundAt, wait } from './util';
@@ -36,6 +38,9 @@ const STEP = 1 / 120;
 const BG_KEYS = ['bg.sky', 'bg.far', 'bg.mid'];
 
 type Hazard = { kind: 'gap' | 'wall'; x0: number; x1: number; key: string };
+
+/** where an invited friend stands to help at each build (on ground, clear of the parked truck) */
+const HELPER_SPOT: Record<string, number> = { stream: 2720, 'second-lane': 1240, ledge: 3020 };
 
 export default class MissionScene extends Phaser.Scene {
   launch!: MissionLaunch;
@@ -74,7 +79,6 @@ export default class MissionScene extends Phaser.Scene {
   private waitAtWall = 0;
   private testClock = 0;
   private blockedClock = 0;
-  private persistedCoins = 0;
   private closePause: (() => void) | null = null;
   private offs: (() => void)[] = [];
   private ghost: { sim: TruckSim; view: TruckView; until: number; clock: number } | null = null;
@@ -101,6 +105,25 @@ export default class MissionScene extends Phaser.Scene {
     this.ghost = null;
     this.offs = [];
     this.watchers = [];
+    // Phaser reuses this scene object for every drive: everything per-run starts fresh here
+    this.cameraBusy = false;
+    this.groundY = G;
+    this.hazards = [];
+    this.teachWall = null;
+    this.teachGap = false;
+    this.waitAtWall = 0;
+    this.testClock = 0;
+    this.blockedClock = 0;
+    this.closePause = null;
+    this.controlsWereOn = false;
+    this.owned = new Set();
+    this.lastRestoreMs = 0;
+    this.checkpointY = G;
+    this.airBump = null;
+    this.jumps = 0;
+    this.clockMs = 0;
+    this.edgeHold = null;
+    this.resolvedZones = new Set();
   }
 
   create(): void {
@@ -176,6 +199,15 @@ export default class MissionScene extends Phaser.Scene {
       onInvite: () => this.toggleInvite(),
     });
     this.hud.setCoins(0, L.coins.length);
+    // tracks have no coins: no tally
+    this.hud.showCoins(L.coins.length > 0);
+    // Esc or P pauses (keyboard, for grown-ups and desktop play)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || this.closePause) return;
+      if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') this.pause();
+    };
+    window.addEventListener('keydown', onKey);
+    this.offs.push(() => window.removeEventListener('keydown', onKey));
     this.offs.push(
       a.onInterrupt(() => this.pause()),
       a.onSettings(() => {
@@ -183,6 +215,10 @@ export default class MissionScene extends Phaser.Scene {
         this.fx.setOptions({ reduced: app().reducedMotion(), low: app().lowIntensity() });
       }),
     );
+    // continue from a saved checkpoint, or start fresh (and forget an older resume point for this mission)
+    const resume = this.launch.kind === 'mission' ? this.launch.resume : null;
+    if (resume && resume.missionId === L.id) this.applyResume(resume);
+    else if (this.launch.kind === 'mission' && save.resume?.missionId === L.id) void a.commit({ ...save, resume: null });
     this.enterDriving();
     // a short breath before rolling: the truck bounces once on the start line
     this.held = true;
@@ -252,7 +288,27 @@ export default class MissionScene extends Phaser.Scene {
     let input: DriveInput = playerDrives ? this.controls.read() : { jumpHeld: false, jumpPressed: false, brakeHeld: false };
     if (!playerDrives) this.controls.read();
 
-    this.sim.stopped = this.held || this.restoring;
+    // after repeated misses at a gap: wait at its edge (hand on the jump button) until jump is pressed
+    let edgeStop = false;
+    if (this.edgeHold && playerDrives) {
+      const h = this.hazards.find((hz) => hz.key === this.edgeHold);
+      if (!h || this.sim.x > h.x1) {
+        this.edgeHold = null;
+        this.controls.demoHand(false);
+      } else if (this.sim.x >= h.x0 - 190 && this.sim.grounded) {
+        if (input.jumpPressed) {
+          this.sim.vx = TUNING.drive.speed * this.sim.speedFactor;
+          this.edgeHold = null;
+          this.controls.demoHand(false);
+          this.controls.hint(false);
+        } else {
+          edgeStop = true;
+          this.controls.hint(true);
+          this.controls.demoHand(true);
+        }
+      }
+    }
+    this.sim.stopped = this.held || this.restoring || edgeStop;
     this.acc += dt;
     while (this.acc >= STEP) {
       this.acc -= STEP;
@@ -345,20 +401,85 @@ export default class MissionScene extends Phaser.Scene {
       if (this.sim.x >= cp.x && cp.x > this.state.checkpointX && this.state.reachCheckpoint(cp.id, cp.x)) {
         this.checkpointY = this.sim.y;
         this.world.raiseFlag(cp.id);
-        void this.persistFinds();
+        void this.persistFinds(true);
       }
     }
   }
 
-  /** Coins and the discovery found so far are kept even if the drive is left unfinished. */
-  private async persistFinds(): Promise<void> {
-    if (this.missionId === 'track') return;
-    const found = this.state.coins.size + (this.state.discovery ? 1 : 0);
-    if (found === this.persistedCoins) return;
-    this.persistedCoins = found;
-    let s = addCoins(app().save, this.state.coins).save;
-    s = addDiscovery(s, this.state.discovery).save;
-    if (s !== app().save) await app().commit(s);
+  /**
+   * Coins and the discovery found so far are kept even if the drive is left
+   * unfinished. At a checkpoint the place itself is saved too (a resume point),
+   * so a reload or relaunch continues from there.
+   */
+  private async persistFinds(atCheckpoint = false): Promise<void> {
+    if (this.launch.kind !== 'mission' || !this.state) return;
+    const c = addCoins(app().save, this.state.coins);
+    const d = addDiscovery(c.save, this.state.discovery);
+    let next = d.save;
+    if (atCheckpoint) next = { ...next, resume: this.resumePoint() };
+    if (c.added.length || d.added || atCheckpoint) await app().commit(next);
+  }
+
+  private resumePoint(): ResumePoint {
+    const placed: ResumePoint['placed'] = [];
+    for (const z of this.resolvedZones) for (const p of this.builds.get(z)?.placed ?? []) placed.push({ zone: z, socket: p.socket, piece: p.piece });
+    return {
+      missionId: this.missionId as MissionId,
+      checkpoint: this.state.checkpoint,
+      x: this.state.checkpointX,
+      y: this.checkpointY,
+      beat: this.state.beat,
+      choice: this.state.choice,
+      placed,
+      lane: this.sim.lane,
+    };
+  }
+
+  /** Continue a mission from a saved checkpoint: story so far, choices and solved builds come back. */
+  private applyResume(r: ResumePoint): void {
+    const L = this.level;
+    this.state.beat = r.beat;
+    this.state.choice = r.choice;
+    this.state.reachCheckpoint(r.checkpoint, r.x);
+    this.checkpointY = r.y;
+    for (const cp of L.checkpoints) if (cp.x <= r.x && cp.x > L.startX) this.world.raiseFlag(cp.id);
+    for (const z of L.zones) {
+      const mine = r.placed.filter((p) => p.zone === z.id);
+      if (!mine.length) continue;
+      this.builds.get(z.id)?.restore(mine.map((p) => ({ socket: p.socket, piece: p.piece })));
+      this.state.placed.push(...mine.map((p) => ({ socket: p.socket, piece: p.piece })));
+      this.resolvedZones.add(z.id);
+    }
+    this.terrain = this.base.with([...this.builds.values()].flatMap((b) => b.segments()));
+    this.sim.setTerrain(this.terrain);
+    this.setLane(r.lane);
+    if (L.forkX && (r.choice === 'gentle' || r.choice === 'jump')) this.world.placeSign(r.choice === 'jump' ? 'high' : 'low', false);
+    this.sim.placeAt(r.x, r.y);
+    this.groundY = this.sim.y;
+    this.cam.snap(this.sim.x, this.groundY);
+    this.truck.update(this.pose(), 0);
+    // friends are where the story left them
+    const put = (id: CrewId, x: number, face: 'left' | 'right' = 'left') => {
+      const c = this.crew.get(id);
+      if (!c) return;
+      c.x = x;
+      c.y = groundAt(this.terrain, x, 'back', G - 100);
+      c.container.setPosition(c.x, c.y);
+      c.face(face);
+    };
+    if (L.id === 'wobbly-bridge' && this.resolvedZones.has('stream')) put('milo', 3330, 'right');
+    if (L.id === 'ramp-we-share' && r.choice) put('pip', L.finishX - 200);
+    if (L.id === 'everyone-rally' && r.choice) {
+      if (this.resolvedZones.has('ledge')) {
+        put('pip', 3780);
+        put('milo', 3860);
+        put('nori', 3940);
+      } else {
+        put('nori', 2850, 'right');
+        put('pip', 2940, 'right');
+        put('milo', 3040, 'right');
+      }
+    }
   }
 
   private checkPickups(): void {
@@ -467,6 +588,10 @@ export default class MissionScene extends Phaser.Scene {
   }
 
   private lastRestoreMs = 0;
+  /** build zones solved this run (kept in the resume point) */
+  private resolvedZones = new Set<string>();
+  /** after repeated misses at a gap, the truck waits at its edge until jump is pressed */
+  private edgeHold: string | null = null;
   /** ground height where the last checkpoint was reached */
   private checkpointY: number = G;
   /** the log the truck bumped during the current jump (a miss only if it lands short) */
@@ -498,6 +623,7 @@ export default class MissionScene extends Phaser.Scene {
     await this.truck.fadeIn(fadeIn);
     this.restoring = false;
     this.lastRestoreMs = Math.round(this.clockMs - t0); // scene time (what timers and tweens see; equals real time at 60 fps)
+    if (key.startsWith('gap@') && n >= 3) this.edgeHold = key;
     this.onMiss(key, true, n);
   }
 
@@ -603,9 +729,12 @@ export default class MissionScene extends Phaser.Scene {
     this.hud.setInvite(helper ? helper.id : null, this.invited.has(zone.id));
     this.layoutChanged(zone);
     this.cameraBusy = true;
+    // the test button only works once the tray is out (no test during the camera pan)
+    this.hud.setEnabled('test', false);
     void this.cam.focus(zone.focusX, G - 170, dur(900, 200)).then(() => {
-      if (this.dead || this.state.phase !== 'building') return;
+      if (this.dead || this.state.phase !== 'building' || this.testing) return;
       this.build?.show();
+      this.hud.setEnabled('test', true);
     });
     if (helper && !this.invited.has(zone.id)) helper.setPose('help');
   }
@@ -624,12 +753,17 @@ export default class MissionScene extends Phaser.Scene {
     this.invited.add(b.zone.id);
     this.hud.setInvite(helper.id, true);
     helper.emote('heart');
-    void helper.moveTo(b.zone.focusX - 260, (x) => groundAt(this.terrain, x, this.sim.lane), 360).then(() => helper.setPose('help'));
+    // the friend comes to a spot beside the build, clear of the truck
+    const spot = HELPER_SPOT[b.zone.id] ?? helper.x;
+    void helper.moveTo(spot, (x) => groundAt(this.terrain, x, 'back'), 360).then(() => {
+      helper.face('right');
+      helper.setPose('help');
+    });
   }
 
   private async testBuild(): Promise<void> {
     const b = this.build;
-    if (!b || this.testing || this.state.phase !== 'building') return;
+    if (!b || this.testing || this.state.phase !== 'building' || !b.isOpen) return;
     b.hide();
     this.hud.setMode('encounter');
     this.hud.hint(null);
@@ -656,6 +790,7 @@ export default class MissionScene extends Phaser.Scene {
     this.testing = false;
     this.held = true;
     this.state.placed.push(...b.placed.map((p) => ({ socket: p.socket, piece: p.piece })));
+    this.resolvedZones.add(b.zone.id);
     this.fx.check(b.zone.focusX, G - 300);
     if (!this.state.go('resolving')) return;
     this.scripted = true;
@@ -745,6 +880,7 @@ export default class MissionScene extends Phaser.Scene {
     }
     const { save, earned } = applyMissionResult(app().save, summary);
     const saved = await app().commit(save);
+    if (saved) void askToKeepSaves();
     if (this.dead) return;
     app().go('result', { launch: this.launch, summary, earned, saved });
   }
@@ -762,7 +898,7 @@ export default class MissionScene extends Phaser.Scene {
       onResume: () => this.resume(),
       onRetry: () => {
         this.closePause = null;
-        app().go('mission', this.launch);
+        void this.persistFinds().then(() => app().go('mission', this.launch));
       },
       onGarage: () => {
         this.closePause = null;
@@ -798,6 +934,8 @@ export default class MissionScene extends Phaser.Scene {
     this.hud?.destroy();
     for (const b of this.builds.values()) b.destroy();
     this.builds.clear();
+    for (const c of this.crew.values()) c.destroy();
+    this.crew.clear();
     this.world?.destroy();
     this.ghost?.view.destroy();
     this.ghost = null;
@@ -832,6 +970,9 @@ export default class MissionScene extends Phaser.Scene {
       usedHelp: this.state.usedHelp,
       beat: this.state.beat,
       example: !!this.ghost,
+      edgeHold: this.edgeHold,
+      coinsShown: this.level.coins.length > 0,
+      resolved: [...this.resolvedZones],
       hazard: h ? { kind: h.kind, x0: h.x0, x1: h.x1, key: h.key } : null,
       build: this.build?.inspect() ?? null,
       invited: [...this.invited],

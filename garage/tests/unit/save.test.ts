@@ -145,3 +145,48 @@ describe('save store', () => {
     expect(store.data.settings.jumpSide).toBe('left');
   });
 });
+
+describe('resume points (continue a mission from its last checkpoint)', () => {
+  const good = { missionId: 'wobbly-bridge', checkpoint: 'cp-across', x: 3420, y: 860, beat: 3, choice: null, placed: [{ zone: 'stream', socket: 'span', piece: 'bridge' }], lane: 'back' };
+
+  it('a valid resume point survives a save round trip', () => {
+    const raw = { ...defaultSave(), resume: good };
+    const r = readSave(JSON.parse(JSON.stringify(raw)));
+    expect(r.ok && r.data.resume).toEqual(good);
+  });
+
+  it('anything that does not match the mission data is dropped, not trusted', () => {
+    for (const bad of [
+      { ...good, missionId: 'moon-base' },
+      { ...good, checkpoint: 'cp-nowhere' },
+      { ...good, x: 99999 },
+      { ...good, beat: 42 },
+      { ...good, choice: 'fly' },
+      { ...good, placed: [{ zone: 'stream', socket: 'span', piece: 'ramp' }] },
+      { ...good, placed: [{ zone: 'stream', socket: 'span', piece: 'bridge' }, { zone: 'stream', socket: 'span', piece: 'bridge' }] },
+      'junk',
+    ]) {
+      const r = readSave({ ...defaultSave(), resume: bad });
+      expect(r.ok && r.data.resume, JSON.stringify(bad)).toBeNull();
+      expect(r.ok && r.repaired).toBe(true);
+    }
+  });
+
+  it('finishing the mission clears its resume point', () => {
+    const s = { ...defaultSave(), resume: good as any };
+    expect(applyMissionResult(s, result()).save.resume).toBeNull();
+  });
+});
+
+describe('a save that cannot be read is never overwritten', () => {
+  it('reads failing at start: play continues, writes are refused honestly, a grown-up reset may replace it', async () => {
+    const backend = new MemoryBackend();
+    backend.map.set('current', { precious: true });
+    const failing = { ...backend, kind: 'memory' as const, get: async () => { throw new Error('IndexedDB read failed'); }, putAll: backend.putAll.bind(backend), clear: backend.clear.bind(backend) };
+    const store = await SaveStore.open(failing);
+    expect(store.status.readFailed).toBe(true);
+    expect(await store.save(applyMissionResult(store.data, result()).save)).toBe(false);
+    expect(store.status.lastWrite).toBe('failed');
+    expect(backend.map.get('current')).toEqual({ precious: true });
+  });
+});

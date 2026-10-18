@@ -105,6 +105,8 @@ export interface SaveStatus {
   lastError: string | null;
   /** an unreadable record was set aside (kept, not deleted) */
   setAside: boolean;
+  /** reading the stored save failed: nothing is written over it this session */
+  readFailed: boolean;
 }
 
 export class SaveStore {
@@ -131,11 +133,11 @@ export class SaveStore {
         b = await IdbBackend.open();
       } catch (e) {
         b = new MemoryBackend();
-        const store = new SaveStore(b, defaultSave(), { where: 'memory-only', loaded: 'fresh', lastWrite: 'none', lastError: String((e as Error)?.message ?? e), setAside: false });
+        const store = new SaveStore(b, defaultSave(), { where: 'memory-only', loaded: 'fresh', lastWrite: 'none', lastError: String((e as Error)?.message ?? e), setAside: false, readFailed: false });
         return store;
       }
     }
-    const status: SaveStatus = { where: b.kind === 'memory' && !backend ? 'memory-only' : 'device', loaded: 'fresh', lastWrite: 'none', lastError: null, setAside: false };
+    const status: SaveStatus = { where: b.kind === 'memory' && !backend ? 'memory-only' : 'device', loaded: 'fresh', lastWrite: 'none', lastError: null, setAside: false, readFailed: false };
     let data = defaultSave();
     try {
       const cur = readSave(await b.get('current'));
@@ -156,7 +158,9 @@ export class SaveStore {
         }
       }
     } catch (e) {
-      status.lastError = String((e as Error)?.message ?? e);
+      // the stored save couldn't be read right now: play on from memory, but never write over it
+      status.readFailed = true;
+      status.lastError = `The saved progress could not be read (${String((e as Error)?.message ?? e)}), so it is not being overwritten. Reload the game to try again.`;
     }
     return new SaveStore(b, data, status);
   }
@@ -178,6 +182,11 @@ export class SaveStore {
     const record: SaveData = { ...next, savedAt: Date.now() };
     this.data = record;
     const job = this.chain.then(async () => {
+      if (this.status.readFailed) {
+        this.status.lastWrite = 'failed';
+        this.emit();
+        return false;
+      }
       try {
         const prevRaw = await this.backend.get('current');
         const prev = readSave(prevRaw);
@@ -223,6 +232,8 @@ export class SaveStore {
     }
     const r = readSave(body);
     if (!r.ok) return { ok: false, reason: r.reason === 'newer-version' ? 'This save is from a newer version of the game.' : 'This file is not a Wonder Garage save.' };
+    // a grown-up chose this file on purpose: it may replace a save that couldn't be read
+    this.status.readFailed = false;
     const ok = await this.save(r.data);
     if (!ok) return { ok: false, reason: `The save could not be written (${this.status.lastError}).` };
     return { ok: true, repaired: r.repaired };
@@ -231,6 +242,8 @@ export class SaveStore {
   async reset(): Promise<boolean> {
     const fresh = defaultSave();
     fresh.settings = { ...this.data.settings };
+    // starting over is deliberate: it may replace a save that couldn't be read
+    this.status.readFailed = false;
     try {
       await this.chain;
       await this.backend.clear();

@@ -112,6 +112,14 @@ export function openParentGate(): Promise<boolean> {
 // ---------------------------------------------------------------- settings panel
 
 let openPanel: HTMLElement | null = null;
+let closeOpen: ((navigate: boolean) => void) | null = null;
+/** the save was replaced (import / start over): the garage must be rebuilt when the panel closes */
+let replaced = false;
+
+/** Close the grown-up panel if it's open (scene changes call this). */
+export function closeParentSettings(): void {
+  closeOpen?.(false);
+}
 
 export function openParentSettings(): void {
   if (openPanel) return;
@@ -121,11 +129,18 @@ export function openParentSettings(): void {
   const status = h('p', { class: 'set-status', role: 'status', 'aria-live': 'polite' });
   const panel = h('div', { class: 'grownup settings-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Grown-up settings', 'data-testid': 'settings' });
   const wrap = h('div', { class: 'grownup-backdrop' }, panel);
-  const close = () => {
+  const close = (navigate = true) => {
+    if (!openPanel) return;
     release();
     window.removeEventListener('keydown', onKey);
     wrap.remove();
     openPanel = null;
+    closeOpen = null;
+    if (replaced && navigate) {
+      replaced = false;
+      // show the restored (or fresh) garage: name, shelf, cards, look
+      a.go('garage', { entrance: 'return' });
+    }
   };
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') close();
@@ -234,6 +249,7 @@ export function openParentSettings(): void {
         h('p', { 'data-testid': 'save-last' }, last),
         h('p', {}, loaded),
         st.setAside ? h('p', {}, 'A damaged save was set aside (kept, not deleted). Exporting a backup includes the current save only.') : null,
+        st.readFailed ? h('p', { 'data-testid': 'save-read-failed' }, st.lastError ?? 'The saved progress could not be read.') : null,
         h('button', { type: 'button', class: 'set-btn', 'data-testid': 'persist', on: { click: () => void askPersist(persistOut, usage) } }, 'Keep saves safe'),
         persistOut,
         usage,
@@ -261,11 +277,12 @@ export function openParentSettings(): void {
     );
   };
 
-  const closeBtn = h('button', { type: 'button', class: 'grownup-close', 'aria-label': 'Close settings', 'data-testid': 'settings-close', html: icon('close'), on: { click: close } });
+  const closeBtn = h('button', { type: 'button', class: 'grownup-close', 'aria-label': 'Close settings', 'data-testid': 'settings-close', html: icon('close'), on: { click: () => close() } });
   panel.append(closeBtn, body);
   render();
-  layer('panel').append(wrap);
+  layer('gate').append(wrap);
   openPanel = wrap;
+  closeOpen = close;
   release = trapFocus(panel);
   window.addEventListener('keydown', onKey);
 }
@@ -327,8 +344,9 @@ function importButton(say: (m: string) => void, rerender: () => void): HTMLEleme
     }
     const r = await app().store.importJson(await f.text());
     if (r.ok) {
-      await app().commit(app().store.data);
-      say(r.repaired ? 'Backup restored (a few invalid values were repaired).' : 'Backup restored.');
+      replaced = true;
+      app().refreshFromStore();
+      say(r.repaired ? 'Backup restored (a few invalid values were repaired). The garage will update when you close this panel.' : 'Backup restored. The garage will update when you close this panel.');
     } else say(`${r.reason} Nothing was changed.`);
     rerender();
   });
@@ -366,7 +384,8 @@ function resetButton(say: (m: string) => void, rerender: () => void): HTMLElemen
       t = setTimeout(async () => {
         t = null;
         const ok = await app().store.reset();
-        await app().commit(app().store.data);
+        replaced = true;
+        app().refreshFromStore();
         say(ok ? 'Progress, coins, rewards and saved tracks were cleared. These grown-up settings were kept.' : `Could not clear the save: ${app().store.status.lastError}.`);
         rerender();
       }, HOLD_MS);

@@ -3,7 +3,7 @@ import type { DiscoveryId, MissionId, RewardId } from '../content/missions';
 import type { MissionSummary } from '../core/missionState';
 import type { Slots } from '../core/track';
 import type { Earned } from '../save/progress';
-import type { SaveData, Settings } from '../save/schema';
+import type { ResumePoint, SaveData, Settings } from '../save/schema';
 import type { SaveStore } from '../save/store';
 
 /**
@@ -14,7 +14,7 @@ import type { SaveStore } from '../save/store';
 export type SceneKey = 'boot' | 'garage' | 'mission' | 'creator' | 'result';
 
 /** What to drive: an authored mission, or a track from My Tiny Track. */
-export type MissionLaunch = { kind: 'mission'; missionId: MissionId } | { kind: 'track'; slots: Slots; slot: number | null };
+export type MissionLaunch = { kind: 'mission'; missionId: MissionId; resume?: ResumePoint | null } | { kind: 'track'; slots: Slots; slot: number | null };
 
 export interface GarageData {
   /**
@@ -72,6 +72,8 @@ export interface AppContext {
   readonly updateReady: boolean;
   /** apply a waiting update now (reloads); only call at a boundary (garage entrance, Done) */
   applyUpdate(): void;
+  /** the save was replaced underneath (import, start over): re-apply settings and tell listeners */
+  refreshFromStore(): void;
   /** a grown-up changed a setting: re-read settings everywhere */
   onSettings(fn: () => void): () => void;
   /** pause requests from outside the scene (rotation, backgrounding, focus loss) */

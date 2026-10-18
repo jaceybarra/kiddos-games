@@ -263,7 +263,7 @@ export default class CreatorScene extends Phaser.Scene {
     const L = this.lay;
     const fix = L.slot[c.fixSlot];
     // the piece that would fix it, see-through, in the slot that needs it
-    o.setAlpha(0.55 + 0.25 * Math.sin(this.pulse));
+    o.setAlpha(app().reducedMotion() ? 0.8 : 0.72 + 0.2 * Math.sin(this.pulse));
     if (c.fixPiece) drawSlotPiece(o, c.fixPiece, fix.x, fix.w, L.ground);
     dashed(o, fix.x + 4, L.ground - 178, fix.w - 8, 186, 8, 1);
     if (c.problemSlot !== null && c.problemSlot !== c.fixSlot) {
@@ -508,12 +508,16 @@ export default class CreatorScene extends Phaser.Scene {
     const last = L.tiles[L.tiles.length - 1];
     g.fillStyle(0xd39550, 1).fillRoundedRect(first.x - 24, first.y - 20, last.x + last.w - first.x + 48, TILE_H + 36, 32);
     g.lineStyle(6, 0x3a2618, 1).strokeRoundedRect(first.x - 24, first.y - 20, last.x + last.w - first.x + 48, TILE_H + 36, 32);
+    const fixPiece = this.check && !this.check.playable ? this.check.fixPiece : null;
     for (const t of L.tiles) {
-      const sel = this.selected === t.piece;
-      g.fillStyle(0xfff6e6, 1).fillRoundedRect(t.x, t.y - (sel ? 14 : 0), t.w, t.h, 24);
-      g.lineStyle(sel ? 8 : 5, 0x3a2618, 1).strokeRoundedRect(t.x, t.y - (sel ? 14 : 0), t.w, t.h, 24);
-      drawTrackIcon(g, t.piece, t.x + t.w / 2, t.y + t.h / 2 - (sel ? 14 : 0), t.w - 30, t.h - 30);
-      if (sel) dashed(g, t.x - 10, t.y - 24, t.w + 20, t.h + 20, 5, 1);
+      // the piece that would fix the track bobs in the tray
+      const lift = fixPiece === t.piece && !app().reducedMotion() ? Math.round(6 + 6 * Math.sin(this.pulse)) : 0;
+      const sel = this.selected === t.piece || fixPiece === t.piece;
+      const y = t.y - lift - (sel ? 14 : 0);
+      g.fillStyle(0xfff6e6, 1).fillRoundedRect(t.x, y, t.w, t.h, 24);
+      g.lineStyle(sel ? 8 : 5, 0x3a2618, 1).strokeRoundedRect(t.x, y, t.w, t.h, 24);
+      drawTrackIcon(g, t.piece, t.x + t.w / 2, y + t.h / 2, t.w - 30, t.h - 30);
+      if (sel) dashed(g, t.x - 10, y - 10, t.w + 20, t.h + 20, 5, 1);
     }
   }
 

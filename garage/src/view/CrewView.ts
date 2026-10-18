@@ -127,6 +127,7 @@ export class CrewView {
   }
 
   setPose(p: Pose): void {
+    if (!this.alive) return;
     this.pose = p;
     setPiece(this.figure, `crew.${this.id}.${p}`);
     if (p !== 'notice') this.stopPointing();
@@ -137,12 +138,14 @@ export class CrewView {
   }
 
   face(dir: 'left' | 'right'): void {
+    if (!this.alive) return;
     this.facing = dir;
     this.inner.setScale(dir === 'left' ? 1 : -1, 1);
   }
 
   /** show or hide the friend's vehicle (wagon is pulled behind, kart/scooter ridden) */
   setProp(prop: 'wagon' | 'kart' | 'scooter' | null): void {
+    if (!this.alive) return;
     if (this.propImg) {
       this.propImg.destroy();
       this.propImg = null;
@@ -167,6 +170,7 @@ export class CrewView {
 
   /** move along the ground to x at `speed` units/s; groundY(x) gives the height. Resolves on arrival. */
   moveTo(x: number, groundY: (x: number) => number, speed: number): Promise<void> {
+    if (!this.alive) return Promise.resolve();
     this.moveTween?.stop();
     const from = this.x;
     const dist = Math.abs(x - from);
@@ -211,6 +215,7 @@ export class CrewView {
 
   /** follow a path of points (jumps, ramps), riding the prop */
   followPath(points: { x: number; y: number }[], speed: number): Promise<void> {
+    if (!this.alive) return Promise.resolve();
     this.moveTween?.stop();
     if (points.length === 0) return Promise.resolve();
     const pts = [{ x: this.x, y: this.y }, ...points];
@@ -253,6 +258,7 @@ export class CrewView {
   }
 
   hop(height = 60): Promise<void> {
+    if (!this.alive) return Promise.resolve();
     this.hopTween?.stop();
     const reduced = this.reduced;
     const h = reduced ? Math.min(10, height * 0.2) : height;
@@ -284,6 +290,7 @@ export class CrewView {
 
   /** a thought bubble with a picture, for `ms` (stays until hideThought if ms = 0) */
   think(content: BubbleContent, ms: number): Promise<void> {
+    if (!this.alive) return Promise.resolve();
     this.hideThought(true);
     const head = HEAD[this.id];
     const hx = this.facing === 'left' ? head.x : -head.x;
@@ -328,6 +335,7 @@ export class CrewView {
   }
 
   emote(kind: Emote): void {
+    if (!this.alive) return;
     if (kind === 'zzz-no') return;
     const key = kind === 'scribble' ? 'fx.scribble' : kind === 'spark' ? 'fx.spark' : kind === 'heart' ? 'fx.heart' : 'fx.check';
     const head = HEAD[this.id];
@@ -357,6 +365,7 @@ export class CrewView {
 
   /** notice pose and a pointing arm/arrow toward a world x */
   pointAt(x: number): void {
+    if (!this.alive) return;
     const dir = x >= this.x ? 1 : -1;
     this.face(dir > 0 ? 'right' : 'left');
     this.setPose('notice');
@@ -380,10 +389,12 @@ export class CrewView {
 
   /** cheer pose with a hop, then back to idle */
   async cheer(): Promise<void> {
+    if (!this.alive) return;
     this.setPose('cheer');
     if (this.reduced) await new Promise<void>((r) => this.scene.time.delayedCall(900, () => r()));
     else {
       await this.hop(50);
+      if (!this.alive) return;
       await new Promise<void>((r) => this.scene.time.delayedCall(380, () => r()));
     }
     if (this.alive && this.pose === 'cheer') this.setPose('idle');

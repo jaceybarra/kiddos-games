@@ -146,6 +146,17 @@ function truck(look: TruckLook, x: number, y: number, s: number): string {
 }
 
 const DEFAULT_LOOK: TruckLook = { paint: 'red', pattern: 'stripes', decal: 'bolt', wheel: 'chunky' };
+/** the child's own truck, for the story pictures (set per call; the default is only a fallback) */
+let LOOK: TruckLook = DEFAULT_LOOK;
+function withLook<T>(look: TruckLook | undefined, fn: () => T): T {
+  const prev = LOOK;
+  LOOK = look ?? DEFAULT_LOOK;
+  try {
+    return fn();
+  } finally {
+    LOOK = prev;
+  }
+}
 
 /** A crew member standing at (x, y), facing left (or right when flipped). */
 const crew = (id: CrewId, pose: Pose, x: number, y: number, s: number, faceRight = false) => use(`crew.${id}.${pose}`, x, y, s, faceRight);
@@ -294,7 +305,7 @@ function choiceTurns(): string {
     // the one ramp
     rampArt(150, 214, CG, CG - 34) +
     // 1: the truck goes first (ahead, hopping off the ramp)
-    at(258, CG - 24, 1, anim('anim-hop', truck(DEFAULT_LOOK, 0, 0, 0.22))) +
+    at(258, CG - 24, 1, anim('anim-hop', truck(LOOK, 0, 0, 0.22))) +
     orderDots(258, 34, 1) +
     // 2: Pip waits her turn, then goes
     pipKart(70, CG, 0.42) +
@@ -318,7 +329,7 @@ function choicePath(): string {
     rampArt(206, 262, back, back - 30, P.teal, '#8fe0d6') +
     rampArt(214, 274, CG, CG - 32) +
     // both go at the same time, each on its own path
-    at(0, 0, 1, anim('anim-slide', speedLines(98, back - 26) + pipKart(160, back, 0.36) + speedLines(30, CG - 26) + truck(DEFAULT_LOOK, 92, CG, 0.2)))
+    at(0, 0, 1, anim('anim-slide', speedLines(98, back - 26) + pipKart(160, back, 0.36) + speedLines(30, CG - 26) + truck(LOOK, 92, CG, 0.2)))
   );
 }
 
@@ -358,14 +369,14 @@ function choiceJump(): string {
     use('prop.springpost', 286, hi, 0.26) +
     routeSign('high', 32, CG, 0.28) +
     // the truck bounces high
-    at(146, hi, 1, anim('anim-hop', truck({ ...DEFAULT_LOOK, wheel: 'spring' }, 0, 0, 0.2)))
+    at(146, hi, 1, anim('anim-hop', truck(LOOK, 0, 0, 0.2)))
   );
 }
 
 const CHOICE: Record<ChoicePicture, () => string> = { turns: choiceTurns, path: choicePath, gentle: choiceGentle, jump: choiceJump };
 
-export function choicePicture(id: ChoicePicture): string {
-  return pic(`0 0 ${CW} ${CH}`, CHOICE[id]);
+export function choicePicture(id: ChoicePicture, look?: TruckLook): string {
+  return withLook(look, () => pic(`0 0 ${CW} ${CH}`, CHOICE[id]));
 }
 
 // ---------------------------------------------------------------- mission cards (240 × 160)
@@ -486,7 +497,7 @@ function recapProblem(m: MissionId | 'track'): string {
       skyBg(RW, RH, RH, 0, false, hills(RW, 120, 2)) +
       stream(RW, RH, 176, 240, RG) +
       rampArt(124, 176, RG, RG - 34) +
-      truck(DEFAULT_LOOK, 46, RG, 0.21) +
+      truck(LOOK, 46, RG, 0.21) +
       pipKart(100, RG, 0.34) +
       // both would like the one ramp
       sh(glintPath(166, 84, 10), P.yellow, 2) +
@@ -561,24 +572,31 @@ function recapDid(m: MissionId | 'track', s: Summary): string {
   if (s.choice === 'gentle' || s.choice === 'jump')
     return base + groundBand(0, RW, RG, RH, 0) + routeSign(s.choice === 'gentle' ? 'low' : 'high', RW / 2, RG, 0.62);
   if (m === 'track') return base + pieceTile('log', 50, 104, 64) + pieceTile('ramp', 120, 104, 64) + pieceTile('pond', 190, 104, 64);
-  return base + groundBand(0, RW, RG, RH, 0) + truck(DEFAULT_LOOK, RW / 2, RG, 0.4) + sparkles([[60, 60, 10], [190, 54, 8]]);
+  return base + groundBand(0, RW, RG, RH, 0) + truck(LOOK, RW / 2, RG, 0.4) + sparkles([[60, 60, 10], [190, 54, 8]]);
 }
 
-function recapResult(m: MissionId | 'track'): string {
-  if (m === 'wobbly-bridge')
+function recapResult(m: MissionId | 'track', s: Summary): string {
+  if (m === 'wobbly-bridge') {
+    // the wagon is across, by whatever the child built: bridge, or a hop off the ramp / bouncy pad
+    const bridge = s.placed.some((p) => p.piece === 'bridge');
+    const ramp = s.placed.some((p) => p.piece === 'ramp');
+    const way = bridge
+      ? bridgeArt(70, 160, RG + 2)
+      : (ramp ? rampArt(26, 70, RG, RG - 26) : padArt(52, RG, 0.9)) + st(`M64 ${RG - 34} Q118 ${RG - 120} 186 ${RG - 26}`, 3.5, INK, 'stroke-dasharray="6 8"');
     return (
       skyBg(RW, RH, RH, 0, false, hills(RW, 120, 1)) +
       stream(RW, RH, 70, 160, RG) +
-      bridgeArt(70, 160, RG + 2) +
+      way +
       use('prop.wagon', 198, RG, 0.34) +
-      crew('milo', 'cheer', 38, RG, 0.38, true) +
+      crew('milo', 'cheer', bridge ? 38 : 222, RG, 0.38, bridge) +
       sparkles([[30, 50, 9], [210, 46, 11], [150, 34, 7]])
     );
+  }
   if (m === 'ramp-we-share')
     return (
       skyBg(RW, RH, RG, 18, false, hills(RW, 128, 2)) +
       checkFlag(214, RG, 0.9) +
-      truck(DEFAULT_LOOK, 70, RG, 0.26) +
+      truck(LOOK, 70, RG, 0.26) +
       pipKart(158, RG, 0.38, true) +
       use('fx.heart', 116, 60, 0.5) +
       sparkles([[40, 44, 9], [196, 40, 10]])
@@ -592,7 +610,7 @@ function recapResult(m: MissionId | 'track'): string {
       sh(`M-4 176 L24 176 L70 ${top} L244 ${top} L244 ${top + 8} L72 ${top + 8} L28 184 L-4 184 Z`, P.grass, 0) +
       st(`M-4 176 L24 176 L70 ${top} L244 ${top}`, 3) +
       rallyBanner(20, 222, 22) +
-      truck(DEFAULT_LOOK, 96, top, 0.19) +
+      truck(LOOK, 96, top, 0.19) +
       crew('milo', 'cheer', 142, top, 0.25) +
       crew('pip', 'cheer', 172, top, 0.25) +
       crew('nori', 'cheer', 204, top, 0.25) +
@@ -602,14 +620,14 @@ function recapResult(m: MissionId | 'track'): string {
   return (
     skyBg(RW, RH, RG, 18, false, hills(RW, 128, 1)) +
     use('obj.finish', 150, RG, 0.27) +
-    truck(DEFAULT_LOOK, 150, RG, 0.26) +
+    truck(LOOK, 150, RG, 0.26) +
     [[40, 40, 'a', 20], [70, 70, 'b', -30], [196, 36, 'c', 35], [214, 92, 'a', -15], [30, 104, 'c', 50]].map(([x, y, k, rot]) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(0.7)">${art(`fx.confetti.${k}`).body}</g>`).join('') +
     sparkles([[46, 130, 9], [206, 130, 9]])
   );
 }
 
-export function recapPanel(missionId: MissionId | 'track', index: 0 | 1 | 2, s: { placed: { socket: string; piece: string }[]; choice: Choice }): string {
-  return pic(`0 0 ${RW} ${RH}`, () => frame(RW, RH, index === 0 ? recapProblem(missionId) : index === 1 ? recapDid(missionId, s) : recapResult(missionId)));
+export function recapPanel(missionId: MissionId | 'track', index: 0 | 1 | 2, s: { placed: { socket: string; piece: string }[]; choice: Choice }, look?: TruckLook): string {
+  return withLook(look, () => pic(`0 0 ${RW} ${RH}`, () => frame(RW, RH, index === 0 ? recapProblem(missionId) : index === 1 ? recapDid(missionId, s) : recapResult(missionId, s))));
 }
 
 // ---------------------------------------------------------------- rewards and discoveries

@@ -110,6 +110,11 @@ export class Hud {
     }
   }
 
+  /** hide the tally where there's nothing to collect (My Tiny Track) */
+  showCoins(on: boolean): void {
+    this.root.classList.toggle('no-coins', !on);
+  }
+
   coinTarget(): { x: number; y: number } {
     const r = this.els.coins.getBoundingClientRect();
     if (r.width === 0) return { x: window.innerWidth / 2, y: 40 };

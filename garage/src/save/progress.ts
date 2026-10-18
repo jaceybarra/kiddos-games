@@ -59,6 +59,8 @@ export function applyMissionResult(save: SaveData, result: MissionSummary): { sa
   next = d.save;
   earned.newDiscovery = d.added;
   next.progress.started = true;
+  // the mission is finished: nothing to continue
+  if (next.resume?.missionId === id) next.resume = null;
   return { save: next, earned };
 }
 

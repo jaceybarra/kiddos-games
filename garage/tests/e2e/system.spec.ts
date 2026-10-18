@@ -117,28 +117,35 @@ test('building: undo, clear, a test that does not work points at the socket that
   await s.context.close();
 });
 
-test('refreshing after progress restores a safe state without duplicating coins or rewards', async ({ browser }) => {
+test('refreshing after progress continues from the last checkpoint without duplicating coins or rewards; a replay keeps the truck in view', async ({ browser }) => {
   const s = await openGame(browser);
   const { page } = s;
   await startFirstMission(page);
   await waitState(page, '!s.example && !s.held && s.vx === 0 && s.hazard && s.hazard.kind === "wall"', 60_000);
   await tap(page, 'jump');
-  // the first three coins are saved at the next checkpoint
+  // the first coins and the place itself are saved at the next checkpoint
   await waitState(page, "s.checkpoint === 'cp-gap'", 30_000);
-  await page.waitForFunction(() => window.__garage!.save().progress.coins.length >= 3);
+  await page.waitForFunction(() => window.__garage!.save().resume?.checkpoint === 'cp-gap' && window.__garage!.save().progress.coins.length >= 3);
   const coins1 = (await save(page)).progress.coins.slice().sort();
   await page.reload();
   await waitScene(page, 'garage');
   expect((await save(page)).progress.coins.slice().sort()).toEqual(coins1);
-  // the garage remembers: Play goes into the garage now, then drive mission 1 to the end, twice
+  // one Play: straight back to that checkpoint
+  await tap(page, 'play');
+  await waitScene(page, 'mission');
+  const back = await state(page);
+  expect(back.checkpoint).toBe('cp-gap');
+  expect(Math.abs(back.x - 1640)).toBeLessThan(5);
+  expect(back.coins).toEqual([]); // nothing new yet: the earlier coins are already in the garage
   for (let run = 0; run < 2; run++) {
-    if (run === 0) {
-      await tap(page, 'play');
-      await waitState(page, "s.mode === 'interior'", 20_000);
-    }
-    await tap(page, 'mission-wobbly-bridge');
-    await waitScene(page, 'mission');
     await startDriver(page);
+    if (run === 1) {
+      // a replay after a finished mission: the camera still follows the truck
+      await waitState(page, 's.x > 1500', 60_000);
+      const t = (await page.evaluate(() => window.__garage!.targets())).find((x) => x.id === 'truck')!;
+      expect(t.x).toBeGreaterThan(0);
+      expect(t.x).toBeLessThan(1024);
+    }
     await waitState(page, "s.phase === 'building' && s.build && s.build.open", 120_000);
     await stopDriver(page);
     await drag(page, 'tray-bridge', 'socket-span');
@@ -150,11 +157,12 @@ test('refreshing after progress restores a safe state without duplicating coins 
     if (run === 0) expect(r.earned.newReward).toBe('pennant');
     else expect(r.earned).toMatchObject({ newMission: false, newReward: null, newCoins: [] });
     await waitState(page, "s.stage === 'choices'", 30_000);
-    await tap(page, 'end-garage');
-    await waitScene(page, 'garage');
+    await tap(page, run === 0 ? 'end-replay' : 'end-garage');
+    await waitScene(page, run === 0 ? 'mission' : 'garage');
   }
   const sv = await save(page);
   expect(sv.progress.rewards).toEqual(['pennant']);
+  expect(sv.resume).toBeNull();
   expect(new Set(sv.progress.coins).size).toBe(sv.progress.coins.length);
   await page.reload();
   await waitScene(page, 'garage');
@@ -265,6 +273,14 @@ test('My Tiny Track: legal pieces only, an unplayable layout gets a fix, a track
   expect(back.slots).toEqual(['ramp', 'pond', null, 'log', null, null]);
   await tap(page, 'hud-test');
   await waitScene(page, 'mission');
+  // a second drive in the same visit: the camera follows the truck (the scene is reused)
+  await startDriver(page);
+  await waitState(page, 's.x > 1500', 60_000);
+  const t = (await page.evaluate(() => window.__garage!.targets())).find((x) => x.id === 'truck')!;
+  expect(t.x).toBeGreaterThan(0);
+  expect(t.x).toBeLessThan(1024);
+  expect((await state(page)).coinsShown).toBe(false);
+  await waitScene(page, 'creator', 90_000);
   noProblems(s);
   await s.context.close();
 });
@@ -324,6 +340,12 @@ test('backgrounding, focus loss and a cancelled touch never leave the truck jump
   await page.keyboard.up('Space');
   await tap(page, 'pause-resume');
   await waitState(page, '!s.paused && !s.jumpHeld', 3_000);
+  // Esc pauses (keyboard), Esc again resumes
+  await page.keyboard.press('Escape');
+  await waitState(page, 's.paused', 3_000);
+  await page.waitForTimeout(300);
+  await page.keyboard.press('Escape');
+  await waitState(page, '!s.paused', 3_000);
   // tab hidden
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });

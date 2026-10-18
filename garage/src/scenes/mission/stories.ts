@@ -42,16 +42,16 @@ export async function runEncounter(s: MissionScene, id: string): Promise<void> {
 /** Mission 1: Milo tries to roll his picnic wagon over the old bridge; it wobbles; he pauses and points. */
 async function miloGap(s: MissionScene): Promise<void> {
   const milo = friend(s, 'milo');
-  await focus(s, 2860);
+  await focus(s, 2700);
   if (s.dead) return;
   if (milo) {
     // his first try: the wagon reaches the old planks and wobbles, so he backs off (no danger, just "hmm")
     milo.face('right');
-    await milo.moveTo(2965, gy(s), SPEED.milo * 0.7);
+    await milo.moveTo(2950, gy(s), SPEED.milo * 0.7);
     if (s.dead) return;
     await wobble(s, milo);
     if (s.dead) return;
-    await milo.moveTo(2880, gy(s), SPEED.milo * 0.6);
+    await milo.moveTo(2720, gy(s), SPEED.milo * 0.6);
     if (s.dead) return;
     milo.face('left');
     milo.emote('scribble');
@@ -79,7 +79,7 @@ async function miloGap(s: MissionScene): Promise<void> {
 /** Mission 2: Pip wants the ramp too. Take turns, or make another path. */
 async function pipRamp(s: MissionScene): Promise<void> {
   const pip = friend(s, 'pip');
-  await focus(s, 1260);
+  await focus(s, 1120);
   if (s.dead) return;
   if (pip) {
     // Pip is so keen she's off before anyone else
@@ -98,8 +98,8 @@ async function pipRamp(s: MissionScene): Promise<void> {
   if (s.dead) return;
   const choice = showChoice(
     [
-      { id: 'turns', picture: choicePicture('turns'), label: 'Take turns on the ramp' },
-      { id: 'path', picture: choicePicture('path'), label: 'Build another path next to it' },
+      { id: 'turns', picture: choicePicture('turns', app().save.truck), label: 'Take turns on the ramp' },
+      { id: 'path', picture: choicePicture('path', app().save.truck), label: 'Build another path next to it' },
     ],
     { testid: 'choice' },
   );
@@ -149,7 +149,7 @@ async function noriFork(s: MissionScene): Promise<void> {
   const nori = friend(s, 'nori');
   const pip = friend(s, 'pip');
   const milo = friend(s, 'milo');
-  await focus(s, 1260, G - 210);
+  await focus(s, 1180, G - 210);
   if (s.dead) return;
   if (nori) {
     nori.setPose('notice');
@@ -171,8 +171,8 @@ async function noriFork(s: MissionScene): Promise<void> {
   if (s.dead) return;
   const choice = showChoice(
     [
-      { id: 'gentle', picture: choicePicture('gentle'), label: 'Put the sign on the gentle low path' },
-      { id: 'jump', picture: choicePicture('jump'), label: 'Put the sign on the jumpy high path' },
+      { id: 'gentle', picture: choicePicture('gentle', app().save.truck), label: 'Put the sign on the gentle low path' },
+      { id: 'jump', picture: choicePicture('jump', app().save.truck), label: 'Put the sign on the jumpy high path' },
     ],
     { testid: 'route' },
   );
@@ -234,7 +234,7 @@ async function sideBySide(s: MissionScene): Promise<void> {
   await focus(s, 1600);
   if (!pip || s.dead) return;
   pip.face('right');
-  const pts = [...pathAlong(s.base, pip.x, 1300, 'back'), { x: 1400, y: G - 55 }, { x: 1500, y: G - 110 }, ...arc(1500, G - 110, 1860, G, 240), { x: 1990, y: G }];
+  const pts = [...pathAlong(s.base, pip.x, 1300, 'back'), { x: 1400, y: G - 55 }, { x: 1500, y: G - 110 }, ...arc(1500, G - 110, 2240, G, 280), { x: 2300, y: G }];
   await pip.followPath(pts, SPEED.pip);
   if (s.dead) return;
   pip.face('left');

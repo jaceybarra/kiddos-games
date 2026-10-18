@@ -47,6 +47,20 @@ export interface Settings {
   diagnostics: boolean;
 }
 
+/** Where a mission was left (saved at each checkpoint), so a reload or relaunch continues there. */
+export interface ResumePoint {
+  missionId: MissionId;
+  checkpoint: string;
+  x: number;
+  y: number;
+  /** the next story beat */
+  beat: number;
+  choice: 'turns' | 'path' | 'gentle' | 'jump' | null;
+  /** pieces already built and tested, per zone */
+  placed: { zone: string; socket: string; piece: 'bridge' | 'ramp' | 'pad' }[];
+  lane: 'back' | 'front';
+}
+
 export interface SavedTrack {
   slots: Slots;
   savedAt: number;
@@ -67,6 +81,8 @@ export interface SaveData {
   settings: Settings;
   /** three save slots for My Tiny Track */
   tracks: (SavedTrack | null)[];
+  /** a mission left part-way (null when none) */
+  resume: ResumePoint | null;
   savedAt: number;
 }
 
@@ -91,6 +107,7 @@ export function defaultSave(): SaveData {
     truck: { paint: 'red', pattern: 'plain', decal: 'star', wheel: 'chunky' },
     settings: defaultSettings(),
     tracks: [null, null, null],
+    resume: null,
     savedAt: 0,
   };
 }
@@ -224,6 +241,7 @@ export function readSave(raw: unknown): ReadResult {
         if (corrected) note();
         return { slots, savedAt: typeof tr.savedAt === 'number' ? tr.savedAt : 0 };
       }),
+      resume: readResume(r.resume, note),
       savedAt: typeof r.savedAt === 'number' ? r.savedAt : 0,
     };
     // rewards follow completed missions (a reward without its mission is dropped)
@@ -235,4 +253,33 @@ export function readSave(raw: unknown): ReadResult {
   } catch {
     return { ok: false, reason: 'unreadable' };
   }
+}
+
+/** A resume point is only trusted if every part of it matches the mission's real data. */
+function readResume(v: unknown, note: () => void): ResumePoint | null {
+  if (v === null || v === undefined) return null;
+  const bad = () => {
+    note();
+    return null;
+  };
+  if (!isObj(v)) return bad();
+  const m = MISSIONS.find((x) => x.id === v.missionId);
+  if (!m) return bad();
+  const cp = m.checkpoints.find((c) => c.id === v.checkpoint);
+  if (!cp || typeof v.x !== 'number' || typeof v.y !== 'number' || !Number.isFinite(v.x) || !Number.isFinite(v.y)) return bad();
+  if (Math.abs(v.x - cp.x) > 1 || v.y < 0 || v.y > 2000) return bad();
+  if (typeof v.beat !== 'number' || !Number.isInteger(v.beat) || v.beat < 0 || v.beat > m.beats.length) return bad();
+  const choice = v.choice ?? null;
+  if (choice !== null && !['turns', 'path', 'gentle', 'jump'].includes(choice as string)) return bad();
+  const lane = v.lane === 'front' ? 'front' : v.lane === 'back' ? 'back' : null;
+  if (!lane || !Array.isArray(v.placed)) return bad();
+  const placed: ResumePoint['placed'] = [];
+  for (const p of v.placed) {
+    if (!isObj(p)) return bad();
+    const zone = m.zones.find((z) => z.id === p.zone);
+    const sock = zone?.sockets.find((x) => x.id === p.socket);
+    if (!zone || !sock || typeof p.piece !== 'string' || !(p.piece in sock.fits) || placed.some((q) => q.zone === p.zone && q.socket === p.socket)) return bad();
+    placed.push({ zone: zone.id, socket: sock.id, piece: p.piece as 'bridge' | 'ramp' | 'pad' });
+  }
+  return { missionId: m.id, checkpoint: cp.id, x: v.x, y: v.y, beat: v.beat, choice: choice as ResumePoint['choice'], placed, lane };
 }

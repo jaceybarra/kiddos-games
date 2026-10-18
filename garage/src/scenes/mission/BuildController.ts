@@ -84,7 +84,8 @@ export class BuildController {
       this.tiles.push({ kind, g, rect: { x: 0, y: 0, w: TILE_W, h: TILE_H } });
     }
     for (const sock of zone.sockets) {
-      const g = s.add.graphics().setDepth(zone.lane === 'front' ? WorldView.DEPTH.front + 2 : WorldView.DEPTH.pieces + 1).setVisible(false);
+      // sockets sit above friends and the truck so the target is never hidden
+      const g = s.add.graphics().setDepth(WorldView.DEPTH.front + 2).setVisible(false);
       this.sockets.set(sock.id, g);
     }
     this.ghost = s.add.graphics().setDepth(WorldView.DEPTH.front + 5).setVisible(false);
@@ -213,11 +214,19 @@ export class BuildController {
           this.setBob(sock.id, this.drag?.snapped?.id !== sock.id);
         } else this.setBob(sock.id, false);
       } else {
-        drawSocket(g, sock, kinds, sock.id === this.hintSocket ? 'target' : 'idle');
-        this.setBob(sock.id, sock.id === this.hintSocket);
+        // every empty socket is drawn clearly; the next useful one (or the hinted one) gently bobs
+        const next = this.hintSocket ?? this.nextUseful();
+        drawSocket(g, sock, kinds, 'target');
+        this.setBob(sock.id, sock.id === next);
       }
     }
     this.drawTiles();
+  }
+
+  /** the first empty socket the example uses, else the first empty one */
+  private nextUseful(): string | null {
+    const empty = this.zone.sockets.filter((x) => !this.placed.some((p) => p.socket === x.id)).map((x) => x.id);
+    return this.zone.example.map((e) => e.socket).find((id) => empty.includes(id)) ?? empty[0] ?? null;
   }
 
   private setBob(id: string, on: boolean): void {
@@ -419,15 +428,16 @@ export class BuildController {
     this.placed.push(p);
     if (record) this.undoStack.push({ t: 'place', p });
     const sock = this.zone.sockets.find((s) => s.id === p.socket)!;
-    this.host.world.addBuilt(builtId(this.zone, p), p.piece, sock.fits[p.piece]!, true);
+    const g = this.host.world.addBuilt(builtId(this.zone, p), p.piece, sock.fits[p.piece]!, true);
+    // a bouncy pad sits on top of any bridge deck it shares (never hidden under the planks)
+    if (p.piece === 'pad') g.setDepth(g.depth + 1);
     this.host.fx.sparks(sock.x, sock.y - 40, 4);
     const { crew, invited } = this.host.helper();
     if (crew && invited) {
-      // an invited friend really helps: they come over and steady the piece
-      void crew.moveTo(sock.x - 120, () => crew.y, 520).then(() => {
-        crew.setPose('help');
-        crew.emote('spark');
-      });
+      // an invited friend really helps: a heave-ho hop as the piece drops in
+      crew.setPose('help');
+      void crew.hop(40);
+      crew.emote('spark');
     } else if (crew) {
       crew.setPose('help');
     }
@@ -444,6 +454,17 @@ export class BuildController {
     this.host.world.removeBuilt(builtId(this.zone, p));
     this.host.changed();
     this.redraw();
+  }
+
+  /** Put back pieces from a saved resume point (no animation, not undoable). */
+  restore(list: Placement[]): void {
+    for (const p of list) {
+      if (!canPlace(this.zone, this.placed, p.socket, p.piece)) continue;
+      this.placed.push(p);
+      const sock = this.zone.sockets.find((s) => s.id === p.socket)!;
+      const g = this.host.world.addBuilt(builtId(this.zone, p), p.piece, sock.fits[p.piece]!, false);
+      if (p.piece === 'pad') g.setDepth(g.depth + 1);
+    }
   }
 
   undo(): void {

@@ -31,6 +31,7 @@ export default class ResultScene extends Phaser.Scene {
   private closeEnd: (() => void) | null = null;
   private crew: CrewView[] = [];
   private stage = 'reward';
+  private rewardImg: Phaser.GameObjects.Image | null = null;
 
   constructor() {
     super('result');
@@ -43,6 +44,7 @@ export default class ResultScene extends Phaser.Scene {
     this.ui = [];
     this.crew = [];
     this.stage = 'reward';
+    this.rewardImg = null;
   }
 
   create(): void {
@@ -57,7 +59,8 @@ export default class ResultScene extends Phaser.Scene {
   private async run(): Promise<void> {
     const W = this.scale.width;
     const H = this.scale.height;
-    const ground = H - 160;
+    // the celebration stands in the middle band: clear of the recap above and the end choices below
+    const ground = Math.round(H * 0.66);
     addImage(this, 0, 0, 'bg.sky').setOrigin(0, 0).setDisplaySize(W, H);
     for (let x = 0; x < W; x += 2048) addImage(this, x, ground - 330, 'bg.mid').setOrigin(0, 0);
     this.add.rectangle(0, ground, W, H - ground, 0x6db54c).setOrigin(0, 0);
@@ -76,8 +79,16 @@ export default class ResultScene extends Phaser.Scene {
     fx.confetti(W / 2, H * 0.25);
 
     const reward = this.d.launch.kind === 'mission' ? REWARD_OF[this.d.launch.missionId] : null;
+    let plate: HTMLElement | null = null;
+    if (reward && this.d.earned.newReward) {
+      // a milestone card with his name: this one goes on HIS garage shelf
+      plate = h('div', { class: 'r-name', 'data-testid': 'name-plate' }, (app().settings.childName || 'Bentley').toUpperCase());
+      layer('panel').append(plate);
+      this.ui.push(plate);
+    }
     if (reward) {
-      const img = addImage(this, W / 2, ground - 380, `reward.${reward}`).setScale(1.25);
+      const img = addImage(this, W / 2, ground - 300, `reward.${reward}`).setScale(1.25);
+      this.rewardImg = img;
       if (this.d.earned.newReward && !app().reducedMotion()) {
         img.setScale(0.01);
         await tweenP(this, { targets: img, scale: 1.25, duration: 600, ease: 'Back.Out' });
@@ -96,6 +107,8 @@ export default class ResultScene extends Phaser.Scene {
       }
     }
     if (this.dead) return;
+    plate?.remove();
+    this.rewardImg?.setVisible(false);
     this.stage = 'recap';
     await this.recap();
     if (this.dead) return;
@@ -120,7 +133,7 @@ export default class ResultScene extends Phaser.Scene {
         row.append(arrow);
         parts.push(arrow);
       }
-      const p = h('div', { class: 'r-panel', html: recapPanel(id, i, { placed: this.d.summary.placed, choice: this.d.summary.choice }) });
+      const p = h('div', { class: 'r-panel', html: recapPanel(id, i, { placed: this.d.summary.placed, choice: this.d.summary.choice }, app().save.truck) });
       row.append(p);
       parts.push(p);
     }
@@ -135,9 +148,13 @@ export default class ResultScene extends Phaser.Scene {
   private async chapter(): Promise<void> {
     for (const el of this.ui) el.remove();
     this.ui = [];
-    const card = h('div', { class: 'r-chapter', 'data-testid': 'chapter', role: 'img', 'aria-label': 'All three missions done: the pennant, the twin ramp and the crew banner are in the garage, and My Tiny Track is open' });
-    for (const r of REWARD_IDS) card.append(h('div', { class: 'item', html: rewardPicture(r) }));
-    card.append(h('div', { class: 'item glow', html: trackCardPicture() }));
+    const name = (app().settings.childName || 'Bentley').toUpperCase();
+    const card = h('div', { class: 'r-chapter', 'data-testid': 'chapter', role: 'img', 'aria-label': `All three missions done: the pennant, the twin ramp and the crew banner are in ${name}'s garage, and My Tiny Track is open` });
+    const row = h('div', { class: 'r-chapter-row' });
+    for (const r of REWARD_IDS) row.append(h('div', { class: 'item', html: rewardPicture(r) }));
+    // a still picture (not a button): My Tiny Track is waiting in the garage
+    row.append(h('div', { class: 'item', html: trackCardPicture() }));
+    card.append(h('div', { class: 'r-name in-card' }, name), row);
     layer('panel').append(card);
     this.ui.push(card);
     await wait(this, dur(2200, 1200));

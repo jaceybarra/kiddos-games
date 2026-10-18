@@ -22,3 +22,6 @@
 .rotate-pic { width: min(70vw, 360px); aspect-ratio: 1; }
 .rotate-pic svg { width: 100%; height: 100%; }
 .rotate-note { margin: 0; font: 600 18px/1.3 var(--font); color: var(--ink-soft); text-align: center; padding: 0 20px; }
+/* a picture choice never blocks the pause button: only the cards take taps */
+.ov-backdrop.soft { pointer-events: none; }
+.ov-backdrop.soft .choice-card { pointer-events: auto; }

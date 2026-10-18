@@ -137,6 +137,11 @@ export class App implements AppContext {
     })();
   }
 
+  refreshFromStore(): void {
+    this.applySettings();
+    this.emitSettings();
+  }
+
   sessionMinutes(): number {
     return (performance.now() - this.bootedAt) / 60000;
   }

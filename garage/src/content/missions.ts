@@ -123,7 +123,7 @@ const wobbly: MissionDef = {
   zones: [
     {
       id: 'stream',
-      stopX: 2600,
+      stopX: 2380,
       exitX: 3440,
       focusX: 3000,
       sockets: [
@@ -144,11 +144,11 @@ const wobbly: MissionDef = {
   ],
   beats: [
     { kind: 'teachJump', x: 900, wallId: 'log-1' },
-    { kind: 'encounter', id: 'milo-gap', x: 2560 },
+    { kind: 'encounter', id: 'milo-gap', x: 2250 },
     { kind: 'build', zone: 'stream' },
     { kind: 'finish', x: 4080 },
   ],
-  crew: { milo: { x: 2880 } },
+  crew: { milo: { x: 2700 } },
   reward: 'pennant',
   upperRoute: { x0: 1460, x1: 1820, y: G - 290 },
 };
@@ -203,7 +203,7 @@ const share: MissionDef = {
     {
       // "make another path": a second route over the pond, in front of the practice ramp
       id: 'second-lane',
-      stopX: 1080,
+      stopX: 880,
       exitX: 1880,
       focusX: 1500,
       sockets: [
@@ -224,7 +224,7 @@ const share: MissionDef = {
     },
   ],
   beats: [
-    { kind: 'encounter', id: 'pip-ramp', x: 1000 },
+    { kind: 'encounter', id: 'pip-ramp', x: 760 },
     { kind: 'finish', x: 3900 },
   ],
   crew: { pip: { x: 1180 } },
@@ -318,11 +318,11 @@ const rally: MissionDef = {
     },
   ],
   beats: [
-    { kind: 'encounter', id: 'nori-fork', x: 1000 },
+    { kind: 'encounter', id: 'nori-fork', x: 760 },
     { kind: 'build', zone: 'ledge' },
     { kind: 'finish', x: 4350 },
   ],
-  crew: { nori: { x: 1180 }, pip: { x: 1060 }, milo: { x: 940 } },
+  crew: { nori: { x: 1410 }, pip: { x: 1290 }, milo: { x: 1170 } },
   reward: 'crew-banner',
 };
 

@@ -4,10 +4,10 @@ import { decalSwatch, missionCardPicture, paintSwatch, patternSwatch, trackCardP
 import { addImage, ensureArt } from '../art/rasterize';
 import { MISSION_ORDER, type DiscoveryId, type MissionId, type RewardId } from '../content/missions';
 import { registerSceneForTests } from '../dev/testHooks';
-import { creatorUnlocked, unlockedMissions, nextMission } from '../save/progress';
+import { chapterComplete, creatorUnlocked, unlockedMissions, nextMission } from '../save/progress';
 import { COIN_IDS, DECAL_IDS, DISCOVERY_IDS, PAINT_IDS, PATTERN_IDS, REWARD_IDS, type SaveData, type TruckLook } from '../save/schema';
 import { button, h, icon, layer } from '../ui/dom';
-import { openParentGate, openParentSettings } from '../ui/parent';
+import { closeParentSettings, openParentGate, openParentSettings } from '../ui/parent';
 import { Fx } from '../view/fx';
 import { TruckView } from '../view/TruckView';
 import { tweenP, wait } from './util';
@@ -176,7 +176,9 @@ export default class GarageScene extends Phaser.Scene {
     const door = addImage(this, o.x + 610, o.y + 330, 'garage.door').setOrigin(0, 0);
     this.objs.push(door);
     this.nameText(o.x + 960, o.y + 250, 500);
-    const play = button({ icon: 'play', label: 'Play', size: 'xl', variant: 'primary', testid: 'play', extraClass: 'g-play-center hint', onTap: () => void this.openDoor(door) });
+    // after "Done" the garage rests: Play is there, but it doesn't call for attention
+    const calm = this.data_.entrance === 'done';
+    const play = button({ icon: 'play', label: 'Play', size: 'xl', variant: 'primary', testid: 'play', extraClass: `g-play-center ${calm ? '' : 'hint'}`, onTap: () => void this.openDoor(door) });
     this.addUi(play);
     this.gear();
   }
@@ -207,6 +209,13 @@ export default class GarageScene extends Phaser.Scene {
       void app().commit(s);
       await this.driveOut();
       if (!this.dead) app().go('mission', { kind: 'mission', missionId: 'wobbly-bridge' });
+      return;
+    }
+    const resume = this.save.resume;
+    if (resume) {
+      // a mission was left part-way (a reload, the app closed): straight back to that checkpoint
+      await this.driveOut();
+      if (!this.dead) app().go('mission', { kind: 'mission', missionId: resume.missionId, resume });
       return;
     }
     if (!app().reducedMotion()) {
@@ -272,14 +281,15 @@ export default class GarageScene extends Phaser.Scene {
     this.jar(o);
     this.cards();
     this.tabs();
-    const next = nextMission(this.save);
+    const next = this.save.resume?.missionId ?? nextMission(this.save);
     const play = button({
       icon: 'play',
       label: 'Play the next mission',
       size: 'xl',
       variant: 'primary',
       testid: 'play',
-      extraClass: 'g-play hint',
+      // once the chapter is done, only My Tiny Track is highlighted (no competing cue)
+      extraClass: `g-play ${chapterComplete(this.save) ? '' : 'hint'}`,
       onTap: () => this.startMission(next),
     });
     this.addUi(play);
@@ -346,6 +356,7 @@ export default class GarageScene extends Phaser.Scene {
         onTap: () => this.startMission(id),
       });
       if (done) b.append(h('span', { class: 'badge', html: icon('check') }));
+      if (this.save.resume?.missionId === id) b.append(h('span', { class: 'badge left', 'data-testid': `resume-${id}`, html: icon('play') }));
       row.append(b);
     }
     if (creatorUnlocked(this.save)) {
@@ -439,7 +450,9 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   private startMission(id: MissionId): void {
-    this.leave(() => app().go('mission', { kind: 'mission', missionId: id }));
+    // a mission left part-way continues from its last checkpoint
+    const resume = this.save.resume?.missionId === id ? this.save.resume : null;
+    this.leave(() => app().go('mission', { kind: 'mission', missionId: id, resume }));
   }
 
   private leave(go: () => void): void {
@@ -470,6 +483,7 @@ export default class GarageScene extends Phaser.Scene {
 
   private cleanup(): void {
     this.dead = true;
+    closeParentSettings();
     this.isReady = false;
     if (this.pendingLook) void this.flushLook();
     for (const off of this.offs) off();

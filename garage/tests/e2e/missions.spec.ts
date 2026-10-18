@@ -11,9 +11,17 @@ async function shot(page: Page, name: string): Promise<void> {
   if (SHOTS) await page.screenshot({ path: `garage/docs/screenshots/${name}.png` });
 }
 
-async function finishMission(page: Page, end: 'garage' | 'replay' | 'done' = 'garage'): Promise<void> {
+async function finishMission(page: Page, end: 'garage' | 'replay' | 'done' = 'garage', shotName?: string): Promise<void> {
   await waitScene(page, 'result', 90_000);
+  if (shotName) {
+    await page.waitForTimeout(700);
+    await shot(page, `${shotName}-celebration`);
+  }
   await waitState(page, "s.stage === 'choices'", 30_000);
+  if (shotName) {
+    await page.waitForTimeout(500);
+    await shot(page, shotName);
+  }
   await tap(page, `end-${end}`);
 }
 
@@ -57,7 +65,9 @@ test('mission 1, first launch: one Play, jump lesson, bridge build, wagon crosse
   await waitState(page, "s.phase === 'resolving'", 30_000);
   await waitState(page, "s.phase === 'driving'", 30_000);
   await startDriver(page);
-  await finishMission(page, 'garage');
+  await finishMission(page, 'garage', 'ending');
+  await waitScene(page, 'garage');
+  await page.waitForTimeout(1200);
   await shot(page, 'garage-inside');
   const sv = await save(page);
   expect(sv.progress.completed).toEqual(['wobbly-bridge']);

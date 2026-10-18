@@ -6,7 +6,7 @@
  */
 export const CONTENT = {
   childName: 'Bentley',
-  /** 'standard' or 'more' (more help: wider jump timing, examples sooner, slower driving) */
+  /** 'standard' or 'more' (more help: wider jump timing from the start, the example after one miss) */
   startingAssist: 'standard' as 'standard' | 'more',
   /** which lower corner the big jump button sits in */
   jumpSide: 'right' as 'right' | 'left',
