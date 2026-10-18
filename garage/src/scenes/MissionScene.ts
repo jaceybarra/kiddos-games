@@ -124,6 +124,7 @@ export default class MissionScene extends Phaser.Scene {
     this.clockMs = 0;
     this.edgeHold = null;
     this.resolvedZones = new Set();
+    this.trace = [];
   }
 
   create(): void {
@@ -189,7 +190,10 @@ export default class MissionScene extends Phaser.Scene {
 
     this.hazards = this.computeHazards();
     this.controls = new DriveControls(a.settings.jumpSide);
-    this.controls.onJumpDown = () => this.truck.kick();
+    this.controls.onJumpDown = () => {
+      this.truck.kick();
+      this.trace.push(`press@${Math.round(this.sim.x)} t${Math.round(this.clockMs)}${this.held ? ' held' : ''}${this.scripted ? ' scripted' : ''}${this.restoring ? ' restoring' : ''}`);
+    };
     this.hud = new Hud({
       onPause: () => this.pause(),
       onHelp: () => void this.help(),
@@ -227,7 +231,8 @@ export default class MissionScene extends Phaser.Scene {
       if (!this.dead && this.state.phase === 'driving' && !this.scripted) this.held = false;
     });
     this.isReady = true;
-    this.offs.push(() => undefined);
+    MissionScene.runs++;
+    this.trace.push(`start run${MissionScene.runs} t${Math.round(this.clockMs)}`);
   }
 
   private buildHost(zone: BuildZone) {
@@ -359,7 +364,15 @@ export default class MissionScene extends Phaser.Scene {
     return { x: s.x, y: s.y, vx: s.vx, vy: s.vy, slope: s.slope, accel: s.accel, squash: s.squash, rolled: s.rolled, grounded: s.grounded };
   }
 
+  /** the last few truck events (test hooks only read this) */
+  private trace: string[] = [];
+  static runs = 0;
+
   private onTruckEvent(e: ReturnType<TruckSim['step']>[number]): void {
+    if (e.type !== 'blocked') {
+      this.trace.push(`${e.type}@${Math.round(this.sim.x)},${Math.round(this.sim.y)} t${Math.round(this.clockMs)}${this.held ? ' held' : ''}${this.scripted ? ' scripted' : ''}`);
+      if (this.trace.length > 12) this.trace.shift();
+    }
     switch (e.type) {
       case 'land':
         if (e.impact > 0.15) this.fx.land(this.sim.x, this.sim.y, e.impact);
@@ -972,6 +985,7 @@ export default class MissionScene extends Phaser.Scene {
       example: !!this.ghost,
       edgeHold: this.edgeHold,
       coinsShown: this.level.coins.length > 0,
+      trace: this.trace.slice(),
       resolved: [...this.resolvedZones],
       hazard: h ? { kind: h.kind, x0: h.x0, x1: h.x1, key: h.key } : null,
       build: this.build?.inspect() ?? null,

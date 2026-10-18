@@ -21,13 +21,11 @@ test('help and recovery: a miss restores the checkpoint in about a second; two m
   const { page } = s;
   await startFirstMission(page);
   // get past the lesson log
-  const before = await waitState(page, '!s.example && !s.held && s.vx === 0 && s.hazard && s.hazard.kind === "wall"', 60_000);
+  const before = await waitState(page, 's.x > 900 && !s.example && !s.held && s.vx === 0 && s.hazard && s.hazard.kind === "wall"', 60_000);
   await tap(page, 'jump');
-  const pressed = await waitState(page, `s.presses > ${before.presses}`, 3_000);
-  await waitState(page, `s.jumps > ${before.jumps}`, 3_000).catch(() => {
-    throw new Error(`the press registered but no jump happened: ${JSON.stringify(pressed)}`);
-  });
-  await waitState(page, 's.x > 1300', 10_000);
+  await waitState(page, `s.presses > ${before.presses} && s.jumps > ${before.jumps}`, 3_000);
+  const over = await waitState(page, 's.x > 1300', 10_000).catch(() => null);
+  if (!over) throw new Error(`one tap at the lesson log did not get over it: ${JSON.stringify((await state(page)).trace)}`);
   // drive into the practice gap without jumping, twice
   await startDriver(page, 'miss');
   const first = await waitState(page, 's.restoring', 30_000);
@@ -121,7 +119,7 @@ test('refreshing after progress continues from the last checkpoint without dupli
   const s = await openGame(browser);
   const { page } = s;
   await startFirstMission(page);
-  await waitState(page, '!s.example && !s.held && s.vx === 0 && s.hazard && s.hazard.kind === "wall"', 60_000);
+  await waitState(page, 's.x > 900 && !s.example && !s.held && s.vx === 0 && s.hazard && s.hazard.kind === "wall"', 60_000);
   await tap(page, 'jump');
   // the first coins and the place itself are saved at the next checkpoint
   await waitState(page, "s.checkpoint === 'cp-gap'", 30_000);
