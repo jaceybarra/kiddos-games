@@ -47,6 +47,20 @@ describe('driving and jumping', () => {
     expect(t.x).toBeGreaterThan(900);
   });
 
+  it('waiting flush against a log, one tap from standstill clears it (both wheels, slower driving too)', () => {
+    for (const wheel of WHEELS)
+      for (const speedFactor of [1, TUNING.drive.slowFactor]) {
+        const terrain = new Terrain([flat(0, 4000, G)], [{ id: 'log', x: 800, w: 70, top: G - 72 }]);
+        const t = new TruckSim(terrain, 200, { wheel, speedFactor });
+        run(t, 4);
+        expect(t.x).toBeGreaterThan(640); // waiting with its nose at the log
+        expect(t.x).toBeLessThan(651);
+        // (it brushes the log's face while rising: that's fine; it must end up past the log)
+        run(t, 2, (i) => ({ ...none, jumpPressed: i === 0, jumpHeld: i < 2 }));
+        expect(t.x, `${wheel} ${speedFactor}`).toBeGreaterThan(870);
+      }
+  });
+
   it('spring wheels jump clearly higher than chunky wheels, and holding adds a little', () => {
     const chunkyTap = apex('chunky', 1);
     const chunkyHold = apex('chunky', 30);

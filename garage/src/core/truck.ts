@@ -127,6 +127,10 @@ export class TruckSim {
       const ramp = this.grounded ? this.surface?.launch : undefined;
       this.vy = -Math.max(J.velocity[this.wheel], ramp ?? 0);
       if (ramp) this.airSpeed = Math.max(this.vx, TUNING.drive.speed);
+      // waiting at a log: the jump carries the truck forward over it (not straight up and back down)
+      if (this.grounded && !input.brakeHeld && this.terrain.wallBetween(this.x, this.x + this.halfLength + 24, this.y)) {
+        this.airSpeed = Math.max(this.airSpeed, TUNING.drive.speed * this.speedFactor);
+      }
       this.grounded = false;
       this.jumping = true;
       this.surface = null;
