@@ -2,7 +2,8 @@
  * Side-view ground made of authored straight segments. The truck rides on
  * the nearest surface below it, so upper platforms (one-way, landed on from
  * above) can sit over the lower route. Logs are short walls: the truck waits
- * in front of one until it jumps.
+ * in front of one until it jumps. Crates (smash through) and mud or boost
+ * strips sit on the ground and change the drive without blocking it.
  */
 export type SurfaceKind = 'grass' | 'wood' | 'bridge' | 'ramp' | 'pad' | 'platform' | 'landing';
 
@@ -34,6 +35,26 @@ export interface Wall {
   top: number;
 }
 
+/** A wooden crate sitting on the ground: driving (or landing) into it smashes it. */
+export interface Crate {
+  id: string;
+  /** centre of the crate */
+  x: number;
+  /** the ground it sits on (its bottom) */
+  y: number;
+  size: number;
+}
+
+/** A strip on the ground that changes the drive: mud slows, a boost strip zooms. */
+export interface Patch {
+  id: string;
+  kind: 'mud' | 'boost';
+  x0: number;
+  x1: number;
+  /** ground height of the strip (only a truck on that ground feels it) */
+  y: number;
+}
+
 export interface Surface {
   seg: Segment;
   y: number;
@@ -52,12 +73,16 @@ export class Terrain {
   readonly allWalls: Wall[];
   /** lowest ground (largest y), used to decide when a fall is a miss */
   readonly floorY: number;
+  readonly crates: Crate[];
+  readonly patches: Patch[];
 
-  constructor(segments: Segment[], walls: Wall[] = []) {
+  constructor(segments: Segment[], walls: Wall[] = [], extras: { crates?: Crate[]; patches?: Patch[] } = {}) {
     this.segments = [...segments].sort((a, b) => a.x0 - b.x0);
     this.walls = walls.filter((w) => !segments.some((s) => s.clears === w.id)).sort((a, b) => a.x - b.x);
     this.allWalls = walls;
     this.floorY = Math.max(...this.segments.map((s) => Math.max(s.y0, s.y1)), 0);
+    this.crates = extras.crates ?? [];
+    this.patches = extras.patches ?? [];
   }
 
   /**
@@ -87,6 +112,21 @@ export class Terrain {
     return null;
   }
 
+  /** Reversing: a log whose right face lies between x1 and x0 (x1 < x0) and stands above height y. */
+  wallBehind(x0: number, x1: number, y: number): Wall | null {
+    for (const w of this.walls) {
+      const face = w.x + w.w;
+      if (face <= x0 && face > x1 && y > w.top + 2) return w;
+    }
+    return null;
+  }
+
+  /** The mud or boost strip under a truck on the ground at (x, y), if any. */
+  patchAt(x: number, y: number): Patch | null {
+    for (const p of this.patches) if (x >= p.x0 && x <= p.x1 && Math.abs(y - p.y) < 14) return p;
+    return null;
+  }
+
   /** Logs also have a top you can land on. */
   wallTopAt(x: number, y: number): number | null {
     for (const w of this.walls) if (x >= w.x && x <= w.x + w.w && y <= w.top + 6) return w.top;
@@ -103,7 +143,7 @@ export class Terrain {
   }
 
   with(extra: Segment[]): Terrain {
-    return new Terrain([...this.segments, ...extra], this.allWalls);
+    return new Terrain([...this.segments, ...extra], this.allWalls, { crates: this.crates, patches: this.patches });
   }
 }
 

@@ -1,5 +1,5 @@
 import { TUNING } from '../config/tuning';
-import { flat, slope, type Segment, type Wall } from '../core/terrain';
+import { flat, slope, type Crate, type Patch, type Segment, type Wall } from '../core/terrain';
 import type { BuildZone } from '../core/build';
 
 /**
@@ -70,6 +70,15 @@ export interface MissionDef {
   reward: RewardId;
   /** where spring wheels can climb (decor marks the higher route) */
   upperRoute?: { x0: number; x1: number; y: number };
+  /** crates to smash (some hide a coin) */
+  crates?: Crate[];
+  /** mud (slow) and boost (zoom) strips on the ground */
+  patches?: Patch[];
+}
+
+/** a crate on the ground at x (size 90), or stacked on another */
+function crate(id: string, x: number, y: number = G, size = 90): Crate {
+  return { id, x, y, size };
 }
 
 // ------------------------------------------------------------------ Mission 1
@@ -151,6 +160,9 @@ const wobbly: MissionDef = {
   crew: { milo: { x: 2700 } },
   reward: 'pennant',
   upperRoute: { x0: 1460, x1: 1820, y: G - 290 },
+  // between the log and the practice gap: crates to smash; after the stream: a boost strip into a crate stack
+  crates: [crate('m1-k1', 1520), crate('m1-k2', 1640), crate('m1-k3', 3880), crate('m1-k4', 3880, G - 90), crate('m1-k5', 3990)],
+  patches: [{ id: 'm1-boost', kind: 'boost', x0: 3520, x1: 3640, y: G }],
 };
 
 // ------------------------------------------------------------------ Mission 2
@@ -230,6 +242,12 @@ const share: MissionDef = {
   crew: { pip: { x: 1180 } },
   reward: 'twin-ramp',
   upperRoute: { x0: 2760, x1: 3140, y: G - 300 },
+  // two crates hide coins after the pond; a mud patch, then a boost strip toward the finish
+  crates: [crate('m2-k1', 2000), crate('m2-k2', 2100), crate('m2-k3', 3720), crate('m2-k4', 3720, G - 90)],
+  patches: [
+    { id: 'm2-mud', kind: 'mud', x0: 3180, x1: 3400, y: G },
+    { id: 'm2-boost', kind: 'boost', x0: 3460, x1: 3580, y: G },
+  ],
 };
 
 // ------------------------------------------------------------------ Mission 3
@@ -324,6 +342,12 @@ const rally: MissionDef = {
   ],
   crew: { nori: { x: 1410 }, pip: { x: 1290 }, milo: { x: 1170 } },
   reward: 'crew-banner',
+  // mud on the gentle route, crates where the routes meet, and a boost strip into crates on the top ledge
+  crates: [crate('m3-k1', 2930), crate('m3-k2', 3020), crate('m3-k3', 4100, LEDGE), crate('m3-k4', 4190, LEDGE), crate('m3-k5', 4190, LEDGE - 90)],
+  patches: [
+    { id: 'm3-mud', kind: 'mud', x0: 2030, x1: 2270, y: G },
+    { id: 'm3-boost', kind: 'boost', x0: 3960, x1: 4060, y: LEDGE },
+  ],
 };
 
 export const MISSIONS: MissionDef[] = [wobbly, share, rally];

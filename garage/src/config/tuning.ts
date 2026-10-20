@@ -12,7 +12,7 @@ export const TUNING = {
   },
 
   drive: {
-    /** gentle automatic forward speed (units/s) */
+    /** cruising speed (units/s): "drive itself" mode drives at this; every required jump is designed around it */
     speed: 340,
     /** "slower driving" parent setting multiplies the speed */
     slowFactor: 0.72,
@@ -22,6 +22,53 @@ export const TUNING = {
     /** while grounded the truck can step up/down this much without leaving the ground */
     stepUp: 22,
     stepDown: 30,
+  },
+
+  /** He drives (the default): gas, brake that becomes reverse, momentum, hills */
+  pedals: {
+    /** flat-out speed on the gas */
+    topSpeed: 560,
+    gasAccel: 640,
+    /** letting go of every pedal: the truck rolls on and slows gently */
+    coastDecel: 150,
+    /** holding the brake at a standstill this long starts reversing */
+    reverseDelayMs: 220,
+    reverseSpeed: 230,
+    reverseAccel: 520,
+    /** pull of a hill along its slope (less than the gas, so every authored hill can be climbed from a standstill) */
+    hillGravity: 900,
+    /** a jump with the gas held always carries at least cruising speed (gaps are made for it) */
+    jumpCarry: true,
+    /** over a crest, when the ground's fall-away (units/s) is faster than this, the truck takes off for a little hop */
+    crestLift: 120,
+  },
+
+  /** mud, boost strips and crates */
+  stuff: {
+    mudSpeed: 210,
+    mudDrag: 1100,
+    boostSpeed: 820,
+    boostAccel: 2600,
+    boostMs: 1100,
+    /** smashing a crate keeps this much speed */
+    crateKeep: 0.88,
+  },
+
+  /** in the air (pedals): the gas spins forward, the brake spins back; left alone the truck levels itself */
+  air: {
+    spinMax: 7,
+    spinAccel: 22,
+    /** how quickly a truck left alone eases level (per second) */
+    levelRate: 4,
+    /** a landing tilted less than this from the ground is fine (radians, about 75°) */
+    landTolerance: 1.3,
+    /** a deliberate tilt that lands this close to the ground is a perfect landing */
+    perfect: 0.3,
+    /** a perfect landing gives this little push */
+    perfectBoost: 90,
+    /** landing on its roof: a soft bounce, the truck rolls upright, no miss */
+    tumbleBounce: 520,
+    tumbleKeep: 0.5,
   },
 
   jump: {
@@ -47,6 +94,8 @@ export const TUNING = {
     rampLaunch: 980,
     /** landing on a bouncy pad sends the truck back up this fast */
     padBounce: 1320,
+    /** hitting a ramp or pad faster than cruising throws higher, up to this much */
+    fastLaunchMax: 1.22,
   },
 
   recovery: {
@@ -57,7 +106,7 @@ export const TUNING = {
   },
 
   camera: {
-    /** how far ahead of the truck the camera looks */
+    /** how far ahead of the truck the camera looks (at cruising speed; more when faster, behind when reversing) */
     lookAhead: 320,
     /** follow smoothing (per second); lower is softer */
     followX: 3.2,
