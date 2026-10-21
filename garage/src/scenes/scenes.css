@@ -12,6 +12,7 @@
 .g-options.wheels { grid-template-columns: repeat(2, 150px); }
 .g-options .gbtn { --size: 92px; }
 .g-options.wheels .gbtn { width: 150px; height: 120px; }
+.g-yard { position: absolute; right: calc(var(--edge) + var(--safe-r) + 16px); bottom: calc(var(--edge) + var(--safe-b) + 196px); }
 .g-play { position: absolute; right: calc(var(--edge) + var(--safe-r) + 8px); bottom: calc(var(--edge) + var(--safe-b) + 8px); }
 .g-play-center { position: absolute; left: 50%; bottom: calc(6% + var(--safe-b)); transform: translateX(-50%); }
 .g-corner-tl { position: absolute; left: calc(var(--edge) + var(--safe-l)); top: calc(var(--edge) + var(--safe-t)); }

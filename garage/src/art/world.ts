@@ -221,6 +221,45 @@ const signLow = piece(
   rrect(-80, -46, 160, 92, 14, P.cream, W) + line('M-58 10 Q-40 -10 -22 10 Q-4 30 14 10 Q28 -6 40 6', 9, P.ink) + path('M34 -10 L62 10 L30 24 Z', P.ink) + circle(-58, 10, 9, P.teal, 3),
 );
 
+// ---------------------------------------------------------------- things to drive into: crates, mud, boost strips
+
+// a wooden crate, 90 across, bottom centre at (0, 0)
+const crate = piece(
+  'obj.crate',
+  [-52, -96, 104, 102],
+  shadow(0, 0, 48, 5) +
+    rrect(-45, -90, 90, 90, 9, P.woodLight, 6) +
+    line('M-42 -60 L42 -60 M-42 -30 L42 -30', 4, P.woodDark, 'opacity="0.5"') +
+    path('M-38 -84 L-24 -84 L38 -10 L24 -10 Z', P.wood, 4) +
+    rrect(-45, -90, 90, 90, 9, 'none', 6) +
+    [[-34, -80], [34, -80], [-34, -10], [34, -10]].map(([x, y]) => circle(x, y, 3.5, P.woodDark)).join('') +
+    shine(-26, -76, 11, 5, -20, 0.5),
+);
+
+// a splinter of crate (flies off when it smashes)
+const crateBit = piece('obj.crate.bit', [-28, -10, 56, 20], rrect(-24, -7, 48, 14, 5, P.woodLight, 4) + line('M-14 0 L14 0', 2.5, P.woodDark, 'opacity="0.6"'));
+
+// a mud puddle, 240 across at the ground line (y=0), stretched to fit each strip
+const mud = piece(
+  'obj.mud',
+  [-8, -20, 256, 40],
+  path(blobPath([[0, 2], [20, -10], [70, -14], [120, -11], [170, -15], [222, -10], [240, 2], [200, 14], [120, 16], [40, 14]]), P.soilDark, 5) +
+    ellipse(70, -4, 26, 5, P.soil, 0, 'opacity="0.8"') +
+    ellipse(170, -5, 20, 4, P.soil, 0, 'opacity="0.8"') +
+    circle(118, -8, 6, P.soil, 3) +
+    circle(204, -3, 4, P.soil, 2.5) +
+    circle(38, -3, 4, P.soil, 2.5),
+);
+
+// a boost strip: bright chevrons pointing on, 120 across at the ground line
+const boost = piece(
+  'obj.boost',
+  [-6, -20, 132, 32],
+  rrect(0, -14, 120, 22, 8, P.blueDark, 5) +
+    [10, 46, 82].map((x) => path(`M${x} -10 L${x + 14} -10 L${x + 28} -3 L${x + 14} 4 L${x} 4 L${x + 14} -3 Z`, P.yellow, 3)).join('') +
+    shine(26, -10, 14, 2.5, 0, 0.45),
+);
+
 // ---------------------------------------------------------------- effects and helper cues
 
 const fx = [
@@ -233,6 +272,11 @@ const fx = [
   piece('fx.confetti.c', [-10, -6, 20, 12], rrect(-9, -5, 18, 10, 3, P.teal, 2.5)),
   piece('fx.ring', [-70, -24, 140, 48], ellipse(0, 0, 64, 18, 'none', 0, `stroke="#ffffff" stroke-width="7" opacity="0.9"`)),
   piece('fx.drop', [-10, -14, 20, 28], path('M0 -12 Q10 2 8 6 Q6 12 0 12 Q-6 12 -8 6 Q-10 2 0 -12 Z', P.waterLight, 2.5)),
+  piece('fx.mud', [-12, -12, 24, 24], path(blobPath([[-9, 2], [-4, -9], [7, -7], [9, 4], [0, 9]]), P.soilDark, 2.5)),
+  // the exhaust flame behind a boosting truck (points left, its base at x=0)
+  piece('fx.flame', [-74, -26, 80, 52], path('M0 -18 Q-30 -22 -70 0 Q-30 22 0 18 Z', P.orange, 4) + path('M0 -9 Q-18 -11 -40 0 Q-18 11 0 9 Z', P.yellow, 0)),
+  // a speed line
+  piece('fx.speed', [-64, -6, 128, 12], line('M-58 0 L58 0', 6, '#ffffff', 'opacity="0.85"')),
   // a pointing hand (helper cue), fingertip at (0,0)
   piece(
     'fx.hand',
@@ -256,6 +300,10 @@ export const WORLD_PIECES: ArtPiece[] = [
   ...clouds,
   ...props,
   log,
+  crate,
+  crateBit,
+  mud,
+  boost,
   brokenBridge,
   coin,
   acorn,

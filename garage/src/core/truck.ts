@@ -220,8 +220,9 @@ export class TruckSim {
       if (pedals) this.airSpeed = this.vx;
       if (ramp) this.airSpeed = Math.max(this.vx, TUNING.drive.speed);
       // waiting at a log: the jump carries the truck forward over it (not straight up and back down)
-      const driving = pedals ? gas : !brake;
-      if (this.grounded && driving && this.terrain.wallBetween(this.x, this.x + this.halfLength + 24, this.y)) {
+      // (with the pedals, a jump close in front of a log means "over it", gas or not)
+      const reach = pedals ? 90 : 24;
+      if (this.grounded && !brake && this.terrain.wallBetween(this.x, this.x + this.halfLength + reach, this.y)) {
         this.airSpeed = Math.max(this.airSpeed, this.cruise);
       }
       // a jump with the gas held always carries at least cruising speed: every gap is made for it

@@ -7,6 +7,8 @@ export const ICON_NAMES = [
   // driving
   'jump', // a chunky up-arc arrow over a wheel
   'brake', // a wheel with two stop bars / a hand-stop shape
+  'gas', // a pedal with a big arrow pointing on (go)
+  'reverse', // a pedal with a big arrow pointing back (stop, then back up)
   'pause', // two thick bars
   'help', // an open hand with a small sparkle (show me)
   // flow

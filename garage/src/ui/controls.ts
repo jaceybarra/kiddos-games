@@ -1,60 +1,74 @@
 import './hud.css';
-import type { DriveInput } from '../core/truck';
-import { button, h, layer } from './dom';
+import type { DriveInput, DriveMode } from '../core/truck';
+import { button, h, icon, layer } from './dom';
+
+type Which = 'jump' | 'brake' | 'gas';
 
 /**
- * The driving controls: one big jump button in a lower corner (side is a
- * grown-up setting) and a smaller brake in the other. Only one finger is ever
- * needed. Everything held is released on pointercancel, blur, tab hidden,
- * rotation and when a modal opens, so a button can never stay stuck down.
+ * The driving controls.
  *
- * Keyboard (for grown-ups and development): Space / ArrowUp / W jump,
- * ArrowDown / S / Shift brake.
+ * Pedals (he drives): a big green gas pedal in one lower corner; the jump
+ * button and the brake (hold to stop, keep holding to back up) in the other.
+ * Only one finger is ever needed: let go of the gas and the truck rolls on
+ * while the jump is tapped. Two thumbs work too.
+ *
+ * Drives itself (easier): one big jump button in a lower corner and a smaller
+ * brake in the other, as before.
+ *
+ * `side` is a grown-up setting: which corner the main button (the gas, or the
+ * jump when it drives itself) sits in. Everything held is released on
+ * pointercancel, blur, tab hidden, rotation and when a modal opens, so a
+ * button can never stay stuck down.
+ *
+ * Keyboard (for grown-ups and development): → / D gas, ← / A brake and back
+ * up, ↓ / S / Shift brake, Space / ↑ / W jump.
  */
 export class DriveControls {
   readonly root: HTMLElement;
   readonly jumpBtn: HTMLButtonElement;
   readonly brakeBtn: HTMLButtonElement;
-  private jumpHeld = false;
+  readonly gasBtn: HTMLButtonElement;
+  private held: Record<Which, boolean> = { jump: false, brake: false, gas: false };
+  private keys: Record<Which, boolean> = { jump: false, brake: false, gas: false };
+  private pointers: Record<Which, number | null> = { jump: null, brake: null, gas: null };
   private jumpEdge = false;
-  private brakeHeld = false;
-  private keyJump = false;
-  private keyBrake = false;
-  private jumpPointer: number | null = null;
-  private brakePointer: number | null = null;
   private enabled = false;
-  private hand: HTMLElement;
+  private mode: DriveMode;
+  private hands: Record<'jump' | 'gas', HTMLElement>;
   private offs: (() => void)[] = [];
   /** how many jump presses were registered (tests) */
   presses = 0;
+  /** how many times the gas went down (tests, and the first gas lesson) */
+  gasPresses = 0;
   /** called on the frame the jump button goes down (for immediate visual feedback) */
   onJumpDown: (() => void) | null = null;
+  /** called when the gas goes down */
+  onGasDown: (() => void) | null = null;
 
-  constructor(side: 'left' | 'right') {
-    this.root = h('div', { class: `drive-controls side-${side}`, 'data-testid': 'drive-controls' });
+  constructor(side: 'left' | 'right', mode: DriveMode = 'pedals') {
+    this.mode = mode;
+    this.root = h('div', { class: `drive-controls side-${side} mode-${mode}`, 'data-testid': 'drive-controls' });
     this.jumpBtn = button({ icon: 'jump', label: 'Jump (hold for a little higher)', size: 'xl', variant: 'primary', testid: 'jump', onTap: () => undefined, extraClass: 'jump-btn' });
-    this.brakeBtn = button({ icon: 'brake', label: 'Brake (hold to stop)', size: 'md', variant: 'soft', testid: 'brake', onTap: () => undefined, extraClass: 'brake-btn' });
-    this.hand = h('div', { class: 'demo-hand', 'aria-hidden': 'true' });
-    this.jumpBtn.append(this.hand);
-    this.root.append(this.brakeBtn, this.jumpBtn);
+    this.brakeBtn = button({ icon: 'brake', label: 'Brake (hold to stop)', size: 'lg', variant: 'soft', testid: 'brake', onTap: () => undefined, extraClass: 'brake-btn' });
+    this.gasBtn = button({ icon: 'gas', label: 'Gas (hold to go)', size: 'xl', variant: 'plain', testid: 'gas', onTap: () => undefined, extraClass: 'gas-btn' });
+    this.hands = { jump: h('div', { class: 'demo-hand', 'aria-hidden': 'true' }), gas: h('div', { class: 'demo-hand', 'aria-hidden': 'true' }) };
+    this.jumpBtn.append(this.hands.jump);
+    this.gasBtn.append(this.hands.gas);
+    this.root.append(this.brakeBtn, this.jumpBtn, this.gasBtn);
     layer('hud').append(this.root);
-    this.wireButton(this.jumpBtn, 'jump');
-    this.wireButton(this.brakeBtn, 'brake');
+    for (const w of ['jump', 'brake', 'gas'] as const) this.wireButton(w);
+    this.setMode(mode);
     const key = (down: boolean) => (e: KeyboardEvent) => {
       if (e.repeat && down) return;
       const k = e.key;
-      if (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W') {
-        if (down && !this.keyJump && this.enabled) {
-          this.jumpEdge = true;
-          this.presses++;
-          this.onJumpDown?.();
-        }
-        this.keyJump = down && this.enabled;
-        e.preventDefault();
-      } else if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Shift') {
-        this.keyBrake = down && this.enabled;
-        e.preventDefault();
-      }
+      let which: Which | null = null;
+      if (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W') which = 'jump';
+      else if (k === 'ArrowRight' || k === 'd' || k === 'D') which = this.mode === 'pedals' ? 'gas' : null;
+      else if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Shift' || k === 'ArrowLeft' || k === 'a' || k === 'A') which = 'brake';
+      if (!which) return;
+      e.preventDefault();
+      if (down && !this.keys[which] && this.enabled) this.pressed(which);
+      this.keys[which] = down && this.enabled;
     };
     const kd = key(true);
     const ku = key(false);
@@ -77,32 +91,36 @@ export class DriveControls {
     this.show(false);
   }
 
-  private wireButton(b: HTMLButtonElement, which: 'jump' | 'brake'): void {
+  private btn(which: Which): HTMLButtonElement {
+    return which === 'jump' ? this.jumpBtn : which === 'brake' ? this.brakeBtn : this.gasBtn;
+  }
+
+  private pressed(which: Which): void {
+    if (which === 'jump') {
+      this.jumpEdge = true;
+      this.presses++;
+      this.onJumpDown?.();
+    } else if (which === 'gas') {
+      this.gasPresses++;
+      this.onGasDown?.();
+    }
+  }
+
+  private wireButton(which: Which): void {
+    const b = this.btn(which);
     b.addEventListener('pointerdown', (e) => {
       if (!this.enabled || e.button !== 0) return;
       e.preventDefault();
-      if (which === 'jump') {
-        // one finger at a time: a second pointer on the same button is ignored
-        if (this.jumpPointer !== null) return;
-        this.jumpPointer = e.pointerId;
-        this.jumpHeld = true;
-        this.jumpEdge = true;
-        this.presses++;
-        this.onJumpDown?.();
-      } else {
-        if (this.brakePointer !== null) return;
-        this.brakePointer = e.pointerId;
-        this.brakeHeld = true;
-      }
+      // a second finger on the same button is ignored
+      if (this.pointers[which] !== null) return;
+      this.pointers[which] = e.pointerId;
+      this.held[which] = true;
+      this.pressed(which);
     });
     const release = (e: PointerEvent) => {
-      if (which === 'jump' && e.pointerId === this.jumpPointer) {
-        this.jumpPointer = null;
-        this.jumpHeld = false;
-      } else if (which === 'brake' && e.pointerId === this.brakePointer) {
-        this.brakePointer = null;
-        this.brakeHeld = false;
-      }
+      if (e.pointerId !== this.pointers[which]) return;
+      this.pointers[which] = null;
+      this.held[which] = false;
     };
     b.addEventListener('pointerup', release);
     b.addEventListener('pointercancel', release);
@@ -112,10 +130,15 @@ export class DriveControls {
 
   /** The input for this frame. The jump "pressed" edge is consumed by reading it. */
   read(): DriveInput {
-    if (!this.enabled) return { jumpHeld: false, jumpPressed: false, brakeHeld: false };
+    if (!this.enabled) return { jumpHeld: false, jumpPressed: false, brakeHeld: false, gasHeld: false };
     const pressed = this.jumpEdge;
     this.jumpEdge = false;
-    return { jumpHeld: this.jumpHeld || this.keyJump, jumpPressed: pressed, brakeHeld: this.brakeHeld || this.keyBrake };
+    return {
+      jumpHeld: this.held.jump || this.keys.jump,
+      jumpPressed: pressed,
+      brakeHeld: this.held.brake || this.keys.brake,
+      gasHeld: this.mode === 'pedals' && (this.held.gas || this.keys.gas),
+    };
   }
 
   /** Are the controls taking input right now? */
@@ -125,16 +148,22 @@ export class DriveControls {
 
   /** Is the jump button (or key) held right now? */
   get holding(): boolean {
-    return this.jumpHeld || this.keyJump;
+    return this.held.jump || this.keys.jump;
+  }
+
+  /** Is the gas held right now? */
+  get gasHeld(): boolean {
+    return this.mode === 'pedals' && (this.held.gas || this.keys.gas);
   }
 
   /** Release everything: pointercancel, blur, hidden tab, rotation, a modal opening. */
   clear(): void {
-    this.jumpHeld = this.brakeHeld = this.keyJump = this.keyBrake = false;
+    for (const w of ['jump', 'brake', 'gas'] as const) {
+      this.held[w] = this.keys[w] = false;
+      this.pointers[w] = null;
+      this.btn(w).classList.remove('pressed');
+    }
     this.jumpEdge = false;
-    this.jumpPointer = this.brakePointer = null;
-    this.jumpBtn.classList.remove('pressed');
-    this.brakeBtn.classList.remove('pressed');
   }
 
   /** Show for driving; hide (and release) while building, during encounters and menus. */
@@ -150,22 +179,44 @@ export class DriveControls {
     this.root.classList.toggle('side-right', side === 'right');
   }
 
-  /** A gentle "press here" cue: the dashed ring bounces around the jump button. */
-  hint(on: boolean): void {
-    this.jumpBtn.classList.toggle('hint', on);
+  /** Pedals or drives itself (a grown-up setting; changes which buttons show). */
+  setMode(mode: DriveMode): void {
+    this.mode = mode;
+    this.root.classList.toggle('mode-pedals', mode === 'pedals');
+    this.root.classList.toggle('mode-auto', mode === 'auto');
+    this.gasBtn.classList.toggle('off', mode !== 'pedals');
+    const pedals = mode === 'pedals';
+    this.brakeBtn.innerHTML = icon(pedals ? 'reverse' : 'brake');
+    this.brakeBtn.setAttribute('aria-label', pedals ? 'Brake (hold to stop, keep holding to back up)' : 'Brake (hold to stop)');
+    if (!pedals) {
+      this.held.gas = this.keys.gas = false;
+      this.pointers.gas = null;
+    }
+  }
+
+  get driveMode(): DriveMode {
+    return this.mode;
+  }
+
+  /** A gentle "press here" cue: the dashed ring bounces around a button. */
+  hint(on: boolean, which: 'jump' | 'gas' = 'jump'): void {
+    this.btn(which).classList.toggle('hint', on);
+    if (!on && which === 'jump') this.gasBtn.classList.remove('hint');
   }
 
   /** The example's helper hand presses the jump button once (picture only; no input). */
-  demoTap(): void {
-    this.hand.classList.remove('tap');
-    void this.hand.offsetWidth;
-    this.hand.classList.add('tap');
+  demoTap(which: 'jump' | 'gas' = 'jump'): void {
+    const hand = this.hands[which];
+    hand.classList.remove('tap');
+    void hand.offsetWidth;
+    hand.classList.add('tap');
   }
 
-  /** Show or hide the helper hand resting on the jump button. */
-  demoHand(on: boolean): void {
-    this.hand.classList.toggle('on', on);
-    if (!on) this.hand.classList.remove('tap');
+  /** Show or hide the helper hand resting on a button. */
+  demoHand(on: boolean, which: 'jump' | 'gas' = 'jump'): void {
+    const hand = this.hands[which];
+    hand.classList.toggle('on', on);
+    if (!on) hand.classList.remove('tap');
   }
 
   destroy(): void {

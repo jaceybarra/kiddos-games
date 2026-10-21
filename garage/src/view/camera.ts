@@ -57,19 +57,25 @@ export class CameraRig {
     this.cam.setScroll(this.cx - this.cam.width / 2, this.cy - this.cam.height / 2);
   }
 
+  /** how far ahead the camera looks right now (eases with speed: further when fast, behind when reversing) */
+  private lead: number = TUNING.camera.lookAhead;
+
   private targetFor(x: number, groundY: number): { x: number; y: number } {
     return {
-      x: this.clampX(x + TUNING.camera.lookAhead),
+      x: this.clampX(x + this.lead),
       y: this.clampY(groundY - TUNING.camera.truckBelowCentre),
     };
   }
 
   /** every frame while driving: x = truck x, groundY = height of the ground the truck last stood on */
-  follow(x: number, groundY: number, dtSec: number): void {
+  follow(x: number, groundY: number, dtSec: number, vx: number = TUNING.drive.speed): void {
     if (this.focusing) return;
     if (!this.placed) return this.snap(x, groundY);
-    const t = this.targetFor(x, groundY);
     const dt = Math.max(0, Math.min(dtSec, 0.1));
+    const k = vx / TUNING.drive.speed;
+    const want = TUNING.camera.lookAhead * Math.max(-0.7, Math.min(1.6, 0.55 + (k >= 0 ? 0.45 : 1.8) * k));
+    this.lead += (want - this.lead) * (1 - Math.exp(-1.6 * dt));
+    const t = this.targetFor(x, groundY);
     this.cx += (t.x - this.cx) * (1 - Math.exp(-TUNING.camera.followX * dt));
     this.cy += (t.y - this.cy) * (1 - Math.exp(-TUNING.camera.followY * dt));
     // a resize can change the clamp range: stay inside it
@@ -120,6 +126,7 @@ export class CameraRig {
   snap(x: number, groundY: number): void {
     this.focusing?.stop();
     this.focusing = null;
+    this.lead = TUNING.camera.lookAhead;
     const t = this.targetFor(x, groundY);
     this.cx = t.x;
     this.cy = t.y;

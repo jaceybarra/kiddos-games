@@ -7,18 +7,19 @@ import { testLayout, type BuildZone } from '../core/build';
 import { MissionState } from '../core/missionState';
 import { Terrain, type Lane } from '../core/terrain';
 import { autoInput, TruckSim, type DriveInput } from '../core/truck';
-import { missionLevel, trackLevel, type Level } from '../content/levels';
+import { missionLevel, playgroundLevel, trackLevel, type Level } from '../content/levels';
 import { G, type CrewId, type MissionId } from '../content/missions';
 import { addCoins, addDiscovery, applyMissionResult } from '../save/progress';
 import type { ResumePoint } from '../save/schema';
 import { DriveControls } from '../ui/controls';
 import { Hud } from '../ui/hud';
-import { showPauseMenu } from '../ui/overlays';
+import { showEndChoices, showPauseMenu } from '../ui/overlays';
 import { CameraRig } from '../view/camera';
 import { CrewView } from '../view/CrewView';
 import { Fx } from '../view/fx';
 import { TruckView, type TruckPose } from '../view/TruckView';
 import { WorldView } from '../view/WorldView';
+import { StuffView } from '../view/StuffView';
 import { registerSceneForTests } from '../dev/testHooks';
 import { askToKeepSaves } from '../app/storage';
 import { BuildController } from './mission/BuildController';
@@ -55,6 +56,7 @@ export default class MissionScene extends Phaser.Scene {
   fx!: Fx;
   controls!: DriveControls;
   hud!: Hud;
+  stuff!: StuffView;
   crew = new Map<CrewId, CrewView>();
   builds = new Map<string, BuildController>();
   build: BuildController | null = null;
@@ -125,6 +127,14 @@ export default class MissionScene extends Phaser.Scene {
     this.edgeHold = null;
     this.resolvedZones = new Set();
     this.trace = [];
+    this.stars = 0;
+    this.flips = 0;
+    this.tumbles = 0;
+    this.perfects = 0;
+    this.idleClock = 0;
+    this.fxClock = 0;
+    this.gasLesson = false;
+    this.closeEnd = null;
   }
 
   create(): void {
@@ -138,22 +148,34 @@ export default class MissionScene extends Phaser.Scene {
 
   // ------------------------------------------------------------------ setup
 
-  private get missionId(): MissionId | 'track' {
-    return this.launch.kind === 'mission' ? this.launch.missionId : 'track';
+  private get missionId(): MissionId | 'track' | 'playground' {
+    return this.launch.kind === 'mission' ? this.launch.missionId : this.launch.kind;
   }
+
+  /** stars for tricks this drive (flips, perfect landings, big air): for fun, never saved */
+  private stars = 0;
+  private flips = 0;
+  private tumbles = 0;
+  private perfects = 0;
+  /** standing still with nothing pressed (the gas pedal hint) */
+  private idleClock = 0;
+  private fxClock = 0;
+  /** the very first drive: the hand rests on the gas until it's pressed */
+  private gasLesson = false;
+  private closeEnd: (() => void) | null = null;
 
   private setup(): void {
     const a = app();
     const save = a.save;
-    this.level = this.launch.kind === 'mission' ? missionLevel(this.launch.missionId) : trackLevel(this.launch.slots);
+    this.level = this.launch.kind === 'mission' ? missionLevel(this.launch.missionId) : this.launch.kind === 'track' ? trackLevel(this.launch.slots) : playgroundLevel();
     const L = this.level;
     this.owned = new Set(save.progress.coins);
     this.state = new MissionState(this.missionId, { id: L.checkpoints[0]?.id ?? 'cp-start', x: L.startX }, { moreHelp: a.settings.moreHelp });
-    this.base = new Terrain(L.segments, L.walls);
+    this.base = new Terrain(L.segments, L.walls, { crates: L.crates, patches: L.patches });
     this.terrain = this.base;
     const missionSpeed = this.launch.kind === 'mission' ? (CONTENT.missions[this.launch.missionId]?.speedFactor ?? 1) : 1;
     const speedFactor = (a.settings.slowDriving ? TUNING.drive.slowFactor : 1) * missionSpeed;
-    this.sim = new TruckSim(this.terrain, L.startX, { wheel: save.truck.wheel, speedFactor, assist: this.state.assist });
+    this.sim = new TruckSim(this.terrain, L.startX, { wheel: save.truck.wheel, speedFactor, assist: this.state.assist, mode: a.settings.driving, minX: 150 });
     this.groundY = this.sim.y;
     this.checkpointY = this.sim.y;
 
@@ -175,6 +197,8 @@ export default class MissionScene extends Phaser.Scene {
       { reduced: a.reducedMotion(), low: a.lowIntensity(), ownedCoins: this.owned, ownedDiscovery: !!L.discovery && save.progress.discoveries.includes(L.discovery.id) },
     );
     this.fx = new Fx(this, { reduced: a.reducedMotion(), low: a.lowIntensity() });
+    const D = WorldView.DEPTH;
+    this.stuff = new StuffView(this, { crates: L.crates, patches: L.patches }, { reduced: a.reducedMotion(), low: a.lowIntensity(), depth: { ground: D.pieces - 0.5, crate: D.pieces + 3.5, fx: D.fx } });
     this.cam = new CameraRig(this, { reduced: a.reducedMotion(), worldLength: L.length });
     this.truck = new TruckView(this, save.truck, { depth: WorldView.DEPTH.truck });
     this.truck.update(this.pose(), 0);
@@ -189,7 +213,14 @@ export default class MissionScene extends Phaser.Scene {
     for (const z of L.zones) this.builds.set(z.id, new BuildController(this.buildHost(z), z));
 
     this.hazards = this.computeHazards();
-    this.controls = new DriveControls(a.settings.jumpSide);
+    this.controls = new DriveControls(a.settings.jumpSide, a.settings.driving);
+    this.controls.onGasDown = () => {
+      if (this.gasLesson) {
+        this.gasLesson = false;
+        this.controls.demoHand(false, 'gas');
+        this.controls.hint(false, 'gas');
+      }
+    };
     this.controls.onJumpDown = () => {
       this.truck.kick();
       this.trace.push(`press@${Math.round(this.sim.x)} t${Math.round(this.clockMs)}${this.held ? ' held' : ''}${this.scripted ? ' scripted' : ''}${this.restoring ? ' restoring' : ''}`);
@@ -216,7 +247,10 @@ export default class MissionScene extends Phaser.Scene {
       a.onInterrupt(() => this.pause()),
       a.onSettings(() => {
         this.controls.setSide(app().settings.jumpSide);
+        this.controls.setMode(app().settings.driving);
+        if (!this.testing) this.sim.mode = app().settings.driving;
         this.fx.setOptions({ reduced: app().reducedMotion(), low: app().lowIntensity() });
+        this.stuff.setOptions({ reduced: app().reducedMotion(), low: app().lowIntensity() });
       }),
     );
     // continue from a saved checkpoint, or start fresh (and forget an older resume point for this mission)
@@ -224,6 +258,12 @@ export default class MissionScene extends Phaser.Scene {
     if (resume && resume.missionId === L.id) this.applyResume(resume);
     else if (this.launch.kind === 'mission' && save.resume?.missionId === L.id) void a.commit({ ...save, resume: null });
     this.enterDriving();
+    // the very first drive with the pedals: a hand rests on the gas until it's pressed
+    if (this.sim.mode === 'pedals' && !resume && save.progress.completed.length === 0 && this.launch.kind === 'mission') {
+      this.gasLesson = true;
+      this.controls.demoHand(true, 'gas');
+      this.controls.hint(true, 'gas');
+    }
     // a short breath before rolling: the truck bounces once on the start line
     this.held = true;
     this.truck.cheer();
@@ -290,7 +330,7 @@ export default class MissionScene extends Phaser.Scene {
 
     // the input for this frame (only while the player is driving)
     const playerDrives = this.state.phase === 'driving' && !this.scripted && !this.held && !this.restoring;
-    let input: DriveInput = playerDrives ? this.controls.read() : { jumpHeld: false, jumpPressed: false, brakeHeld: false };
+    let input: DriveInput = playerDrives ? this.controls.read() : { jumpHeld: false, jumpPressed: false, brakeHeld: false, gasHeld: false };
     if (!playerDrives) this.controls.read();
 
     // after repeated misses at a gap: wait at its edge (hand on the jump button) until jump is pressed
@@ -300,9 +340,9 @@ export default class MissionScene extends Phaser.Scene {
       if (!h || this.sim.x > h.x1) {
         this.edgeHold = null;
         this.controls.demoHand(false);
-      } else if (this.sim.x >= h.x0 - 190 && this.sim.grounded) {
+      } else if (this.sim.x + this.stopDistance() >= h.x0 - 152 && this.sim.grounded) {
         if (input.jumpPressed) {
-          this.sim.vx = TUNING.drive.speed * this.sim.speedFactor;
+          this.sim.vx = this.sim.cruise;
           this.edgeHold = null;
           this.controls.demoHand(false);
           this.controls.hint(false);
@@ -326,7 +366,12 @@ export default class MissionScene extends Phaser.Scene {
 
     if (this.sim.grounded) this.groundY = this.sim.y;
     this.truck.update(this.pose(), dt);
-    if (!this.cameraBusy) this.cam.follow(this.ghost ? Math.max(this.sim.x, this.ghost.sim.x - 200) : this.sim.x, this.groundY, dt);
+    // high in the air the camera rises with the truck; it looks further ahead the faster it goes (behind when reversing)
+    const camY = Math.min(this.groundY, this.sim.y + 260);
+    if (!this.cameraBusy) this.cam.follow(this.ghost ? Math.max(this.sim.x, this.ghost.sim.x - 200) : this.sim.x, camY, dt, this.ghost ? this.ghost.sim.vx : this.sim.vx);
+    this.stuff.update(dt);
+    this.driveEffects(dt);
+    if (playerDrives) this.watchIdle(dt);
 
     if (this.state.phase === 'driving' && !this.restoring) {
       this.checkCheckpoints();
@@ -361,7 +406,52 @@ export default class MissionScene extends Phaser.Scene {
 
   private pose(): TruckPose {
     const s = this.sim;
-    return { x: s.x, y: s.y, vx: s.vx, vy: s.vy, slope: s.slope, accel: s.accel, squash: s.squash, rolled: s.rolled, grounded: s.grounded };
+    return { x: s.x, y: s.y, vx: s.vx, vy: s.vy, slope: s.slope, accel: s.accel, squash: s.squash, rolled: s.rolled, grounded: s.grounded, angle: s.angle, boosting: s.boostLeft > 0 };
+  }
+
+  /** how far the truck rolls before it stops if braked now */
+  private stopDistance(): number {
+    return Math.max(0, this.sim.vx) ** 2 / (2 * TUNING.drive.brakeDecel);
+  }
+
+  /** mud flicks up behind the wheels; speed lines stream past on a boost */
+  private driveEffects(dt: number): void {
+    this.fxClock += dt;
+    if (this.fxClock < 0.07) return;
+    this.fxClock = 0;
+    if (this.sim.grounded && this.sim.patch?.kind === 'mud') this.stuff.splatter(this.sim.x, this.sim.y, this.sim.vx);
+    if (this.sim.boostLeft > 0) this.stuff.speedLines(this.sim.x, this.sim.y);
+  }
+
+  /** Pedals: standing still with nothing pressed (and no log to jump) for a moment, the gas pedal bounces to say "go". */
+  private watchIdle(dt: number): void {
+    if (this.sim.mode !== 'pedals' || this.gasLesson) return;
+    const s = this.sim;
+    const idle = s.grounded && Math.abs(s.vx) < 1 && !this.controls.gasHeld && !this.ghost && !this.edgeHold && !this.teachWall && !this.terrain.wallBetween(s.x, s.x + s.halfLength + 90, s.y);
+    const was = this.idleClock > 2.5;
+    this.idleClock = idle ? this.idleClock + dt : 0;
+    const now = this.idleClock > 2.5;
+    if (now !== was) this.controls.hint(now, 'gas');
+  }
+
+  /** Flips, perfect landings and big air: stars pop over the truck and the tally counts them (this drive only). */
+  private trick(e: { flips: number; perfect: boolean; air: number }): void {
+    if (this.state.phase !== 'driving' || this.testing || this.scripted) return;
+    let n = 0;
+    if (e.flips > 0) {
+      n += e.flips + (e.flips > 1 ? 1 : 0);
+      this.flips += e.flips;
+    }
+    if (e.perfect) {
+      n += 1;
+      this.perfects++;
+    }
+    if (e.air > 1.15 && e.flips === 0) n += 1;
+    if (!n) return;
+    this.stars += n;
+    this.hud.setStars(this.stars);
+    this.fx.trick(this.sim.x, this.sim.y - 250, n);
+    if (e.perfect) this.fx.sparks(this.sim.x, this.sim.y - 30, 4);
   }
 
   /** the last few truck events (test hooks only read this) */
@@ -376,6 +466,7 @@ export default class MissionScene extends Phaser.Scene {
     switch (e.type) {
       case 'land':
         if (e.impact > 0.15) this.fx.land(this.sim.x, this.sim.y, e.impact);
+        this.trick(e);
         if (this.airBump) {
           // a jump that bumped the log and came down still in front of it: one miss at that log
           const w = this.base.walls.find((ww) => ww.id === this.airBump);
@@ -386,6 +477,18 @@ export default class MissionScene extends Phaser.Scene {
       case 'bounce':
       case 'launch':
         this.fx.sparks(this.sim.x, this.sim.y - 20, 3);
+        break;
+      case 'tumble':
+        // a roof landing: a soft boing while it rolls back onto its wheels (never a miss)
+        this.tumbles++;
+        this.fx.puff(this.sim.x, this.sim.y - 30);
+        break;
+      case 'smash':
+        this.stuff.smash(e.crate, this.sim.vx);
+        break;
+      case 'patch':
+        if (e.patch.kind === 'boost') this.fx.sparks(this.sim.x - 120, this.sim.y - 30, 4);
+        else this.stuff.splatter(this.sim.x, this.sim.y, this.sim.vx);
         break;
       case 'blocked':
         if (!this.sim.grounded) this.airBump = e.wallId;
@@ -520,7 +623,7 @@ export default class MissionScene extends Phaser.Scene {
     const x = this.sim.x;
     switch (b.kind) {
       case 'teachJump':
-        if (x >= b.x) {
+        if (x + this.stopDistance() >= b.x + 38) {
           this.state.beat++;
           this.teachWall = b.wallId;
           // first lesson: a see-through truck shows the jump while the hand presses the button
@@ -532,7 +635,7 @@ export default class MissionScene extends Phaser.Scene {
         }
         break;
       case 'encounter':
-        if (x >= b.x) {
+        if (x + this.stopDistance() >= b.x + 38) {
           this.state.beat++;
           void this.encounter(b.id);
         }
@@ -543,7 +646,7 @@ export default class MissionScene extends Phaser.Scene {
           this.state.beat++;
           break;
         }
-        if (x >= zone.stopX - 125) {
+        if (x + this.stopDistance() >= zone.stopX - 87) {
           this.held = true;
           if (Math.abs(this.sim.vx) < 1 && this.sim.grounded) {
             this.state.beat++;
@@ -586,7 +689,8 @@ export default class MissionScene extends Phaser.Scene {
   /** Waiting in front of a log: after a moment the jump button bounces to say "this one". */
   private watchWaiting(dt: number): void {
     if (this.teachWall) return;
-    const blocked = this.sim.grounded && Math.abs(this.sim.vx) < 1 && !this.held && !this.scripted && this.terrain.wallBetween(this.sim.x, this.sim.x + this.sim.halfLength + 8, this.sim.y);
+    const reach = this.sim.mode === 'pedals' ? 90 : 8;
+    const blocked = this.sim.grounded && Math.abs(this.sim.vx) < 1 && !this.held && !this.scripted && this.terrain.wallBetween(this.sim.x, this.sim.x + this.sim.halfLength + reach, this.sim.y);
     this.waitAtWall = blocked ? this.waitAtWall + dt : 0;
     if (this.waitAtWall > 2) this.controls.hint(true);
     else if (!this.teachGap) this.controls.hint(false);
@@ -679,7 +783,7 @@ export default class MissionScene extends Phaser.Scene {
     g.clock += dt;
     const input = autoInput(g.sim, this.terrain);
     for (const e of g.sim.step(dt, input)) if (e.type === 'jump') this.controls.demoTap();
-    g.view.update({ x: g.sim.x, y: g.sim.y, vx: g.sim.vx, vy: g.sim.vy, slope: g.sim.slope, accel: g.sim.accel, squash: g.sim.squash, rolled: g.sim.rolled, grounded: g.sim.grounded }, dt);
+    g.view.update({ x: g.sim.x, y: g.sim.y, vx: g.sim.vx, vy: g.sim.vy, slope: g.sim.slope, accel: g.sim.accel, squash: g.sim.squash, rolled: g.sim.rolled, grounded: g.sim.grounded, angle: g.sim.angle }, dt);
     if (g.sim.x >= g.until || g.clock > 7 || g.sim.y > G + 200) {
       this.ghost = null;
       void g.view.fadeOut(dur(300, 100)).then(() => g.view.destroy());
@@ -785,6 +889,8 @@ export default class MissionScene extends Phaser.Scene {
     this.blockedClock = 0;
     this.cameraBusy = false;
     this.held = false;
+    // the test drive is the truck driving itself to try the build (as the build checker does)
+    this.sim.mode = 'auto';
   }
 
   private watchTest(dt: number): void {
@@ -801,6 +907,7 @@ export default class MissionScene extends Phaser.Scene {
     const b = this.build;
     if (!b || !this.testing) return;
     this.testing = false;
+    this.sim.mode = app().settings.driving;
     this.held = true;
     this.state.placed.push(...b.placed.map((p) => ({ socket: p.socket, piece: p.piece })));
     this.resolvedZones.add(b.zone.id);
@@ -814,6 +921,7 @@ export default class MissionScene extends Phaser.Scene {
     const b = this.build;
     if (!b || !this.testing) return;
     this.testing = false;
+    this.sim.mode = app().settings.driving;
     this.restoring = true;
     if (fell) {
       this.fx.splash(this.sim.x, G + 30);
@@ -887,6 +995,19 @@ export default class MissionScene extends Phaser.Scene {
     }
     await wait(this, dur(1700, 900));
     if (this.dead) return;
+    if (this.launch.kind === 'playground') {
+      // free play: nothing to win or lose; drive again or go back
+      const s = app().settings;
+      const end = showEndChoices({ reminder: s.reminderMinutes > 0 && app().sessionMinutes() >= s.reminderMinutes });
+      this.closeEnd = end.close;
+      void end.picked.then((c) => {
+        this.closeEnd = null;
+        if (this.dead) return;
+        if (c === 'replay') app().go('mission', { kind: 'playground' });
+        else app().go('garage', { entrance: c === 'garage' ? 'return' : 'done' });
+      });
+      return;
+    }
     if (this.launch.kind === 'track') {
       app().go('creator', { slots: this.launch.slots, slot: this.launch.slot, drove: true });
       return;
@@ -932,7 +1053,8 @@ export default class MissionScene extends Phaser.Scene {
 
   private async leave(): Promise<void> {
     await this.persistFinds();
-    if (this.launch.kind === 'track') app().go('creator', { slots: this.launch.slots, slot: this.launch.slot });
+    if (this.launch.kind === 'playground') app().go('garage', { entrance: 'return' });
+    else if (this.launch.kind === 'track') app().go('creator', { slots: this.launch.slots, slot: this.launch.slot });
     else app().go('garage', { entrance: 'return' });
   }
 
@@ -941,6 +1063,8 @@ export default class MissionScene extends Phaser.Scene {
     this.isReady = false;
     this.closePause?.();
     this.closePause = null;
+    this.closeEnd?.();
+    this.closeEnd = null;
     for (const off of this.offs) off();
     this.offs = [];
     this.controls?.destroy();
@@ -950,6 +1074,7 @@ export default class MissionScene extends Phaser.Scene {
     for (const c of this.crew.values()) c.destroy();
     this.crew.clear();
     this.world?.destroy();
+    this.stuff?.destroy();
     this.ghost?.view.destroy();
     this.ghost = null;
   }
@@ -998,6 +1123,20 @@ export default class MissionScene extends Phaser.Scene {
       jumps: this.jumps,
       controlsOn: this.controls.active,
       pauseMenu: !!this.closePause,
+      driving: this.sim.mode,
+      gasHeld: this.controls.gasHeld,
+      gasPresses: this.controls.gasPresses,
+      gasLesson: this.gasLesson,
+      angle: Math.round(this.sim.angle * 100) / 100,
+      boosting: this.sim.boostLeft > 0,
+      patch: this.sim.patch?.kind ?? null,
+      smashed: this.sim.smashed.size,
+      crates: this.level.crates.length,
+      stars: this.stars,
+      flips: this.flips,
+      perfects: this.perfects,
+      tumbles: this.tumbles,
+      endChoices: !!this.closeEnd,
     };
   }
 

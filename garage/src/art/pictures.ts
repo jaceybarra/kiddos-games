@@ -475,6 +475,34 @@ export function trackCardPicture(): string {
   );
 }
 
+// ---------------------------------------------------------------- the Test Track (free driving)
+
+export function playgroundCardPicture(look: TruckLook = DEFAULT_LOOK): string {
+  return pic(`0 0 ${MW} ${MH}`, () =>
+    frame(
+      MW,
+      MH,
+      skyBg(MW, MH, MH, 0, false, hills(MW, 96, 3)) +
+        cloud(200, 26, 0.45) +
+        rr(-4, MG, MW + 8, MH - MG + 4, 0, P.soil, 0) +
+        rr(-4, MG, MW + 8, 8, 0, P.grass, 0) +
+        st(`M-4 ${MG} L${MW + 4} ${MG}`, 3) +
+        // a boost strip, a kicker ramp, crates waiting on the far side
+        rr(8, MG - 6, 44, 9, 3, P.blueDark, 2.5) +
+        sh(`M14 ${MG - 4} L22 ${MG - 4} L28 ${MG - 1.5} L22 ${MG + 1} L14 ${MG + 1} L20 ${MG - 1.5} Z`, P.yellow, 1.5) +
+        sh(`M32 ${MG - 4} L40 ${MG - 4} L46 ${MG - 1.5} L40 ${MG + 1} L32 ${MG + 1} L38 ${MG - 1.5} Z`, P.yellow, 1.5) +
+        rampArt(56, 100, MG, MG - 26) +
+        use('obj.crate', 186, MG, 0.36) +
+        use('obj.crate', 218, MG, 0.36) +
+        use('obj.crate', 202, MG - 32, 0.36) +
+        // the truck flying, tipped back, with speed lines
+        st('M70 54 L96 54 M64 70 L92 70 M74 86 L98 86', 4, '#ffffff', 'opacity="0.9"') +
+        `<g transform="translate(140 92) rotate(-14)">${truck(look, 0, 0, 0.26)}</g>` +
+        sparkles([[118, 30, 7], [176, 40, 5]]),
+    ),
+  );
+}
+
 // ---------------------------------------------------------------- recap panels (240 × 200)
 
 const RW = 240;

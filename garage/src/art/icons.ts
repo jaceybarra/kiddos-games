@@ -169,6 +169,18 @@ const BODIES: Record<IconName, string> = {
     sh(dRrect(70, 14, 20, 76, 7), 'none') +
     st('M6 90 L94 90', SW),
 
+  // a green pedal with a big arrow pointing on (go)
+  gas:
+    sh(dRrect(14, 14, 72, 72, 18), P.grass) +
+    st('M24 70 L76 70', 4, P.grassDark, 'opacity="0.55"') +
+    sh('M30 34 L56 34 L56 20 L84 50 L56 80 L56 66 L30 66 Z', P.yellow, 6),
+
+  // a red pedal with a big arrow pointing back (slow down, stop, then back up)
+  reverse:
+    sh(dRrect(14, 14, 72, 72, 18), P.red) +
+    st('M24 70 L76 70', 4, P.redDark, 'opacity="0.55"') +
+    sh('M70 34 L44 34 L44 20 L16 50 L44 80 L44 66 L70 66 Z', '#ffffff', 6),
+
   // two thick bars
   pause: sh(dRrect(24, 18, 20, 64, 8), P.blue) + sh(dRrect(56, 18, 20, 64, 8), P.blue) + st('M30 26 L30 46 M62 26 L62 46', 4, '#ffffff', 'opacity="0.55"'),
 

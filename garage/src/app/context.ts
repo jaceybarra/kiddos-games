@@ -13,8 +13,8 @@ import type { SaveStore } from '../save/store';
  */
 export type SceneKey = 'boot' | 'garage' | 'mission' | 'creator' | 'result';
 
-/** What to drive: an authored mission, or a track from My Tiny Track. */
-export type MissionLaunch = { kind: 'mission'; missionId: MissionId; resume?: ResumePoint | null } | { kind: 'track'; slots: Slots; slot: number | null };
+/** What to drive: an authored mission, a track from My Tiny Track, or the free-play Test Track. */
+export type MissionLaunch = { kind: 'mission'; missionId: MissionId; resume?: ResumePoint | null } | { kind: 'track'; slots: Slots; slot: number | null } | { kind: 'playground' };
 
 export interface GarageData {
   /**

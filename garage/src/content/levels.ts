@@ -106,7 +106,8 @@ export function playgroundLevel(): Level {
   box(4700, G - 260);
   box(4800, G - 260, 2);
   box(4720);
-  box(4880, G, 3);
+  box(4880);
+  box(5250, G, 3);
   box(6500, G, 2);
   box(6620);
   const finishX = 6800;
@@ -115,21 +116,22 @@ export function playgroundLevel(): Level {
     length: 7300,
     startX: 260,
     segments: [
-      flat(0, 1120, G),
-      // the big jump over a ditch, landing on a long downhill run
+      // the big jump: a ramp (on solid ground) over a ditch, and a long run to land on
+      flat(0, 1350, G),
       slope(1120, G, 1350, G - 120, 'ramp', { launch: 1100 }),
-      flat(1560, 1900, G),
+      flat(1560, 2200, G),
       // bumpy hills: fast over the tops gives little hops
       slope(2200, G, 2380, G - 90),
       slope(2380, G - 90, 2560, G),
+      flat(2560, 2620, G),
       slope(2620, G, 2800, G - 110),
       slope(2800, G - 110, 2980, G),
+      flat(2980, 3040, G),
       slope(3040, G, 3200, G - 80),
       slope(3200, G - 80, 3360, G),
-      flat(1900, 4300, G),
+      flat(3360, 7300, G),
       // a bouncy pad up to the high deck (or stay on the ground below)
       flat(4300, 4360, G - 2, 'pad', { bounce: 1320 }),
-      flat(4360, 7300, G),
       flat(4520, 5050, G - 260, 'platform'),
       // the kicker: a long throw for flips, onto flat ground
       slope(5700, G, 5920, G - 150, 'ramp', { launch: 1200 }),

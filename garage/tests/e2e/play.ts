@@ -90,6 +90,8 @@ export async function tap(page: Page, testid: string, timeout = 30_000): Promise
   const el = page.locator(`[data-testid="${testid}"]`).first();
   await el.waitFor({ state: 'visible', timeout });
   await expect(el).toBeEnabled();
+  // (inside a scrolled panel, scroll to it first, as a person would)
+  await el.scrollIntoViewIfNeeded();
   const b = (await el.boundingBox())!;
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
   await page.mouse.down();
@@ -122,30 +124,64 @@ export async function drag(page: Page, fromId: string, toId: string): Promise<vo
 }
 
 /**
- * Start an in-page driver that presses Space (a real keyboard event the
- * controls listen to) just before each gap or log, like a careful player.
- * mode 'miss' never jumps (to test misses and help).
+ * Start an in-page driver that plays with real keyboard events the controls
+ * listen to, like a careful player: with the pedals it holds the gas (→),
+ * eases off with the brake (←) to about cruising speed before a gap or a log,
+ * and presses Space just before it. When the truck drives itself it only
+ * presses Space. mode 'miss' never jumps (to test misses and help).
  */
 export async function startDriver(page: Page, mode: 'jump' | 'miss' = 'jump'): Promise<void> {
   await page.evaluate((m) => {
     window.__driver?.stop();
     let on = true;
     let held = 0;
-    const d = { stop: () => (on = false), jumps: 0, mode: m };
+    let gas = false;
+    let brake = false;
+    const d = { stop: () => {
+      on = false;
+      if (gas) key('keyup', 'ArrowRight');
+      if (brake) key('keyup', 'ArrowLeft');
+    }, jumps: 0, mode: m };
     window.__driver = d;
-    const key = (type: 'keydown' | 'keyup') => window.dispatchEvent(new KeyboardEvent(type, { key: ' ', code: 'Space', bubbles: true }));
+    function key(type: 'keydown' | 'keyup', k: string) {
+      window.dispatchEvent(new KeyboardEvent(type, { key: k, code: k === ' ' ? 'Space' : k, bubbles: true }));
+    }
+    const setGas = (v: boolean) => {
+      if (v !== gas) key(v ? 'keydown' : 'keyup', 'ArrowRight');
+      gas = v;
+    };
+    const setBrake = (v: boolean) => {
+      if (v !== brake) key(v ? 'keydown' : 'keyup', 'ArrowLeft');
+      brake = v;
+    };
     const tick = () => {
       if (!on) return;
       const s = window.__garage?.state() as Record<string, any> | undefined;
+      const drives = !!s && s.phase === 'driving' && !s.held && !s.scripted && !s.restoring && s.controlsOn;
+      if (s && s.driving === 'pedals') {
+        // a hidden/re-shown control set forgets held keys: press again
+        if (!drives) {
+          gas = false;
+          brake = false;
+        } else {
+          const h = s.hazard as { kind: string; x0: number; x1: number } | null;
+          const ahead = h ? h.x0 - s.x : Infinity;
+          const near = ahead < 520 && ahead > -40;
+          const tooFast = near && s.vx > 360;
+          setBrake(tooFast && s.grounded);
+          setGas(!tooFast || !s.grounded);
+          if (!s.gasHeld && gas) key('keydown', 'ArrowRight');
+        }
+      }
       if (held > 0) {
         held--;
-        if (held === 0) key('keyup');
-      } else if (d.mode === 'jump' && s && s.phase === 'driving' && !s.held && !s.scripted && !s.restoring && s.grounded && s.hazard) {
-        const h = s.hazard as { kind: string; x0: number; x1: number };
-        const nose = s.x + 150;
-        const near = h.kind === 'wall' ? h.x0 - nose < 60 && h.x0 - nose > -5 : h.x0 - s.x < 70 && h.x0 - s.x > -20;
+        if (held === 0) key('keyup', ' ');
+      } else if (d.mode === 'jump' && drives && s!.grounded && s!.hazard) {
+        const h = s!.hazard as { kind: string; x0: number; x1: number };
+        const nose = s!.x + 150;
+        const near = h.kind === 'wall' ? h.x0 - nose < 70 && h.x0 - nose > -5 : h.x0 - s!.x < 70 && h.x0 - s!.x > -20;
         if (near) {
-          key('keydown');
+          key('keydown', ' ');
           d.jumps++;
           held = 6;
         }

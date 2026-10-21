@@ -1,12 +1,24 @@
 /* Drive controls (ui/controls.ts) and the HUD (ui/hud.ts). */
 .drive-controls { position: absolute; inset: 0; pointer-events: none; }
 .drive-controls > .gbtn { position: absolute; pointer-events: auto; }
-.drive-controls .jump-btn { bottom: calc(var(--edge) + var(--safe-b) + 6px); }
+.drive-controls .jump-btn, .drive-controls .gas-btn { bottom: calc(var(--edge) + var(--safe-b) + 6px); }
 .drive-controls .brake-btn { bottom: calc(var(--edge) + var(--safe-b) + 34px); }
-.drive-controls.side-right .jump-btn { right: calc(var(--edge) + var(--safe-r) + 6px); }
-.drive-controls.side-right .brake-btn { left: calc(var(--edge) + var(--safe-l) + 6px); }
-.drive-controls.side-left .jump-btn { left: calc(var(--edge) + var(--safe-l) + 6px); }
-.drive-controls.side-left .brake-btn { right: calc(var(--edge) + var(--safe-r) + 6px); }
+.drive-controls .gas-btn.off { display: none; }
+/* the gas pedal: green, a touch squarer than the round jump button */
+.drive-controls .gas-btn { border-radius: 34px; background: radial-gradient(circle at 35% 28%, #d9f7b8, var(--grass, #6db54c) 74%); }
+.drive-controls .gas-btn svg { width: 86%; height: 86%; }
+/* drives itself: jump in the main corner, brake in the other */
+.drive-controls.mode-auto.side-right .jump-btn { right: calc(var(--edge) + var(--safe-r) + 6px); }
+.drive-controls.mode-auto.side-right .brake-btn { left: calc(var(--edge) + var(--safe-l) + 6px); }
+.drive-controls.mode-auto.side-left .jump-btn { left: calc(var(--edge) + var(--safe-l) + 6px); }
+.drive-controls.mode-auto.side-left .brake-btn { right: calc(var(--edge) + var(--safe-r) + 6px); }
+/* pedals: gas in the main corner; jump in the other corner with the brake beside it */
+.drive-controls.mode-pedals.side-right .gas-btn { right: calc(var(--edge) + var(--safe-r) + 6px); }
+.drive-controls.mode-pedals.side-right .jump-btn { left: calc(var(--edge) + var(--safe-l) + 6px); }
+.drive-controls.mode-pedals.side-right .brake-btn { left: calc(var(--edge) + var(--safe-l) + 6px + 128px + 26px); bottom: calc(var(--edge) + var(--safe-b) + 18px); }
+.drive-controls.mode-pedals.side-left .gas-btn { left: calc(var(--edge) + var(--safe-l) + 6px); }
+.drive-controls.mode-pedals.side-left .jump-btn { right: calc(var(--edge) + var(--safe-r) + 6px); }
+.drive-controls.mode-pedals.side-left .brake-btn { right: calc(var(--edge) + var(--safe-r) + 6px + 128px + 26px); bottom: calc(var(--edge) + var(--safe-b) + 18px); }
 .drive-controls.hidden, .drive-controls .hidden { display: none; }
 /* the helper hand that shows a press on the jump button (fingertip at the button centre) */
 .demo-hand {
@@ -44,4 +56,7 @@ html.motion-reduced .demo-hand.tap { animation: none; }
 .hud-coins .coin-icon svg { width: 100%; height: 100%; }
 .hud-coins.bump { animation: g-pulse .4s ease-out 1; }
 html.motion-reduced .hud-coins.bump { animation: none; }
-.hud.no-coins .hud-coins { display: none; }
+.hud.no-coins .hud-coins:not(.hud-stars) { display: none; }
+.hud-stars { transform: none; left: calc(50% + 100px); }
+.hud-stars.none { display: none; }
+.hud.no-coins .hud-stars { left: 50%; transform: translateX(-50%); }

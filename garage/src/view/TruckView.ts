@@ -29,7 +29,15 @@ export interface TruckPose {
   grounded: boolean;
   /** optional: the height of the ground below the truck (for the shadow while airborne; null = water/no ground) */
   groundY?: number | null;
+  /** optional: the body angle from the physics (in the air it spins through flips) */
+  angle?: number;
+  /** optional: on a boost strip (exhaust flame) */
+  boosting?: boolean;
 }
+
+const wrapPi = (a: number) => a - Math.PI * 2 * Math.round(a / (Math.PI * 2));
+/** in the air the body turns around its middle, this far above the wheels' contact point */
+const SPIN_PIVOT = 74;
 
 /** Ground probe: the surface height at x for a truck around height y (null = no ground, e.g. water). */
 export type GroundProbe = (x: number, y: number) => number | null;
@@ -53,6 +61,7 @@ export const TRUCK_VIEW_KEYS = [
   'wheel.spring',
   'spring.coil',
   'chunky.strut',
+  'fx.flame',
 ] as const;
 
 export const WHEEL_X = { rear: -84, front: 88 } as const;
@@ -85,6 +94,10 @@ export class TruckView {
   private wheels: Phaser.GameObjects.Image[];
   private supports: Phaser.GameObjects.Image[];
   private body: Phaser.GameObjects.Container;
+  private flame: Phaser.GameObjects.Image;
+  private flameOn = 0;
+  private airK = 0;
+  private clock = 0;
   private paint: Phaser.GameObjects.Image;
   private pattern: Phaser.GameObjects.Image;
   private trim: Phaser.GameObjects.Image;
@@ -125,7 +138,8 @@ export class TruckView {
     this.trim = makeImage(scene, 0, 0, 'truck.trim');
     this.decal = makeImage(scene, 40, -40, 'decal.bolt').setScale(0.75);
     this.body.add([this.paint, this.pattern, this.trim, this.decal]);
-    this.chassis.add([...this.wheels, ...this.supports, this.body]);
+    this.flame = makeImage(scene, -136, -40, 'fx.flame').setOrigin(1, 0.5).setVisible(false);
+    this.chassis.add([this.flame, ...this.wheels, ...this.supports, this.body]);
     this.container.add([this.shadow, this.chassis]);
 
     this.container.setScale(this.baseScale);
@@ -198,11 +212,20 @@ export class TruckView {
           target = Math.atan2(yf - yr, WHEEL_X.front - WHEEL_X.rear);
         }
       }
+    } else if (p.angle !== undefined) {
+      // the physics spins the truck (flips); follow it closely
+      target = p.angle;
     } else {
       target = Phaser.Math.Clamp(p.vy * 0.00017, -0.18, 0.18);
     }
-    const kA = p.grounded ? 22 : 5;
-    this.chassisAngle += (target - this.chassisAngle) * (1 - Math.exp(-kA * dt));
+    const kA = p.grounded ? 22 : p.angle !== undefined ? 30 : 5;
+    // turn the short way round (after a flip, a full turn is the same as none)
+    if (p.grounded) this.chassisAngle = target + wrapPi(this.chassisAngle - target);
+    this.chassisAngle += wrapPi(target - this.chassisAngle) * (1 - Math.exp(-kA * dt));
+    // in the air it turns around its middle; on the ground around the wheels
+    this.airK += ((p.grounded ? 0 : 1) - this.airK) * (1 - Math.exp(-(p.grounded ? 14 : 6) * dt));
+    this.clock += dt;
+    this.flameOn += ((p.boosting ? 1 : 0) - this.flameOn) * (1 - Math.exp(-12 * dt));
 
     // --- body lean from acceleration (visual only)
     const leanT = Phaser.Math.Clamp(-p.accel * TUNING.feel.leanPerAccel, -TUNING.feel.maxLean, TUNING.feel.maxLean);
@@ -263,12 +286,21 @@ export class TruckView {
     const r = WHEEL_R[wheel];
     const gap = BODY_GAP[wheel];
     this.chassis.setRotation(this.chassisAngle);
+    const hp = SPIN_PIVOT * this.airK;
+    this.chassis.setPosition(-hp * Math.sin(this.chassisAngle), -hp + hp * Math.cos(this.chassisAngle));
     for (const w of this.wheels) w.y = -r;
     const comp = Math.max(-0.4, this.comp);
     const kick = this.kickT > 0 ? -10 * Math.sin((this.kickT / 0.12) * Math.PI * 0.5) : 0;
     const drop = comp * 9 - this.stretch * 6;
     const bodyY = -r - gap + drop + this.bob + kick - this.cheerLift;
     this.body.setPosition(0, bodyY);
+    // exhaust flame on a boost strip (flickers; steady with less motion)
+    const fl = this.flameOn;
+    this.flame.setVisible(fl > 0.05 && !this.ghost);
+    if (fl > 0.05) {
+      const flick = this.reduced ? 1 : 0.85 + 0.2 * Math.sin(this.clock * 38) + 0.1 * Math.sin(this.clock * 23);
+      this.flame.setPosition(-136, bodyY - 34).setScale(fl * flick, fl * (0.9 + 0.1 * flick)).setAlpha(Math.min(1, fl * 1.4));
+    }
     this.body.setRotation(this.lean);
     const sq = Math.max(0, comp) * 0.25;
     this.body.setScale(1 + sq * 0.45, 1 - sq);

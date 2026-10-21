@@ -36,6 +36,8 @@ export interface Settings {
   /** calmer celebrations, fewer particles */
   lowIntensity: boolean;
   jumpSide: 'left' | 'right';
+  /** 'pedals': he drives (gas, brake/reverse, jump); 'auto': the truck drives itself (jump and brake only) */
+  driving: 'pedals' | 'auto';
   slowDriving: boolean;
   /** wider jump timing from the start and examples sooner */
   moreHelp: boolean;
@@ -92,6 +94,7 @@ export function defaultSettings(): Settings {
     motion: 'system',
     lowIntensity: false,
     jumpSide: CONTENT.jumpSide,
+    driving: 'pedals',
     slowDriving: false,
     moreHelp: CONTENT.startingAssist === 'more',
     reminderMinutes: CONTENT.reminderMinutes,
@@ -222,6 +225,7 @@ export function readSave(raw: unknown): ReadResult {
         motion: pick(s.motion, ['system', 'reduced', 'full'] as const, d.settings.motion, note),
         lowIntensity: bool(s.lowIntensity, d.settings.lowIntensity, note),
         jumpSide: pick(s.jumpSide, ['left', 'right'] as const, d.settings.jumpSide, note),
+        driving: pick(s.driving, ['pedals', 'auto'] as const, d.settings.driving, note),
         slowDriving: bool(s.slowDriving, d.settings.slowDriving, note),
         moreHelp: bool(s.moreHelp, d.settings.moreHelp, note),
         reminderMinutes:

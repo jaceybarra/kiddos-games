@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { app, dur, type GarageData } from '../app/context';
-import { decalSwatch, missionCardPicture, paintSwatch, patternSwatch, trackCardPicture, wheelPreview } from '../art/pictures';
+import { decalSwatch, missionCardPicture, paintSwatch, patternSwatch, playgroundCardPicture, trackCardPicture, wheelPreview } from '../art/pictures';
 import { addImage, ensureArt } from '../art/rasterize';
 import { MISSION_ORDER, type DiscoveryId, type MissionId, type RewardId } from '../content/missions';
 import { registerSceneForTests } from '../dev/testHooks';
@@ -373,6 +373,18 @@ export default class GarageScene extends Phaser.Scene {
       );
     }
     this.addUi(row);
+    // the Test Track, out in the yard through the open door: free driving, always open (nothing to win or lose)
+    this.addUi(
+      button({
+        icon: { svg: playgroundCardPicture(this.save.truck) },
+        label: 'Test Track: free driving with crates, jumps and flips',
+        size: 'lg',
+        variant: 'plain',
+        testid: 'playground',
+        extraClass: 'g-card g-yard',
+        onTap: () => this.leave(() => app().go('mission', { kind: 'playground' })),
+      }),
+    );
   }
 
   private tabs(): void {

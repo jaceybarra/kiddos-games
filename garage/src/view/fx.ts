@@ -211,6 +211,30 @@ export class Fx {
     }
   }
 
+  /** a trick (a flip, a perfect landing, big air): stars pop up in an arc over the truck and float away */
+  trick(x: number, y: number, n: number): void {
+    const count = Math.max(1, Math.min(this.low ? 2 : 5, n));
+    for (let i = 0; i < count; i++) {
+      const ox = (i - (count - 1) / 2) * 64;
+      const st = this.img('fx.star', x + ox, y).setScale(0.2);
+      if (this.reduced) {
+        st.setScale(1).setAlpha(0);
+        this.scene.tweens.add({ targets: st, alpha: 1, duration: 160, delay: i * 70, yoyo: true, hold: 500, onComplete: () => this.done(st) });
+        continue;
+      }
+      this.scene.tweens.add({
+        targets: st,
+        y: y - 70 - Math.abs(ox) * -0.2 - (count - Math.abs(i - (count - 1) / 2)) * 14,
+        scale: 1.25,
+        angle: 72,
+        duration: 300,
+        delay: i * 70,
+        ease: 'Back.easeOut',
+        onComplete: () => this.tween(st, { y: st.y - 60, alpha: 0, scale: 0.8, delay: 380, duration: 420, ease: 'Sine.easeIn' }),
+      });
+    }
+  }
+
   /** big tick that pops and fades (it worked!) */
   check(x: number, y: number): void {
     const im = this.img('fx.check', x, y).setScale(this.reduced ? 1 : 0.3).setAlpha(this.reduced ? 0 : 1);

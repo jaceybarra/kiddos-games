@@ -25,10 +25,10 @@ export interface HudHandlers {
   onBack?: () => void;
 }
 
-type Key = 'pause' | 'help' | 'invite' | 'undo' | 'clear' | 'test' | 'save' | 'back' | 'coins';
+type Key = 'pause' | 'help' | 'invite' | 'undo' | 'clear' | 'test' | 'save' | 'back' | 'coins' | 'stars';
 
 const SHOWN: Record<HudMode, Key[]> = {
-  drive: ['pause', 'help', 'coins'],
+  drive: ['pause', 'help', 'coins', 'stars'],
   build: ['pause', 'help', 'invite', 'undo', 'clear', 'test'],
   encounter: ['pause'],
   creator: ['back', 'help', 'save', 'undo', 'clear', 'test'],
@@ -41,7 +41,9 @@ export class Hud {
   private mode: HudMode = 'hidden';
   private inviteFace: CrewId | null = null;
   private coinNum: HTMLElement;
+  private starNum: HTMLElement;
   private found = 0;
+  private stars = 0;
 
   constructor(handlers: HudHandlers) {
     this.root = h('div', { class: 'hud', 'data-testid': 'hud' });
@@ -64,6 +66,11 @@ export class Hud {
     const coins = h('div', { class: 'hud-coins', 'data-testid': 'hud-coins', role: 'status', 'aria-label': 'Coins found' }, h('span', { class: 'coin-icon', html: icon('coin') }), this.coinNum);
     this.els.coins = coins;
     this.root.append(coins);
+    // stars for tricks this drive (flips, perfect landings, big air): just for fun, never saved
+    this.starNum = h('span', { class: 'coin-num' }, '0');
+    const stars = h('div', { class: 'hud-coins hud-stars none', 'data-testid': 'hud-stars', role: 'status', 'aria-label': 'Trick stars this drive' }, h('span', { class: 'coin-icon', html: icon('star') }), this.starNum);
+    this.els.stars = stars;
+    this.root.append(stars);
     layer('hud').append(this.root);
     this.setMode('hidden');
   }
@@ -104,6 +111,19 @@ export class Hud {
     this.coinNum.textContent = String(found);
     if (more) {
       const c = this.els.coins;
+      c.classList.remove('bump');
+      void c.offsetWidth;
+      c.classList.add('bump');
+    }
+  }
+
+  setStars(n: number): void {
+    const more = n > this.stars;
+    this.stars = n;
+    this.starNum.textContent = String(n);
+    const c = this.els.stars;
+    c.classList.toggle('none', n === 0);
+    if (more) {
       c.classList.remove('bump');
       void c.offsetWidth;
       c.classList.add('bump');

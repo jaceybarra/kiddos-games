@@ -224,7 +224,11 @@ export function openParentSettings(): void {
           ['full', 'Full motion'],
         ]),
         toggle('lowIntensity', 'Lower intensity (calmer celebrations, fewer sparkles)'),
-        choice('jumpSide', 'Jump button', [
+        choice('driving', 'Driving', [
+          ['pedals', 'Pedals: gas, brake / back up, and jump'],
+          ['auto', 'Easier: the truck drives itself (jump and brake only)'],
+        ]),
+        choice('jumpSide', 'Main button (the gas pedal; the jump button when it drives itself)', [
           ['right', 'Right corner'],
           ['left', 'Left corner'],
         ]),
