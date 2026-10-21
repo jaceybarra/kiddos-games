@@ -47,6 +47,18 @@ describe('driving and jumping', () => {
     expect(t.x).toBeGreaterThan(900);
   });
 
+  it('pushing against a log, the truck rests at zero speed (so "stuck" is seen at once)', () => {
+    const terrain = new Terrain([flat(0, 4000, G)], [{ id: 'log', x: 800, w: 70, top: G - 72 }]);
+    for (const mode of ['auto', 'pedals'] as const) {
+      const t = new TruckSim(terrain, 200, { wheel: 'chunky', mode });
+      run(t, 4, () => ({ ...none, gasHeld: true }));
+      for (let i = 0; i < 30; i++) {
+        t.step(1 / 120, { ...none, gasHeld: true });
+        expect(t.vx, mode).toBe(0);
+      }
+    }
+  });
+
   it('waiting flush against a log, one tap from standstill clears it (both wheels, slower driving too)', () => {
     for (const wheel of WHEELS)
       for (const speedFactor of [1, TUNING.drive.slowFactor]) {

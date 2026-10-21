@@ -19,7 +19,7 @@ Environment: Linux container, Node 22.22, Chromium from Playwright 1.56.1 with s
 | Install from lockfile | `npm ci` | ✅ (0 vulnerabilities reported) |
 | Type check | `npx tsc --noEmit -p garage/tsconfig.json` (part of `npm run garage:build`) | ✅ no errors |
 | Production build | `npm run garage:build` | ✅ |
-| Unit tests | `npm run garage:test` | ✅ 116 passed |
+| Unit tests | `npm run garage:test` | ✅ 117 passed |
 | Browser tests | `npm run garage:e2e` | Re-run in progress for this release (21 journeys); the first 4 passed. Updated when the run ends. |
 
 ### Unit tests (Vitest, `garage/tests/unit`)
@@ -115,7 +115,10 @@ Track card now sits in the open garage door).
 
 Found by the browser runs and fixed: a truck braking for a build could stop a couple of units short of the spot and
 then stay held with the build never opening (mission 3, spring wheels). Once braking for a build has started, the
-stop now opens the build. A test-helper change briefly made the journeys with bobbing choice cards hang; the helper
+stop now opens the build. Also an old one: a truck pushing against a log or the ledge didn't rest at zero speed (it
+crept the last half unit, so its speed flickered), and a build test drive that couldn't climb the step only gave up
+on a 14-second fallback instead of at once. The truck now rests against a log at zero speed (unit-tested). A
+test-helper change briefly made the journeys with bobbing choice cards hang; the helper
 was fixed (the game was not involved).
 
 No independent review was run for the second release.

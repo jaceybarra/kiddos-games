@@ -82,7 +82,8 @@ describe('pedals: gas, rolling on, brake, reverse', () => {
   it('reversing stops at the start of the world and at the back of a log', () => {
     const t = truck(new Terrain([flat(0, 4000, G)], [{ id: 'log', x: 600, w: 70, top: G - 72 }]), 900);
     run(t, 4, brake);
-    expect(t.x).toBeCloseTo(600 + 70 + t.halfLength, 0);
+    expect(Math.abs(t.x - (600 + 70 + t.halfLength))).toBeLessThan(2);
+    expect(t.vx).toBe(0);
     const u = truck(flatWorld(), 400);
     run(u, 4, brake);
     expect(u.x).toBe(u.minX);

@@ -66,7 +66,10 @@ export async function waitState(page: Page, pred: string, timeout = 60_000): Pro
   for (;;) {
     const s = await state(page).catch(() => ({}) as Record<string, any>);
     if (fn(s)) return s;
-    if (Date.now() - t0 > timeout) throw new Error(`waitState timed out: ${pred}\nlast state: ${JSON.stringify(s).slice(0, 600)}`);
+    if (Date.now() - t0 > timeout) {
+      const key = { phase: s.phase, x: s.x, y: s.y, vx: s.vx, held: s.held, scripted: s.scripted, testing: s.testing, build: s.build, trace: s.trace };
+      throw new Error(`waitState timed out: ${pred}\nkey state: ${JSON.stringify(key)}\nlast state: ${JSON.stringify(s).slice(0, 600)}`);
+    }
     await page.waitForTimeout(60);
   }
 }

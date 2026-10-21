@@ -102,6 +102,7 @@ test('building: undo, clear, a test that does not work points at the socket that
   expect((await state(page)).build.placed).toEqual([]);
   // bridge only: the test drive can't climb the step; the climb socket is pointed at
   await drag(page, 'tray-bridge', 'socket-span');
+  await waitState(page, "s.build.placed.includes('span:bridge')", 5_000);
   await tap(page, 'hud-test');
   await waitState(page, "s.build && s.build.open && s.build.hintSocket === 'climb'", 40_000);
   await shot(page, 'build-hint');

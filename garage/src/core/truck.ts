@@ -243,15 +243,16 @@ export class TruckSim {
     // horizontal movement: logs block the nose (and the tail when reversing)
     const prevX = this.x;
     let nx = this.x + this.vx * dt;
+    // (a one-unit skin: resting against a log it stays put at zero speed, instead of creeping the last half unit)
     if (nx > prevX) {
-      const wall = this.terrain.wallBetween(prevX + this.halfLength, nx + this.halfLength, this.y);
+      const wall = this.terrain.wallBetween(prevX + this.halfLength - 1, nx + this.halfLength + 1, this.y);
       if (wall) {
         nx = wall.x - this.halfLength - 0.5;
         if (this.vx > 0) ev.push({ type: 'blocked', wallId: wall.id });
         this.vx = 0;
       }
     } else if (nx < prevX) {
-      const wall = this.terrain.wallBehind(prevX - this.halfLength, nx - this.halfLength, this.y);
+      const wall = this.terrain.wallBehind(prevX - this.halfLength + 1, nx - this.halfLength - 1, this.y);
       if (wall) {
         nx = wall.x + wall.w + this.halfLength + 0.5;
         this.vx = 0;
