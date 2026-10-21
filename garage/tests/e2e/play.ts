@@ -90,9 +90,13 @@ export async function tap(page: Page, testid: string, timeout = 30_000): Promise
   const el = page.locator(`[data-testid="${testid}"]`).first();
   await el.waitFor({ state: 'visible', timeout });
   await expect(el).toBeEnabled();
-  // (inside a scrolled panel, scroll to it first, as a person would)
-  await el.scrollIntoViewIfNeeded();
-  const b = (await el.boundingBox())!;
+  // inside a scrolled panel, scroll to it first, as a person would (without waiting for bobbing cards to hold still)
+  let b = (await el.boundingBox())!;
+  const vp = page.viewportSize()!;
+  if (b.y < 0 || b.y + b.height > vp.height || b.x < 0 || b.x + b.width > vp.width) {
+    await el.evaluate((e) => e.scrollIntoView({ block: 'center', inline: 'center' }));
+    b = (await el.boundingBox())!;
+  }
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
   await page.mouse.down();
   await page.waitForTimeout(40);

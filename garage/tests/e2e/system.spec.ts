@@ -116,8 +116,6 @@ test('building: undo, clear, a test that does not work points at the socket that
 });
 
 test('refreshing after progress continues from the last checkpoint without duplicating coins or rewards; a replay keeps the truck in view', async ({ browser }) => {
-  // two whole drives at the software renderer's ~8 fps
-  test.setTimeout(600_000);
   const s = await openGame(browser);
   const { page } = s;
   await startFirstMission(page);
