@@ -134,6 +134,7 @@ export default class MissionScene extends Phaser.Scene {
     this.idleClock = 0;
     this.fxClock = 0;
     this.gasLesson = false;
+    this.buildStop = null;
     this.closeEnd = null;
   }
 
@@ -162,6 +163,8 @@ export default class MissionScene extends Phaser.Scene {
   private fxClock = 0;
   /** the very first drive: the hand rests on the gas until it's pressed */
   private gasLesson = false;
+  /** braking for this build zone has started */
+  private buildStop: string | null = null;
   private closeEnd: (() => void) | null = null;
 
   private setup(): void {
@@ -646,9 +649,13 @@ export default class MissionScene extends Phaser.Scene {
           this.state.beat++;
           break;
         }
-        if (x + this.stopDistance() >= zone.stopX - 87) {
+        // brake so the truck stops at the build spot; once braking has started it stops there and the build opens
+        // (re-checking the distance after the stop could leave it held a few units short, forever)
+        if (this.buildStop === zone.id || x + this.stopDistance() >= zone.stopX - 87) {
+          this.buildStop = zone.id;
           this.held = true;
           if (Math.abs(this.sim.vx) < 1 && this.sim.grounded) {
+            this.buildStop = null;
             this.state.beat++;
             this.startBuild(zone);
           }
