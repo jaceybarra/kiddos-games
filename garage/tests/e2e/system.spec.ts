@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { extname, join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { drag, noProblems, openAll, openGame, openSettings, save, startDriver, startFirstMission, state, stopDriver, tap, target, waitScene, waitState } from './play';
+import { drag, driveToLessonLog, holdKey, noProblems, openAll, openGame, openSettings, save, startDriver, startFirstMission, state, stopDriver, tap, target, waitScene, waitState } from './play';
 
 /**
  * Acceptance checks beyond the mission journeys: help and recovery, pause /
@@ -21,7 +21,7 @@ test('help and recovery: a miss restores the checkpoint in about a second; two m
   const { page } = s;
   await startFirstMission(page);
   // get past the lesson log
-  const before = await waitState(page, 's.x > 900 && !s.example && !s.held && s.vx === 0 && s.hazard && s.hazard.kind === "wall"', 60_000);
+  const before = await driveToLessonLog(page);
   await tap(page, 'jump');
   await waitState(page, `s.presses > ${before.presses} && s.jumps > ${before.jumps}`, 3_000);
   const over = await waitState(page, 's.x > 1300', 10_000).catch(() => null);
@@ -119,10 +119,12 @@ test('refreshing after progress continues from the last checkpoint without dupli
   const s = await openGame(browser);
   const { page } = s;
   await startFirstMission(page);
-  await waitState(page, 's.x > 900 && !s.example && !s.held && s.vx === 0 && s.hazard && s.hazard.kind === "wall"', 60_000);
+  await driveToLessonLog(page);
   await tap(page, 'jump');
-  // the first coins and the place itself are saved at the next checkpoint
-  await waitState(page, "s.checkpoint === 'cp-gap'", 30_000);
+  await waitState(page, 's.x > 1250', 10_000);
+  // the first coins and the place itself are saved at the next checkpoint (then brake before the gap)
+  await holdKey(page, 'ArrowRight', "s.checkpoint === 'cp-gap'", 30_000);
+  await holdKey(page, 'ArrowLeft', 's.vx <= 0', 10_000);
   await page.waitForFunction(() => window.__garage!.save().resume?.checkpoint === 'cp-gap' && window.__garage!.save().progress.coins.length >= 3);
   const coins1 = (await save(page)).progress.coins.slice().sort();
   await page.reload();
@@ -309,6 +311,8 @@ test('portrait pauses and shows the rotate picture; landscape again keeps the dr
   const s = await openGame(browser);
   const { page } = s;
   await startFirstMission(page);
+  await waitState(page, '!s.held && s.controlsOn', 30_000);
+  await page.keyboard.down('ArrowRight');
   await waitState(page, 's.x > 500', 30_000);
   await page.setViewportSize({ width: 600, height: 900 });
   await page.locator('[data-testid="rotate"]').waitFor({ timeout: 5_000 });
@@ -319,6 +323,9 @@ test('portrait pauses and shows the rotate picture; landscape again keeps the dr
   const still = await state(page);
   expect(still.paused).toBe(true);
   expect(still.x).toBe(p.x);
+  // the gas let go when it paused, even though the key is still down
+  expect(still.gasHeld).toBe(false);
+  await page.keyboard.up('ArrowRight');
   await tap(page, 'pause-resume');
   await waitState(page, '!s.paused', 5_000);
   noProblems(s);
@@ -329,7 +336,15 @@ test('backgrounding, focus loss and a cancelled touch never leave the truck jump
   const s = await openGame(browser);
   const { page } = s;
   await startFirstMission(page);
-  await waitState(page, '!s.example && !s.held && s.x > 400', 60_000);
+  await waitState(page, '!s.held && s.controlsOn', 30_000);
+  await page.keyboard.down('ArrowRight');
+  await waitState(page, '!s.example && !s.held && s.x > 400 && s.gasHeld', 60_000);
+  // the gas held, then focus lost: the pause menu appears and the gas is let go
+  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  await waitState(page, 's.paused && !s.gasHeld', 3_000);
+  await page.keyboard.up('ArrowRight');
+  await tap(page, 'pause-resume');
+  await waitState(page, '!s.paused && !s.gasHeld', 3_000);
   // hold the jump key, then lose focus: the pause menu appears and the held input is released
   await page.keyboard.down('Space');
   await waitState(page, 's.jumpHeld', 3_000);

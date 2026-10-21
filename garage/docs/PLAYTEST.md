@@ -19,7 +19,7 @@ Date: ________  Missions played: ________  Roughly how long: ________
 | Question | Yes / Partly / No | What you saw |
 |---|---|---|
 | 1. Could he begin with little or no explanation? | | |
-| 2. Did he understand the next action? *(e.g. where to put a piece, when to jump)* | | |
+| 2. Did he understand the next action? *(e.g. holding the gas, when to jump, where to put a piece)* | | |
 | 3. Did he change a build and notice the effect? | | |
 | 4. Did he recover from a mistake without repeated adult rescue? | | |
 | 5. *(Later day — skip in session 1)* | — | — |
@@ -74,3 +74,8 @@ Notes:
 - Asking for help, watching quietly, or skipping the invite-a-friend button are all normal ways to play.
 - If he repeatedly misses a jump, check whether the helper example appeared after two tries. If he needed you every
   time, try **More help** in the grown-up settings next session and write down that you changed it.
+- Note how he holds the iPad and which fingers press the gas, brake and jump, and whether he backs up on purpose. If
+  driving itself gets in the way of the story, the grown-up setting **Driving → drives itself** is the earlier,
+  simpler version (only jump and brake). Write down which one he played.
+- On the Test Track, note what he goes back to: crates, flips, the high deck, the mud. That says what to put in the
+  next missions.

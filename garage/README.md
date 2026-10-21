@@ -1,9 +1,11 @@
 # Bentley's Wonder Garage
 
 A small, silent side-view monster-truck adventure for one six-year-old, made for a landscape iPad. You dress up
-a monster truck in the garage, drive through Meadow Motor Park, and build a bridge, ramp or bouncy pad when a friend
-has a problem. Milo the beaver, Pip the rabbit and Nori the turtle come along. Every mission puts something on the
-garage shelf. After the three missions, **My Tiny Track** opens: build your own little course and drive it.
+a monster truck in the garage and **drive it yourself** through Meadow Motor Park: gas, brake and back up, jump,
+smash crates, splash through mud, zoom over boost strips and flip off ramps. When a friend has a problem you build a
+bridge, ramp or bouncy pad. Milo the beaver, Pip the rabbit and Nori the turtle come along. Every mission puts
+something on the garage shelf. The **Test Track** (out through the garage door) is free driving, always open. After
+the three missions, **My Tiny Track** opens: build your own little course and drive it.
 
 *"Bentley's Wonder Garage" is a working title, not a trademark claim.*
 
@@ -38,15 +40,23 @@ Run from the repository root. Tested with Node 22.22 on Linux, and the family Ma
 
 | On screen | What it does |
 |---|---|
-| Big Play (garage) | Opens the garage door. The very first time, the truck drives straight into Mission 1. If a mission was left part-way (a reload, the app closed), Play goes straight back to its last checkpoint. |
-| Big jump button (lower corner) | Tap to jump. Hold a moment to jump a little higher. A tap is always enough for every required jump. |
-| Small brake (other corner) | Hold to stop and look. Never needed. |
+| Big Play (garage) | Opens the garage door. The very first time, the truck goes straight into Mission 1. If a mission was left part-way (a reload, the app closed), Play goes straight back to its last checkpoint. |
+| Green gas pedal (lower right) | Hold to drive. Let go and the truck rolls on and slows down gently. The very first drive starts with a hand resting on it. |
+| Big jump button (lower left) | Tap to jump. Hold a moment to jump a little higher. With the gas held, a jump always carries far enough for every required gap. Close in front of a log, a tap hops over it. |
+| Red brake (next to the jump) | Hold to slow down and stop. Keep holding when stopped to back up. |
+| In the air | Press the gas again to tip forward, the brake to tip back. Spin all the way round and land on the wheels for a flip. Let go and the truck levels itself. Landing on the roof is a soft bounce and it rolls back onto its wheels, never a miss. |
+| Out on the course | Crates smash (some hide a coin), mud slows you right down, blue boost strips zoom. Faster ramps throw higher. Flips, clean landings and big air pop stars (just for fun, never saved). |
+| Test Track card (in the open garage door) | Free driving: crates, a big jump, bumpy hills, mud, a log, a bouncy pad up to a high deck and a kicker ramp for flips. Nothing to win or lose. |
 | Pause (top left) | Pause menu: Resume, Retry, Garage. |
 | Helping hand (top right) | Shows how. While driving, a see-through truck demonstrates the jump. While building, a hand carries the right piece to its outline. |
 | Pieces tray (building) | Drag a piece onto a dashed outline, or tap the piece and then the outline. Undo, clear, and the truck-with-flag button to try it. |
 | End of a mission | Three equal buttons: Replay, Garage, Done. Nothing starts by itself. |
 
-Keyboard (for grown-ups and development only): Space / ↑ jump, ↓ / Shift brake, Esc / P pause.
+Keyboard (for grown-ups and development only): → / D gas, ← / A brake and back up, ↓ / Shift brake, Space / ↑ jump,
+Esc / P pause.
+
+The grown-up setting **Driving** switches to the easier **drives itself** mode: the truck cruises on its own and
+only the jump and the brake show (how the first version played). Building test drives always drive themselves.
 
 ## Play on the iPad at home
 
@@ -88,8 +98,9 @@ Tap the small gear in the garage corner. Then press and hold the shape the instr
 time). This keeps small fingers out. It isn't a lock.
 
 - Name on the garage sign (stays on this device).
-- Motion (follow the iPad's Reduce Motion, less, or full), lower intensity, jump button on the left or right,
-  slower driving, more help from the start, session reminder (a calm picture at the end of a mission, never in the
+- **Driving**: pedals (the default) or "drives itself" (easier: jump and brake only).
+- Motion (follow the iPad's Reduce Motion, less, or full), lower intensity, which corner the main button sits in
+  (the gas pedal, or the jump when it drives itself), slower driving (lower top speed too), more help from the start, session reminder (a calm picture at the end of a mission, never in the
   middle), and "open all missions" for trying things out.
 - **Saving**: where saves go, whether the last save worked (it never claims success after a failed write), and
   "Keep saves safe" (asks the browser for persistent storage; it may say no). The game also asks once by itself after
@@ -110,12 +121,14 @@ keeps the previous good save next to the current one and falls back to it if the
 ## Change things without touching the engine
 
 - `garage/src/config/content.ts`: **Bentley's name** (default for the sign), **starting assistance** (`'standard'`
-  or `'more'`), which corner the jump button starts in, **per-mission settings** (speed), and the default session
+  or `'more'`), which corner the main button starts in, **per-mission settings** (speed), and the default session
   reminder. Saved grown-up settings on the device take priority over these defaults.
-- `garage/src/config/tuning.ts`: every movement and feel number: speed, jump heights, coyote time (120 ms), input
-  buffer (150 ms), hold boost, ramp and pad strength, recovery time, camera look-ahead, snap distance.
-- `garage/src/content/missions.ts`: the three missions as typed data with stable ids: ground, logs, checkpoints,
-  coins, the optional discovery, build zones (sockets, offered pieces, the example used by help), story beats, goal,
+- `garage/src/config/tuning.ts`: every movement and feel number: cruising and top speed, gas, coasting, brake and
+  reverse, hill pull, mud and boost strength, spinning in the air and how forgiving landings are, jump heights,
+  coyote time (120 ms), input buffer (150 ms), hold boost, ramp and pad strength, recovery time, camera look-ahead,
+  snap distance.
+- `garage/src/content/missions.ts`: the three missions as typed data with stable ids: ground, logs, crates, mud and
+  boost strips, checkpoints, coins, the optional discovery, build zones (sockets, offered pieces, the example used by help), story beats, goal,
   route variants and help steps.
 
 ## How it's built
@@ -129,10 +142,10 @@ garage/
   index.html, public/          page, manifest, icons (the service worker is generated at build time)
   src/config/                  tuning.ts (feel numbers), content.ts (name, assistance, mission settings)
   src/core/                    pure rules, no Phaser: terrain, truck physics, build sockets, mission state, My Tiny Track
-  src/content/                 the three missions as data; levels.ts turns missions and tracks into drivable levels
+  src/content/                 the three missions as data; levels.ts turns missions and tracks into drivable levels, plus the Test Track
   src/save/                    versioned save format, validation and migration; IndexedDB store; idempotent progress
   src/art/                     original SVG art authored in code, rasterised to textures at load
-  src/view/                    Phaser drawing: truck, world, build pieces, crew, effects, camera
+  src/view/                    Phaser drawing: truck, world, crates/mud/boost strips, build pieces, crew, effects, camera
   src/scenes/                  boot, garage, mission (+ build controller and stories), creator, result
   src/ui/                      DOM controls, HUD, overlays, grown-up gate and settings
   src/app/                     app shell, offline/service-worker handling, the AppContext contract

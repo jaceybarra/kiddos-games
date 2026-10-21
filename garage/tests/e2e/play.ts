@@ -196,6 +196,31 @@ export async function stopDriver(page: Page): Promise<void> {
   await page.evaluate(() => window.__driver?.stop());
 }
 
+/**
+ * Mission 1's first lesson with the pedals: hold the gas button with a real
+ * pointer until the see-through truck shows the jump at the log, then let go;
+ * the truck waits in front of the log.
+ */
+export async function driveToLessonLog(page: Page): Promise<Record<string, any>> {
+  await waitState(page, '!s.held && s.controlsOn', 30_000);
+  const b = (await page.locator('[data-testid="gas"]').boundingBox())!;
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+  await page.mouse.down();
+  await waitState(page, 's.example || s.x > 1000', 60_000);
+  await page.mouse.up();
+  return waitState(page, 's.x > 900 && !s.example && !s.held && s.vx === 0 && s.hazard && s.hazard.kind === "wall"', 60_000);
+}
+
+/** Hold a key (a pedal) until the state matches, then let go. */
+export async function holdKey(page: Page, key: string, until: string, timeout = 30_000): Promise<Record<string, any>> {
+  await page.keyboard.down(key);
+  try {
+    return await waitState(page, until, timeout);
+  } finally {
+    await page.keyboard.up(key);
+  }
+}
+
 /** First launch: garage door → Play → mission 1 starts. */
 export async function startFirstMission(page: Page): Promise<void> {
   await waitScene(page, 'garage');

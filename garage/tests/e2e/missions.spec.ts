@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { drag, noProblems, openAll, openGame, save, startDriver, startFirstMission, state, stopDriver, tap, tapTarget, waitScene, waitState } from './play';
+import { drag, driveToLessonLog, noProblems, openAll, openGame, save, startDriver, startFirstMission, state, stopDriver, tap, tapTarget, waitScene, waitState } from './play';
 
 /**
  * The three missions, played for real: every solution and route variant,
@@ -50,9 +50,12 @@ test('mission 1, first launch: one Play, jump lesson, bridge build, wagon crosse
   await waitScene(page, 'garage');
   await shot(page, 'garage-door');
   await startFirstMission(page);
-  // the jump lesson: the first jump is a real tap on the big DOM button
-  await waitState(page, "s.x > 950 && !s.example && !s.held", 60_000);
-  await waitState(page, "s.vx === 0 && s.hazard && s.hazard.kind === 'wall'", 20_000);
+  // the gas lesson: a hand rests on the gas pedal until it's pressed
+  await waitState(page, 's.gasLesson && !s.held', 30_000);
+  await shot(page, 'gas-lesson');
+  // the jump lesson: the gas held with a real pointer, then the first jump is a real tap on the big DOM button
+  await driveToLessonLog(page);
+  expect((await state(page)).gasLesson).toBe(false);
   await shot(page, 'driving-log');
   await tap(page, 'jump');
   await waitState(page, 's.x > 1300', 10_000);

@@ -14,6 +14,14 @@ Device: ____________  iPadOS version: ________  Date: ________
       after a minute online.
 
 ## Touch and layout (landscape)
+- [ ] The green gas pedal drives while held and lets go the instant the finger lifts (the truck then rolls on and
+      slows by itself).
+- [ ] Holding the gas with one thumb and tapping jump with the other works. So does one finger: lift off the gas,
+      tap jump.
+- [ ] The red brake stops the truck; kept held at a standstill it backs up. A quick tap never backs up.
+- [ ] In the air, pressing the gas again tips the truck forward and the brake tips it back. Holding the gas through
+      a jump doesn't flip it.
+- [ ] The frame rate feels smooth while crates burst and on a boost strip (note any stutter).
 - [ ] The big jump button responds the instant it's touched, every time, including a quick tap.
 - [ ] Holding jump makes the truck go a little higher. Releasing it doesn't leave the truck "stuck jumping".
 - [ ] Dragging a bridge, ramp or pad onto its outline lands where your finger is. No offset at the screen edges.
@@ -21,7 +29,8 @@ Device: ____________  iPadOS version: ________  Date: ________
 - [ ] Nothing important is under the camera notch or the Home bar. Buttons sit clear of the rounded corners.
 - [ ] Pinching or swiping on the game doesn't scroll or zoom the page. The grown-up settings panel can still be
       pinch-zoomed.
-- [ ] Jump on the left (grown-up setting) moves the jump button to the left corner.
+- [ ] "Main button: left corner" (grown-up setting) moves the gas pedal to the left and the jump and brake to the
+      right. With "Drives itself" it moves the jump button instead, and there is no gas pedal.
 
 ## Interruptions
 - [ ] Turning the iPad to portrait pauses the game and shows the turn-the-tablet picture. Turning back shows the
@@ -29,6 +38,7 @@ Device: ____________  iPadOS version: ________  Date: ________
 - [ ] Pressing the Home button (or swiping up) mid-drive, then coming back, shows the pause menu. The truck isn't
       jumping or speeding on its own.
 - [ ] A notification banner or Control Center pull-down mid-jump doesn't leave the jump button held.
+- [ ] The same with the gas held: after the interruption the truck isn't driving on by itself.
 
 ## Saving
 - [ ] Finish mission 1, close the Home Screen app fully (swipe it away), reopen. The pennant is on the shelf and the
