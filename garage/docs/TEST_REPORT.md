@@ -113,6 +113,11 @@ blocks with cliff edges (now one continuous ground), the bouncy pad had a strip 
 a crate stack poked through the high deck (moved), and five garage cards ran into the big Play button (the Test
 Track card now sits in the open garage door).
 
+Found by the browser runs and fixed: a truck braking for a build could stop a couple of units short of the spot and
+then stay held with the build never opening (mission 3, spring wheels). Once braking for a build has started, the
+stop now opens the build. A test-helper change briefly made the journeys with bobbing choice cards hang; the helper
+was fixed (the game was not involved).
+
 No independent review was run for the second release.
 
 Two reviewers who hadn't written the code also looked at it. One checked it requirement by requirement against the
