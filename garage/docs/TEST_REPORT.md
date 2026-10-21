@@ -20,7 +20,7 @@ Environment: Linux container, Node 22.22, Chromium from Playwright 1.56.1 with s
 | Type check | `npx tsc --noEmit -p garage/tsconfig.json` (part of `npm run garage:build`) | ✅ no errors |
 | Production build | `npm run garage:build` | ✅ |
 | Unit tests | `npm run garage:test` | ✅ 117 passed |
-| Browser tests | `npm run garage:e2e` | Re-run in progress for this release (21 journeys); the first 4 passed. Updated when the run ends. |
+| Browser tests | `npm run garage:e2e` | ✅ 21 of 21 passed in one run (≈24 min) |
 
 ### Unit tests (Vitest, `garage/tests/unit`)
 
