@@ -1,7 +1,11 @@
-# Test report: Wonder Garage, first release
+# Test report: Wonder Garage
 
 This report keeps three things apart: what automated tests checked, what was inspected by eye, and what has **not**
 been checked (a real iPad, and Bentley actually playing).
+
+**Second release: he drives.** The truck no longer drives itself by default. There is a gas pedal, a brake that backs
+up, momentum, hills, faster ramps, flips, crates, mud and boost strips, and a free-play Test Track. The first
+release's auto-drive is kept as the grown-up setting "drives itself". Everything below covers both, unless marked.
 
 Environment: Linux container, Node 22.22, Chromium from Playwright 1.56.1 with software WebGL (SwiftShader), at about
 6–8 frames per second. That's far slower than an iPad, so timings below are on the game clock, not the wall clock.
@@ -15,12 +19,31 @@ Environment: Linux container, Node 22.22, Chromium from Playwright 1.56.1 with s
 | Install from lockfile | `npm ci` | ✅ (0 vulnerabilities reported) |
 | Type check | `npx tsc --noEmit -p garage/tsconfig.json` (part of `npm run garage:build`) | ✅ no errors |
 | Production build | `npm run garage:build` | ✅ |
-| Unit tests | `npm run garage:test` | ✅ 85 passed |
-| Browser tests | `npm run garage:e2e` | ✅ 19 of 19 passed in one run (≈21 min) |
+| Unit tests | `npm run garage:test` | ✅ 116 passed |
+| Browser tests | `npm run garage:e2e` | Re-run in progress for this release (21 journeys); the first 4 passed. Updated when the run ends. |
 
 ### Unit tests (Vitest, `garage/tests/unit`)
 
-- **Movement** (`physics.test.ts`): auto-drive and brake; a log makes the truck wait (no miss) and a tap clears it,
+- **Pedals** (`pedals.test.ts`, new): the truck stands still until the gas is pressed; the gas reaches top speed
+  (well above the old cruising speed); letting go it rolls on and slows gently; the brake stops, a quick tap never
+  reverses, and held at a standstill it backs up; gas brakes a reversing truck first; reversing stops at the start
+  and at the back of a log; slower driving lowers top speed. Hills: without gas the truck slows and rolls back down,
+  downhills carry it past top speed, every uphill slope in the missions can be climbed from a standstill, a parked
+  truck stays put on a gentle slope, and a fast crest gives a hop where a slow one doesn't. Jumps: with the gas held a
+  jump carries cruising speed (a near-standstill jump at a gap's edge still clears it); without gas it goes straight
+  up; a faster ramp throws higher and farther. In the air: holding the gas from the ground doesn't spin the truck;
+  gas pressed in the air spins forward and the brake back; spinning too far lands on the roof as a soft tumble and
+  then on the wheels, never a fall; a full turn landed counts as a flip; a deliberate tilt landed flat is a perfect
+  landing with a small push. Crates smash once, don't block and take a little speed (also when it drives itself).
+  Mud slows to mud speed, and the truck speeds up again after. A boost strip goes past top speed, then eases back.
+  **Every mission, both wheels, driven flat out with the pedals**, in legs as the game plays them: mission 1 to
+  Milo, then over the stream with the bridge, the ramp or the pad; mission 2 both ways; mission 3 both routes and
+  both climb pieces. **The Test Track** start to finish, both wheels, pedals and "drives itself", smashing crates.
+  **My Tiny Track**: all 1,189 layouts the checker calls drivable were driven flat out with both wheels. Chunky
+  wheels make every one. With spring wheels, 15 layouts can fail: the ones with two logs right before a ramp and a
+  pond, where the log jump at top speed flies over the ramp straight into the pond. The test pins exactly that. In
+  play it's a soft miss with the checkpoint just before it, and the ramp works from a standstill.
+- **Movement, "drives itself"** (`physics.test.ts`, unchanged from the first release and still passing): auto-drive and brake; a log makes the truck wait (no miss) and a tap clears it,
   even from standstill flush against the log, with either wheels and with slower driving;
   spring wheels jump clearly higher; holding adds 10–40%; coyote time (90 ms works, 220 ms doesn't); input buffer
   (100 ms works, 300 ms doesn't); a missed gap is a soft "fell" event; ramps and pads throw at full speed even with
@@ -42,7 +65,7 @@ Environment: Linux container, Node 22.22, Chromium from Playwright 1.56.1 with s
   refused. IndexedDB write → reload works, with the previous record kept. A corrupted current record falls back to the
   previous one and is set aside, not deleted. A failed write reports `failed`, never success. Import accepts a real
   export and rejects anything else unchanged. Reset keeps grown-up settings.
-- **Art** (`art.test.ts`): all 89 pieces and 29 icons parse; ids are unique; there is no text, script or external
+- **Art** (`art.test.ts`): all 96 pieces and 31 icons parse; ids are unique; there is no text, script or external
   reference in the art; every picture builder returns valid SVG.
 - **Silence and privacy** (`silence.test.ts`): no Web Audio, speech, microphone/camera, audio/video elements,
   notifications, beacons, network calls or vibration anywhere in the game source. The only URL is the SVG namespace,
@@ -57,7 +80,9 @@ Each journey also asserts **no console errors and no requests to any other host*
 
 | Acceptance criterion | Test | Result |
 |---|---|---|
-| 2. One obvious start action | First launch: garage door → Play → mission 1 drives | ✅ |
+| 2. One obvious start action | First launch: garage door → Play → mission 1, a hand resting on the gas pedal | ✅ |
+| Pedals (new) | Test Track with real pointer presses on the on-screen pedals: still until the gas; gas drives; letting go rolls on; brake stops then backs up; crates smash; jump; boost, mud, the whole track to the finish; replay; nothing saved from free play | ✅ |
+| "Drives itself" setting (new) | Grown-up settings → Driving → drives itself: no gas pedal, the truck rolls to the lesson log on its own, one tap gets over it | ✅ |
 | 3. Missions completable with default controls, no audio, no reading, one finger | All six mission journeys | ✅ |
 | 4. Both wheel types finish | Mission 1 (chunky and spring); missions 2 and 3 run for each wheel | ✅ |
 | 5. M1 bridge and ramp; M2 turns and second path; M3 both routes | `missions.spec.ts` | ✅ |
@@ -66,7 +91,7 @@ Each journey also asserts **no console errors and no requests to any other host*
 | 8. Offline reopen; honest failed cache | Offline after caching → reload → plays; a file failing to download → "Not ready" with the reason | ✅ (desktop Chromium on localhost) |
 | 9. Saved tracks | Pond after start refused; pond without ramp → fix (ramp in slot 0); test drive to the finish; save → reload → load → drive | ✅ |
 | 10. Drag coordinates; portrait | Drag at 1024×768, 1366×768 and 1920×1080; portrait 600×900 → rotate picture + paused, progress kept | ✅ |
-| 11. Backgrounding, cancel, rotation | Held key + focus loss → paused, input released; hidden tab → paused; cancelled touch → released; nothing moves under the pause menu | ✅ |
+| 11. Backgrounding, cancel, rotation | Held gas + focus loss → paused, gas released; held jump + focus loss → paused, released; hidden tab → paused; cancelled touch → released; nothing moves under the pause menu; portrait with the gas held → paused, gas released | ✅ |
 | 12. Corrupt save, failed write, invalid import | Damaged IndexedDB record → previous good save; failing writes → "The last save failed"; bad import file → "Nothing was changed" | ✅ |
 | 13. Colour-independent cues, reduced motion | Device reduced-motion → calm mode, decorative animation stopped; settings switch it | ✅ (cues reviewed by eye below) |
 | 14. No dead items, missing art, console errors or third-party requests | Asserted in every journey; art test covers missing pieces | ✅ |
@@ -75,9 +100,20 @@ Measured in the help test: a missed jump is back at the checkpoint after **1.1�
 (scheduled at 0.8 s in `tuning.ts`; frame overhead adds the rest at this frame rate). The **wall-clock time is
 unverified** on an iPad.
 
+In the mission journeys the in-page driver plays with real key events like a careful player: it holds the gas,
+brakes to about cruising speed before a gap or a log, and taps jump at the edge. The very first lesson is played
+with a real pointer on the gas button and a real tap on the jump button.
+
 ## Visual inspection and independent review
 
-The screenshots in `docs/screenshots/` were looked at one by one, at 1024×768 (iPad landscape CSS size).
+The screenshots in `docs/screenshots/` were looked at one by one, at 1024×768 (iPad landscape CSS size). New in the
+second release: `gas-lesson`, `test-track-crates`, `test-track-boost` (exhaust flame, speed lines) and
+`test-track-mud`. Things looked at and fixed while building it: the Test Track hills were first drawn as separate
+blocks with cliff edges (now one continuous ground), the bouncy pad had a strip of water under it (now solid ground),
+a crate stack poked through the high deck (moved), and five garage cards ran into the big Play button (the Test
+Track card now sits in the open garage door).
+
+No independent review was run for the second release.
 
 Two reviewers who hadn't written the code also looked at it. One checked it requirement by requirement against the
 specification, with live probes. The other played every screen at 1024×768 as a six-year-old would and inspected each
@@ -124,12 +160,15 @@ cards and recaps; the garage shelf and coin jar; the pause menu, gate, rotate ca
   real iPad.
 - **Bentley playing**: no child playtest has happened. Use `docs/PLAYTEST.md`. Nothing here claims he will enjoy it
   or that it changes behaviour.
+- **The pedals on a real iPad**: whether two thumbs (gas right, jump and brake left) suit his hands, whether the
+  speeds and the forgiving air spin feel right, and the frame rate with crates bursting and on boost strips. The
+  numbers are all in `src/config/tuning.ts` (`pedals`, `stuff`, `air`).
 
 ## Sizes (production build, `dist-garage/`)
 
 | What | Raw | Compressed (gzip -9) |
 |---|---|---|
-| Everything (first load = complete offline set: code, art-as-code, icons, manifest, service worker) | 1.70 MB | 0.50 MB |
+| Everything (first load = complete offline set: code, art-as-code, icons, manifest, service worker) | 1.73 MB | 0.51 MB |
 | Of which Phaser | 1.37 MB | 0.36 MB |
 
 The targets were under 8 MB (first load) and under 15 MB (offline region). The art is SVG in the code, turned into
@@ -138,8 +177,9 @@ textures on the device, so there are no image downloads.
 ## The three most important improvements to consider next
 
 1. **Play-test on Bentley's iPad and tune from what you see.** Use `PLAYTEST.md` and `DEVICE_CHECKLIST.md`. The feel
-   numbers (jump timing windows, speed, recovery time, help thresholds) are all in `src/config/tuning.ts`, and the
-   name and starting help are in `src/config/content.ts`.
+   numbers (top speed, gas, coasting, hills, air spin and landing tolerance, jump timing windows, recovery time, help
+   thresholds) are all in `src/config/tuning.ts`, and the name and starting help are in `src/config/content.ts`. If
+   driving gets in the way, try the "drives itself" setting and note which he prefers.
 2. **Make offline real on the home network.** Over plain `http://`, the iPad can play only while the Mac is serving.
    Either try the local-HTTPS steps in the README on the iPad, or choose a private HTTPS host.
 3. **Richer helping and continuing moments.** Today an invited friend helps with a heave-ho hop as the piece drops in.

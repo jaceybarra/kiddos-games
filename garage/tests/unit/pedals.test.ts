@@ -5,7 +5,8 @@ import { TruckSim, simulate, type DriveInput, type TruckEvent } from '../../src/
 import { segmentsFor, type Placement } from '../../src/core/build';
 import type { Lane } from '../../src/core/terrain';
 import { MISSIONS, G } from '../../src/content/missions';
-import { missionLevel, playgroundLevel } from '../../src/content/levels';
+import { missionLevel, playgroundLevel, trackLevel } from '../../src/content/levels';
+import { checkTrack, emptySlots, legalAt, TRACK_PIECES, type Slots, type TrackPiece } from '../../src/core/track';
 
 /**
  * "He drives": gas, brake that becomes reverse, momentum, hills, faster ramps,
@@ -348,4 +349,42 @@ describe('every mission and the test track can be driven flat out with the pedal
       }
     });
   }
+});
+
+describe('My Tiny Track with the pedals', () => {
+  it('every layout the checker calls drivable can be driven flat out with the pedals (spring wheels: one known overshoot)', () => {
+    let checked = 0;
+    const failures: { slots: Slots; wheel: WheelKind }[] = [];
+    const opts: (TrackPiece | null)[] = [null, ...TRACK_PIECES];
+    const visit = (s: Slots, i: number) => {
+      if (i === s.length) {
+        if (!checkTrack(s).playable) return;
+        const L = trackLevel(s);
+        const terrain = new Terrain(L.segments, L.walls);
+        for (const wheel of WHEELS) {
+          const r = simulate(terrain, L.startX, L.finishX, { wheel, input: 'auto', mode: 'pedals', maxSec: 60 });
+          if (!r.reached) failures.push({ slots: s, wheel });
+        }
+        checked++;
+        return;
+      }
+      for (const o of opts) {
+        if (o && !legalAt(s, i, o)) continue;
+        const n = s.slice();
+        n[i] = o;
+        visit(n, i + 1);
+      }
+    };
+    visit(emptySlots(), 0);
+    expect(checked).toBeGreaterThan(1000);
+    // Chunky wheels make every one. Spring wheels flat out can fly from a log straight over a ramp into the pond
+    // behind it, but only where two logs come right before a ramp and a pond (a soft miss; the checkpoint is just
+    // before it, and from a standstill the ramp works).
+    for (const f of failures) {
+      expect(f.wheel, JSON.stringify(f.slots)).toBe('spring');
+      const k = f.slots.findIndex((p, j) => p === 'log' && f.slots[j + 1] === 'log' && f.slots[j + 2] === 'ramp' && f.slots[j + 3] === 'pond');
+      expect(k, JSON.stringify(f.slots)).toBeGreaterThanOrEqual(0);
+    }
+    expect(failures.length).toBeLessThan(checked * 0.02);
+  });
 });
