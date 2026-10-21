@@ -106,6 +106,8 @@ test('mission 1 with a ramp-and-landing route, placed by tap-then-target, with s
 
 for (const wheel of ['chunky', 'spring'] as const) {
   test(`mission 2, take turns, then replay with another path (${wheel})`, async ({ browser }) => {
+    // two whole drives at the software renderer's ~8 fps
+    test.setTimeout(600_000);
     const s = await openGame(browser);
     const { page } = s;
     await openAll(page);
@@ -133,6 +135,8 @@ for (const wheel of ['chunky', 'spring'] as const) {
   });
 
   test(`mission 3, gentle route then the jump route, final bridge + ramp build (${wheel})`, async ({ browser }) => {
+    // two whole drives at the software renderer's ~8 fps
+    test.setTimeout(600_000);
     const s = await openGame(browser);
     const { page } = s;
     await openAll(page);
